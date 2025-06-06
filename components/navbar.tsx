@@ -33,7 +33,7 @@ export default function Navbar() {
     { name: "Donations", href: "/donations" },
     { name: "Event", href: "/events" },
     { name: "Blog", href: "#blog" },
-    { name: "Shop", href: "#shop" },
+    { name: "Shop", href: "/shop" },
     { name: "Livestream", href: "/livestream" },
   ]
 
