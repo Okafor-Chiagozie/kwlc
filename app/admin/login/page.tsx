@@ -11,10 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
-// Add the import for Toaster from "@/components/ui/sonner"
 import { Toaster } from "@/components/ui/sonner"
-// Remove the import for Toaster from "@/components/ui/sonner"
-// import { Toaster } from "@/components/ui/sonner"
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("")
@@ -132,7 +129,16 @@ export default function AdminLogin() {
 
       {/* Right Side - Branding */}
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 items-center justify-center p-8 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute inset-0">
+          <Image
+            src="/images/geometric-bg.png"
+            alt="Geometric Background"
+            fill
+            className="object-cover opacity-40"
+            priority
+          />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 via-gray-800/80 to-gray-900/80"></div>
         <div className="relative z-10 text-center text-white space-y-8">
           <div className="w-32 h-32 mx-auto bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
             <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -149,9 +155,7 @@ export default function AdminLogin() {
             <p>London, Lagos</p>
           </div>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
       </div>
-      {/* Remove the <Toaster /> component from the JSX */}
       <Toaster />
     </div>
   )
