@@ -131,7 +131,9 @@ export default function Navbar() {
             </button>
           </div>
 
-          <Button className="bg-primary hover:bg-primary/90 text-white">Donate</Button>
+          <Button className="bg-primary hover:bg-primary/90 text-white">
+            <Link href={'/donations'}>Donate</Link>
+          </Button>
 
           <button
             className={`lg:hidden ${scrolled ? "text-gray-900" : "text-white"}`}
@@ -188,10 +190,13 @@ export default function Navbar() {
             </ul>
 
             <div className="mt-6 pt-6 border-t">
-              <Button className="w-full bg-primary hover:bg-primary/90 text-white mb-3">Donate</Button>
+              <Button className="w-full bg-primary hover:bg-primary/90 text-white mb-3">
+                <Link href={'/donations'}>Donate</Link>
+              </Button>
               <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-md">
                 <Phone className="h-5 w-5 text-primary" />
-                <span className="text-gray-700 text-sm">+234 70 433 2832</span>
+                {/* <span className="text-gray-700 text-sm">+234 70 433 2832</span> */}
+                <a href="tel:+234704332832" className="text-gray-700 text-sm">+234 70 433 2832</a>
               </div>
             </div>
           </nav>

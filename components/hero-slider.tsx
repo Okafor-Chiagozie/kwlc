@@ -159,7 +159,7 @@ export default function HeroSlider() {
                     className="bg-white text-black hover:bg-gray-100 animate-button-reveal opacity-0 text-sm sm:text-base"
                     style={{ animationDelay: "1200ms", animationFillMode: "forwards" }}
                   >
-                    See More
+                    <a href="#experience">See More</a>
                   </Button>
                 </div>
               </div>

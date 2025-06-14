@@ -10,11 +10,12 @@ import WelcomeSection from "@/components/welcome-section"
 import LocationsSection from "@/components/locations-section"
 import LocationPin from "@/components/location-pin"
 import MainLayout from "@/components/main-layout"
+import Link from "next/link"
 
 export default function Home() {
   return (
     <MainLayout>
-      <main className="flex-1">
+      <main className="flex-1 scroll-smooth">
         {/* Hero Slider Section */}
         <section className="relative h-[700px] overflow-hidden">
           <HeroSlider />
@@ -78,7 +79,7 @@ export default function Home() {
                   power of collective worship and the joy of being part of a loving church family.
                 </p>
                 <Button className="group bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all">
-                  <span>Learn More</span>
+                  <Link href={'/branches'}>Learn More</Link>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
@@ -110,7 +111,7 @@ export default function Home() {
                   environment.
                 </p>
                 <Button className="group bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all">
-                  <span>Learn More</span>
+                  <Link href={'/branches'}>Learn More</Link>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
@@ -151,7 +152,7 @@ export default function Home() {
                 variant="outline"
                 className="border-primary text-primary hover:bg-primary hover:text-white transition-colors"
               >
-                View All Programs
+                <Link href={'/events'}>View All Programs</Link>
               </Button>
             </div>
           </div>
@@ -232,7 +233,7 @@ export default function Home() {
                 </div>
                 <Button className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all group text-lg h-12">
                   <Heart className="h-5 w-5 mr-2" />
-                  <span>Make a Donation</span>
+                  <Link href={'/donations'}>Make a Donation</Link>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
@@ -320,7 +321,7 @@ export default function Home() {
                   variant="outline"
                   className="w-full border-primary/20 hover:bg-primary/5 hover:border-primary text-primary"
                 >
-                  Call Now
+                  <a href="tel:+234704332832">Call Now</a>
                 </Button>
               </div>
 
@@ -338,7 +339,7 @@ export default function Home() {
                   variant="outline"
                   className="w-full border-primary/20 hover:bg-primary/5 hover:border-primary text-primary"
                 >
-                  Send Email
+                  <a href="mailto:info@kwlchq.org">Send Email</a>
                 </Button>
               </div>
 
@@ -588,7 +589,7 @@ export default function Home() {
 
                 <div className="mt-6 pt-4">
                   <button className="w-full text-primary hover:text-primary/80 text-sm font-medium flex items-center justify-center gap-2 transition-colors">
-                    View All Events
+                    <Link href={'/events'}>View All Events</Link>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="16"

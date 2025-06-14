@@ -1,5 +1,6 @@
 import type React from "react"
 import Navbar from "@/components/navbar"
+import Link from "next/link"
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,24 +20,16 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               <h3 className="font-bold text-lg mb-4">Quick Links</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    Home
-                  </a>
+                  <Link href={'/'} className="text-gray-400 hover:text-white transition-colors">Home</Link>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    About
-                  </a>
+                  <Link href={'/branches'} className="text-gray-400 hover:text-white transition-colors">Branches</Link>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    Services
-                  </a>
+                  <Link href={'/donations'} className="text-gray-400 hover:text-white transition-colors">Donate</Link>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    Contact
-                  </a>
+                  <Link href={'/events'} className="text-gray-400 hover:text-white transition-colors">Events</Link>
                 </li>
               </ul>
             </div>
