@@ -2,57 +2,65 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { Heart, Share2, Target, TrendingUp, Building, GraduationCap } from "lucide-react"
+import { Heart, Share2, Target, TrendingUp, Building, GraduationCap, AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
 import MainLayout from "@/components/main-layout"
+import { useApi } from "@/hooks/useApi"
+import { getProjects } from "@/services/churchProject"
+import { ChurchProject } from "@/types/churchProject"
 
-const donationProjects = [
-  {
-    id: 1,
-    title: "Build church school",
-    description: "Help us build a modern educational facility for our community children",
-    target: 23000000,
-    raised: 130000,
-    image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/previous-sunday-1-mvsBAuZ8fv6sQ9BIEJLOZ7sL3xWqBZ.png",
-    category: "Education",
-  },
-  {
-    id: 2,
-    title: "Build church school",
-    description: "Support the construction of classrooms and learning facilities",
-    target: 23000000,
-    raised: 130000,
-    image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/previous-sunday-2-U32r6iEgfd2Lfx6ankMMHQVltVVlpX.png",
-    category: "Education",
-  },
-  {
-    id: 3,
-    title: "Church Building Project",
-    description: "Expanding our main sanctuary to accommodate our growing congregation",
-    target: 50000000,
-    raised: 2500000,
-    image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/previous-sunday-3-0cWkRXuoGw3r8yqCXIqVL0agA5oU4R.png",
-    category: "Infrastructure",
-  },
-]
+const isNoRecordsError = (error: string | null) => {
+  return error && error.toLowerCase().includes("no record found")
+}
 
-const projectGallery = [
-  "/placeholder.svg?height=200&width=300&text=Architectural+Plans",
-  "/placeholder.svg?height=200&width=300&text=Blueprint+1",
-  "/placeholder.svg?height=200&width=300&text=Blueprint+2",
-  "/placeholder.svg?height=200&width=300&text=Blueprint+3",
-  "/placeholder.svg?height=200&width=300&text=Blueprint+4",
-]
+const LoadingState = () => (
+  <div className="flex flex-col items-center justify-center py-20">
+    <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+    <p className="text-gray-600">Loading projects...</p>
+  </div>
+)
+
+const ErrorState = ({ error, onRetry }: { error: string; onRetry: () => void }) => (
+  <section className="py-16">
+    <div className="container mx-auto px-4">
+      <div className="text-center max-w-md mx-auto">
+        <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Unable to Load Projects</h2>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <Button onClick={onRetry}>Try Again</Button>
+      </div>
+    </div>
+  </section>
+)
+
+const EmptyState = () => (
+  <div className="flex flex-col items-center justify-center py-20">
+    <Building className="h-12 w-12 text-gray-400 mb-4" />
+    <p className="text-gray-600 mb-2">No projects available</p>
+    <p className="text-sm text-gray-500 text-center">Check back later for new projects to support.</p>
+  </div>
+)
 
 export default function DonationsPage() {
   const [selectedAmount, setSelectedAmount] = useState("")
   const [customAmount, setCustomAmount] = useState("")
+
+  // Fetch projects from API
+  const { 
+    data: projectsResponse, 
+    loading: projectsLoading, 
+    error: projectsError, 
+    refetch: refetchProjects 
+  } = useApi(() => getProjects(), [])
+
+  const projects = projectsResponse?.data || []
+  
+  // Get latest project (first one) and remaining 3 projects
+  const latestProject = projects[0]
+  const otherProjects = projects.slice(1, 4)
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-NG", {
@@ -65,6 +73,30 @@ export default function DonationsPage() {
 
   const calculateProgress = (raised: number, target: number) => {
     return (raised / target) * 100
+  }
+
+  const getProjectImage = (project: ChurchProject) => {
+    if (project.previewImages?.[0]) return project.previewImages[0]
+    if (project.carouselImages?.[0]) return project.carouselImages[0]
+    if (project.galleryImages?.[0]) return project.galleryImages[0]
+    if (project.imageUrl) return project.imageUrl
+    return "/placeholder.svg?height=500&width=600&text=Church+Project"
+  }
+
+  const getProjectGallery = (project: ChurchProject) => {
+    const allImages = [
+      ...(project.previewImages || []),
+      ...(project.carouselImages || []),
+      ...(project.galleryImages || [])
+    ].filter(Boolean)
+    
+    return allImages.length > 0 ? allImages.slice(0, 5) : [
+      "/placeholder.svg?height=200&width=300&text=Project+Image+1",
+      "/placeholder.svg?height=200&width=300&text=Project+Image+2",
+      "/placeholder.svg?height=200&width=300&text=Project+Image+3",
+      "/placeholder.svg?height=200&width=300&text=Project+Image+4",
+      "/placeholder.svg?height=200&width=300&text=Project+Image+5",
+    ]
   }
 
   return (
@@ -95,95 +127,111 @@ export default function DonationsPage() {
         </section>
 
         {/* Main Project Section */}
-        <section className="py-16 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="grid lg:grid-cols-2 gap-12 items-start">
-              {/* Project Image */}
-              <div className="relative">
-                <div className="relative h-[500px] rounded-2xl overflow-hidden shadow-xl">
-                  <Image
-                    src="/placeholder.svg?height=500&width=600&text=Church+Building+Construction"
-                    alt="Church building construction project"
-                    fill
-                    className="object-cover"
-                  />
+        {projectsLoading ? (
+          <LoadingState />
+        ) : projectsError && !isNoRecordsError(projectsError) ? (
+          <ErrorState error={projectsError} onRetry={refetchProjects} />
+        ) : !latestProject || isNoRecordsError(projectsError) ? (
+          <EmptyState />
+        ) : (
+          <>
+            <section className="py-16 bg-white">
+              <div className="container mx-auto px-4">
+                <div className="grid lg:grid-cols-2 gap-12 items-start">
+                  {/* Project Image */}
+                  <div className="relative">
+                    <div className="relative h-[500px] rounded-2xl overflow-hidden shadow-xl">
+                      <Image
+                        src={getProjectImage(latestProject)}
+                        alt={latestProject.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Project Details */}
+                  <div>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary font-medium text-sm mb-6">
+                      <Building className="h-4 w-4" />
+                      <span>Latest Project</span>
+                    </div>
+
+                    <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">{latestProject.name}</h2>
+
+                    <div className="space-y-4 text-gray-700 leading-relaxed mb-8">
+                      <p>{latestProject.description}</p>
+                      
+                      {latestProject.location && (
+                        <p className="text-sm text-gray-600">
+                          <strong>Location:</strong> {latestProject.location}
+                        </p>
+                      )}
+
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-600">Progress</span>
+                          <span className="text-sm font-medium text-primary">
+                            {calculateProgress(latestProject.amountRaised || 0, latestProject.targetAmount).toFixed(1)}%
+                          </span>
+                        </div>
+                        <Progress 
+                          value={calculateProgress(latestProject.amountRaised || 0, latestProject.targetAmount)} 
+                          className="h-3 mb-3" 
+                        />
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">
+                            Raised: {formatCurrency(latestProject.amountRaised || 0)}
+                          </span>
+                          <span className="text-gray-600">
+                            Target: {formatCurrency(latestProject.targetAmount)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <Button className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2">
+                        <Heart className="h-4 w-4" />
+                        Donate Now
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <Share2 className="h-4 w-4" />
+                        Share Project
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </section>
 
-              {/* Project Details */}
-              <div>
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary font-medium text-sm mb-6">
-                  <Building className="h-4 w-4" />
-                  <span>Infrastructure Project</span>
-                </div>
+            {/* Project Gallery */}
+            <section className="py-16 bg-gray-50">
+              <div className="container mx-auto px-4">
+                <h3 className="text-2xl font-bold mb-8 text-gray-900">Pictures from the project</h3>
 
-                <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">Church building project</h2>
-
-                <div className="space-y-4 text-gray-700 leading-relaxed mb-8">
-                  <p>
-                    We are embarking on an ambitious project to expand our church facilities to better serve our growing
-                    congregation and community. This project will include a new sanctuary, fellowship hall, and
-                    educational wings.
-                  </p>
-
-                  <p>
-                    The new building will accommodate up to 2,000 worshippers and will feature modern amenities
-                    including air conditioning, advanced sound systems, and accessibility features for all members of
-                    our community.
-                  </p>
-
-                  <p>
-                    This expansion represents our commitment to providing a welcoming space where people can encounter
-                    God's love and grow in their faith journey. Every contribution, no matter the size, brings us closer
-                    to completing this vision.
-                  </p>
-
-                  <p>
-                    The project also includes dedicated spaces for youth programs, children's ministry, and community
-                    outreach initiatives that will serve the broader Lagos community for generations to come.
-                  </p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Button className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2">
-                    <Heart className="h-4 w-4" />
-                    Donate Now
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    <Share2 className="h-4 w-4" />
-                    Share Project
-                  </Button>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  {getProjectGallery(latestProject).map((image, index) => (
+                    <div
+                      key={index}
+                      className="relative aspect-[4/3] rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+                    >
+                      <Image
+                        src={image || "/placeholder.svg"}
+                        alt={`Project image ${index + 1}`}
+                        fill
+                        className="object-cover hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Project Gallery */}
-        <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <h3 className="text-2xl font-bold mb-8 text-gray-900">Pictures from the project</h3>
-
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {projectGallery.map((image, index) => (
-                <div
-                  key={index}
-                  className="relative aspect-[4/3] rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-                >
-                  <Image
-                    src={image || "/placeholder.svg"}
-                    alt={`Project image ${index + 1}`}
-                    fill
-                    className="object-cover hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+            </section>
+          </>
+        )}
 
         {/* Latest Donations */}
         <section className="py-16 bg-white">
@@ -195,54 +243,66 @@ export default function DonationsPage() {
               </Button>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {donationProjects.map((project) => (
-                <div
-                  key={project.id}
-                  className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow"
-                >
-                  <div className="relative h-48">
-                    <Image
-                      src={project.image || "/placeholder.svg"}
-                      alt={project.title}
-                      fill
-                      className="object-cover"
-                    />
-                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
-                      <span className="text-xs font-medium text-gray-700">{project.category}</span>
+            {projectsLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : projectsError && !isNoRecordsError(projectsError) ? (
+              <ErrorState error={projectsError} onRetry={refetchProjects} />
+            ) : otherProjects.length === 0 && !isNoRecordsError(projectsError) ? (
+              <EmptyState />
+            ) : isNoRecordsError(projectsError) ? (
+              <EmptyState />
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {otherProjects.map((project) => (
+                  <div
+                    key={project.id}
+                    className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow"
+                  >
+                    <div className="relative h-48">
+                      <Image
+                        src={getProjectImage(project)}
+                        alt={project.name}
+                        fill
+                        className="object-cover"
+                      />
+                      <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
+                        <span className="text-xs font-medium text-gray-700">Infrastructure</span>
+                      </div>
+                    </div>
+
+                    <div className="p-6">
+                      <h3 className="text-xl font-bold mb-2 text-gray-900">{project.name}</h3>
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">{project.description}</p>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Target className="h-4 w-4" />
+                            <span>Target: {formatCurrency(project.targetAmount)}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-primary">
+                            <TrendingUp className="h-4 w-4" />
+                            <span>Raised: {formatCurrency(project.amountRaised || 0)}</span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Progress value={calculateProgress(project.amountRaised || 0, project.targetAmount)} className="h-2" />
+                          <div className="flex justify-between text-xs text-gray-500">
+                            <span>{calculateProgress(project.amountRaised || 0, project.targetAmount).toFixed(1)}% funded</span>
+                            <span>{formatCurrency(project.targetAmount - (project.amountRaised || 0))} remaining</span>
+                          </div>
+                        </div>
+
+                        <Button className="w-full bg-primary hover:bg-primary/90 text-white">Donate to Project</Button>
+                      </div>
                     </div>
                   </div>
-
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-2 text-gray-900">{project.title}</h3>
-                    <p className="text-gray-600 text-sm mb-4">{project.description}</p>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Target className="h-4 w-4" />
-                          <span>Target: {formatCurrency(project.target)}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-primary">
-                          <TrendingUp className="h-4 w-4" />
-                          <span>Raised: {formatCurrency(project.raised)}</span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Progress value={calculateProgress(project.raised, project.target)} className="h-2" />
-                        <div className="flex justify-between text-xs text-gray-500">
-                          <span>{calculateProgress(project.raised, project.target).toFixed(1)}% funded</span>
-                          <span>{formatCurrency(project.target - project.raised)} remaining</span>
-                        </div>
-                      </div>
-
-                      <Button className="w-full bg-primary hover:bg-primary/90 text-white">Donate to Project</Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

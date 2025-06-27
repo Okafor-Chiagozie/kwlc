@@ -1,70 +1,155 @@
 "use client"
 
-import { useState } from "react"
+import { useState, use, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Calendar, Clock, MapPin, Share2, ChevronLeft, Users, Heart } from "lucide-react"
+import { Calendar, Clock, MapPin, Share2, ChevronLeft, Users, Heart, AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import MainLayout from "@/components/main-layout"
+import { useApi } from "@/hooks/useApi"
+import { getEvent, getUpcomingEvents } from "@/services/event"
+import { DetailedEvent, Event } from "@/types/event"
 
-// Mock event data
-const event = {
-  id: 1,
-  title: "Youth Empowerment Program",
-  date: "14. 10. 2022",
-  time: "8:00 am - 10:30 am",
-  location: "KINGDOM WAYS LIVING CHURCH",
-  address: "24 Prince Ibrahim Eletu Avenue, Shoprite Circle Mall Road Jakande Bus Stop, Osapa London,Lagos",
-  description:
-    "Join us for our Youth Empowerment Program designed to equip young people with the skills, knowledge, and spiritual foundation they need to succeed in today's world. This program features interactive workshops, inspiring speakers, and practical training sessions that address real-world challenges from a faith perspective.",
-  longDescription: `
-    <p>The Youth Empowerment Program is a transformative experience designed to help young people discover their purpose, develop their talents, and deepen their faith. Through a combination of teaching, mentorship, and practical application, participants will:</p>
-    
-    <ul>
-      <li>Gain clarity on their God-given purpose and calling</li>
-      <li>Develop practical skills for academic and career success</li>
-      <li>Learn principles of financial stewardship and entrepreneurship</li>
-      <li>Build meaningful relationships with like-minded peers</li>
-      <li>Strengthen their spiritual foundation through Bible study and prayer</li>
-    </ul>
-    
-    <p>Our experienced facilitators and guest speakers bring real-world expertise and spiritual insight to create a holistic learning environment. Whether you're a student, young professional, or simply seeking direction, this program offers valuable tools for your journey.</p>
-    
-    <p>Space is limited, so register today to secure your spot. The registration fee includes all program materials, refreshments, and a certificate of completion.</p>
-  `,
-  image:
-    "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-04-05%20at%2015.18.44-mJzZTwiXSxvcHMxaFJMDRgkP5inAAO.png",
-  gallery: [
-    "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-04-05%20at%2015.18.44-mJzZTwiXSxvcHMxaFJMDRgkP5inAAO.png",
-    "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-04-05%20at%2015.18.21-Qqiu1eOCbogVwXGwuuLCdHS64Aar13.png",
-    "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/previous-sunday-1-mvsBAuZ8fv6sQ9BIEJLOZ7sL3xWqBZ.png",
-    "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/previous-sunday-3-0cWkRXuoGw3r8yqCXIqVL0agA5oU4R.png",
-  ],
-  speakers: [
-    {
-      name: "Pastor Ken Mbachi",
-      role: "Lead Pastor",
-      image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ken%201-hXI5KivaxVAed66kGrI92ErEqwBqmf.png",
-    },
-    {
-      name: "Sarah Johnson",
-      role: "Youth Director",
-      image: "/placeholder.svg?height=200&width=200",
-    },
-    {
-      name: "Michael Okonkwo",
-      role: "Guest Speaker",
-      image: "/placeholder.svg?height=200&width=200",
-    },
-  ],
-  price: "1,000",
-  attendees: 120,
-  maxAttendees: 200,
+const isNoRecordsError = (error: string | null) => {
+  return error && error.toLowerCase().includes("no record found")
 }
 
-export default function EventDetailPage({ params }: { params: { id: string } }) {
+const LoadingState = () => (
+  <div className="text-center">
+    <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+    <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading event details...</h1>
+  </div>
+)
+
+const ErrorState = ({ error, onRetry }: { error: string; onRetry: () => void }) => (
+  <section className="py-16">
+    <div className="container mx-auto px-4">
+      <div className="text-center max-w-md mx-auto">
+        <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Unable to Load Event</h2>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <Button onClick={onRetry}>Try Again</Button>
+      </div>
+    </div>
+  </section>
+)
+
+const EmptyState = () => (
+  <div className="flex flex-col items-center justify-center py-40">
+    <Calendar className="h-12 w-12 text-gray-400 mb-4" />
+    <h2 className="text-xl font-semibold mb-2">Event not found</h2>
+    <p className="text-gray-600 mb-4">This event may have been removed or doesn't exist.</p>
+    <Link href="/events">
+      <Button variant="outline" className="border-primary bg-primary text-white hover:bg-primary/5">
+        View All Events
+      </Button>
+    </Link>
+  </div>
+)
+
+export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const [activeTab, setActiveTab] = useState("details")
-  const [selectedImage, setSelectedImage] = useState(event.image)
+  const [selectedImage, setSelectedImage] = useState<string>("")
+
+  // Unwrap the params Promise
+  const { id } = use(params)
+  const eventId = parseInt(id)
+
+  // Fetch event details
+  const { 
+    data: eventResponse, 
+    loading: eventLoading, 
+    error: eventError, 
+    refetch: refetchEvent 
+  } = useApi(() => getEvent(eventId), [eventId])
+
+  // Fetch related events (latest 3 upcoming events excluding current event)
+  const { 
+    data: upcomingEventsData, 
+    loading: relatedLoading 
+  } = useApi(() => getUpcomingEvents(), [])
+
+  // Filter out current event and take only 3
+  const relatedEvents = Array.isArray(upcomingEventsData) 
+    ? upcomingEventsData.filter((e: Event) => e.id !== eventId).slice(0, 3) 
+    : []
+
+  const event = eventResponse?.data?.[0]
+
+  // Set default selected image when event data loads
+  useEffect(() => {
+    if (event?.previewImages?.[0]) {
+      setSelectedImage(event.previewImages[0])
+    } else if (event?.carouselImages?.[0]) {
+      setSelectedImage(event.carouselImages[0])
+    }
+  }, [event])
+
+  // Handle loading state
+  if (eventLoading) {
+    return (
+      <MainLayout>
+        {/* <div className="min-h-screen">
+          <LoadingState />
+        </div> */}
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <LoadingState />
+        </div>
+      </MainLayout>
+    )
+  }
+
+  // Handle error state (but not "no records found")
+  if (eventError && !isNoRecordsError(eventError)) {
+    return (
+      <MainLayout>
+        <div className="min-h-screen">
+          <ErrorState error={eventError} onRetry={refetchEvent} />
+        </div>
+      </MainLayout>
+    )
+  }
+
+  // Handle empty state (no event found)
+  if (!event || isNoRecordsError(eventError)) {
+    return (
+      <MainLayout>
+        <div className="min-h-screen">
+          <EmptyState />
+        </div>
+      </MainLayout>
+    )
+  }
+
+  // Prepare image gallery (combine preview and carousel images)
+  const galleryImages = [
+    ...(event.previewImages || []),
+    ...(event.carouselImages || [])
+  ].filter(Boolean)
+
+  // Use the first available image as default if selectedImage is not set
+  const displayImage = selectedImage || galleryImages[0] || "/placeholder.svg"
+
+  // Format date and time
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-GB', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric' 
+    }).replace(/\//g, '. ')
+  }
+
+  const formatTime = (timeString: string) => {
+    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    })
+  }
+
+  const eventDate = formatDate(event.date)
+  const eventTime = `${formatTime(event.startTime)} - ${formatTime(event.closeTime)}`
 
   return (
     <MainLayout>
@@ -87,19 +172,23 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
 
             <div className="max-w-4xl">
               <div className="flex items-center gap-3 mb-4">
-                <div className="px-3 py-1 bg-primary text-white text-sm font-medium rounded-full">Youth Program</div>
+                <div className="px-3 py-1 bg-primary text-white text-sm font-medium rounded-full">
+                  Event
+                </div>
                 <div className="h-1 w-1 bg-white/40 rounded-full"></div>
-                <div className="text-white/80 text-sm">{event.date}</div>
+                <div className="text-white/80 text-sm">{eventDate}</div>
               </div>
 
-              <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">{event.title}</h1>
+              <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                {event.name}
+              </h1>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="flex items-center gap-3 text-white">
                   <Calendar className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-white/70">Date</p>
-                    <p className="font-medium">{event.date}</p>
+                    <p className="font-medium">{eventDate}</p>
                   </div>
                 </div>
 
@@ -107,17 +196,15 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                   <Clock className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-white/70">Time</p>
-                    <p className="font-medium">{event.time}</p>
+                    <p className="font-medium">{eventTime}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 text-white">
                   <Users className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-sm text-white/70">Attendees</p>
-                    <p className="font-medium">
-                      {event.attendees} / {event.maxAttendees}
-                    </p>
+                    <p className="text-sm text-white/70">Price</p>
+                    <p className="font-medium">₦{event.price || '0'}</p>
                   </div>
                 </div>
               </div>
@@ -158,18 +245,22 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                     >
                       Details
                     </button>
-                    <button
-                      className={`pb-4 px-1 font-medium text-sm border-b-2 ${activeTab === "schedule" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-700"}`}
-                      onClick={() => setActiveTab("schedule")}
-                    >
-                      Schedule
-                    </button>
-                    <button
-                      className={`pb-4 px-1 font-medium text-sm border-b-2 ${activeTab === "speakers" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-700"}`}
-                      onClick={() => setActiveTab("speakers")}
-                    >
-                      Speakers
-                    </button>
+                    {event.schedule && event.schedule.length > 0 && (
+                      <button
+                        className={`pb-4 px-1 font-medium text-sm border-b-2 ${activeTab === "schedule" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+                        onClick={() => setActiveTab("schedule")}
+                      >
+                        Schedule
+                      </button>
+                    )}
+                    {event.speakers && event.speakers.length > 0 && (
+                      <button
+                        className={`pb-4 px-1 font-medium text-sm border-b-2 ${activeTab === "speakers" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+                        onClick={() => setActiveTab("speakers")}
+                      >
+                        Speakers
+                      </button>
+                    )}
                     <button
                       className={`pb-4 px-1 font-medium text-sm border-b-2 ${activeTab === "location" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-700"}`}
                       onClick={() => setActiveTab("location")}
@@ -183,127 +274,99 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                 <div className="mb-12">
                   {activeTab === "details" && (
                     <div>
-                      <div className="mb-8">
-                        <div className="relative aspect-video rounded-2xl overflow-hidden shadow-lg mb-6">
-                          <Image
-                            src={selectedImage || "/placeholder.svg"}
-                            alt={event.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
+                      {galleryImages.length > 0 && (
+                        <div className="mb-8">
+                          <div className="relative aspect-video rounded-2xl overflow-hidden shadow-lg mb-6">
+                            <Image
+                              src={displayImage || "/placeholder.svg"}
+                              alt={event.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
 
-                        <div className="grid grid-cols-4 gap-3">
-                          {event.gallery.map((image, index) => (
-                            <div
-                              key={index}
-                              className={`relative aspect-video rounded-lg overflow-hidden cursor-pointer border-2 ${selectedImage === image ? "border-primary" : "border-transparent"}`}
-                              onClick={() => setSelectedImage(image)}
-                            >
-                              <Image
-                                src={image || "/placeholder.svg"}
-                                alt={`Gallery image ${index + 1}`}
-                                fill
-                                className="object-cover"
-                              />
+                          {galleryImages.length > 1 && (
+                            <div className="grid grid-cols-4 gap-3">
+                              {galleryImages.slice(0, 4).map((image, index) => (
+                                <div
+                                  key={index}
+                                  className={`relative aspect-video rounded-lg overflow-hidden cursor-pointer border-2 ${selectedImage === image ? "border-primary" : "border-transparent"}`}
+                                  onClick={() => setSelectedImage(image)}
+                                >
+                                  <Image
+                                    src={image || "/placeholder.svg"}
+                                    alt={`Gallery image ${index + 1}`}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          )}
                         </div>
-                      </div>
+                      )}
 
                       <h2 className="text-2xl font-bold mb-4">About This Event</h2>
-                      <div
-                        className="prose prose-lg max-w-none text-gray-700"
-                        dangerouslySetInnerHTML={{ __html: event.longDescription }}
-                      ></div>
+                      <div className="prose prose-lg max-w-none text-gray-700">
+                        <p>{event.description || "No description available for this event."}</p>
+                      </div>
                     </div>
                   )}
 
-                  {activeTab === "schedule" && (
+                  {activeTab === "schedule" && event.schedule && event.schedule.length > 0 && (
                     <div>
                       <h2 className="text-2xl font-bold mb-6">Event Schedule</h2>
 
                       <div className="space-y-6">
-                        <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                          <div className="flex items-start gap-4">
-                            <div className="w-16 h-16 bg-primary/10 rounded-lg flex flex-col items-center justify-center text-primary shrink-0">
-                              <span className="text-lg font-bold">8:00</span>
-                              <span className="text-xs font-medium">AM</span>
-                            </div>
+                        {event.schedule.map((scheduleItem, index) => (
+                          <div key={scheduleItem.id} className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                            <div className="flex items-start gap-4">
+                              <div className="w-16 h-16 bg-primary/10 rounded-lg flex flex-col items-center justify-center text-primary shrink-0">
+                                <span className="text-lg font-bold">
+                                  {formatTime(scheduleItem.startTime).split(' ')[0]}
+                                </span>
+                                <span className="text-xs font-medium">
+                                  {formatTime(scheduleItem.startTime).split(' ')[1]}
+                                </span>
+                              </div>
 
-                            <div>
-                              <h3 className="font-bold text-lg mb-1">Registration & Welcome</h3>
-                              <p className="text-gray-600 mb-2">
-                                Check-in, receive program materials, and enjoy light refreshments
-                              </p>
-                              <div className="flex items-center gap-2 text-sm text-gray-500">
-                                <Clock className="h-4 w-4" />
-                                <span>30 minutes</span>
+                              <div>
+                                <h3 className="font-bold text-lg mb-1">{scheduleItem.name}</h3>
+                                <p className="text-gray-600 mb-2">{scheduleItem.description}</p>
+                                <div className="flex items-center gap-2 text-sm text-gray-500">
+                                  <Clock className="h-4 w-4" />
+                                  <span>
+                                    {formatTime(scheduleItem.startTime)} - {formatTime(scheduleItem.endTime)}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-
-                        <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                          <div className="flex items-start gap-4">
-                            <div className="w-16 h-16 bg-primary/10 rounded-lg flex flex-col items-center justify-center text-primary shrink-0">
-                              <span className="text-lg font-bold">8:30</span>
-                              <span className="text-xs font-medium">AM</span>
-                            </div>
-
-                            <div>
-                              <h3 className="font-bold text-lg mb-1">Opening Session</h3>
-                              <p className="text-gray-600 mb-2">
-                                Worship, prayer, and keynote address by Pastor Ken Mbachi
-                              </p>
-                              <div className="flex items-center gap-2 text-sm text-gray-500">
-                                <Clock className="h-4 w-4" />
-                                <span>1 hour</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                          <div className="flex items-start gap-4">
-                            <div className="w-16 h-16 bg-primary/10 rounded-lg flex flex-col items-center justify-center text-primary shrink-0">
-                              <span className="text-lg font-bold">9:30</span>
-                              <span className="text-xs font-medium">AM</span>
-                            </div>
-
-                            <div>
-                              <h3 className="font-bold text-lg mb-1">Workshop Sessions</h3>
-                              <p className="text-gray-600 mb-2">
-                                Interactive workshops on leadership, purpose discovery, and practical skills
-                              </p>
-                              <div className="flex items-center gap-2 text-sm text-gray-500">
-                                <Clock className="h-4 w-4" />
-                                <span>1 hour</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                        ))}
                       </div>
                     </div>
                   )}
 
-                  {activeTab === "speakers" && (
+                  {activeTab === "speakers" && event.speakers && event.speakers.length > 0 && (
                     <div>
                       <h2 className="text-2xl font-bold mb-6">Event Speakers</h2>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {event.speakers.map((speaker, index) => (
-                          <div key={index} className="bg-gray-50 rounded-xl p-6 border border-gray-100 text-center">
+                        {event.speakers.map((speaker) => (
+                          <div key={speaker.id} className="bg-gray-50 rounded-xl p-6 border border-gray-100 text-center">
                             <div className="w-32 h-32 mx-auto rounded-full overflow-hidden mb-4 relative">
                               <Image
-                                src={speaker.image || "/placeholder.svg"}
+                                src={speaker.imageUrl || "/placeholder.svg"}
                                 alt={speaker.name}
                                 fill
                                 className="object-cover"
                               />
                             </div>
                             <h3 className="font-bold text-lg mb-1">{speaker.name}</h3>
-                            <p className="text-gray-600">{speaker.role}</p>
+                            <p className="text-gray-600">{speaker.speakerRole}</p>
+                            {speaker.description && (
+                              <p className="text-sm text-gray-500 mt-2">{speaker.description}</p>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -320,8 +383,8 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                             <MapPin className="h-6 w-6 text-primary" />
                           </div>
                           <div>
-                            <h3 className="font-bold text-lg mb-1">{event.location}</h3>
-                            <p className="text-gray-600">{event.address}</p>
+                            <h3 className="font-bold text-lg mb-1">{event.location || "Location TBD"}</h3>
+                            <p className="text-gray-600">{event.address || "Address will be provided soon"}</p>
                           </div>
                         </div>
                       </div>
@@ -424,7 +487,7 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="font-bold text-lg">Event Details</h3>
                     <div className="px-3 py-1 bg-primary/10 rounded-full text-primary text-sm font-medium">
-                      ₦{event.price}
+                      ₦{event.price || '0'}
                     </div>
                   </div>
 
@@ -435,7 +498,7 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                       </div>
                       <div>
                         <p className="text-sm text-gray-500 mb-0.5">Date</p>
-                        <p className="font-medium text-gray-900">{event.date}</p>
+                        <p className="font-medium text-gray-900">{eventDate}</p>
                       </div>
                     </div>
 
@@ -445,7 +508,7 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                       </div>
                       <div>
                         <p className="text-sm text-gray-500 mb-0.5">Time</p>
-                        <p className="font-medium text-gray-900">{event.time}</p>
+                        <p className="font-medium text-gray-900">{eventTime}</p>
                       </div>
                     </div>
 
@@ -455,37 +518,23 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                       </div>
                       <div>
                         <p className="text-sm text-gray-500 mb-0.5">Location</p>
-                        <p className="font-medium text-gray-900">{event.location}</p>
-                        <p className="text-sm text-gray-500 mt-1">{event.address}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Users className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 mb-0.5">Attendees</p>
-                        <div className="flex items-center gap-2">
-                          <div className="w-full bg-gray-200 rounded-full h-2.5">
-                            <div
-                              className="bg-primary h-2.5 rounded-full"
-                              style={{ width: `${(event.attendees / event.maxAttendees) * 100}%` }}
-                            ></div>
-                          </div>
-                          <span className="text-sm text-gray-500">
-                            {event.attendees}/{event.maxAttendees}
-                          </span>
-                        </div>
+                        <p className="font-medium text-gray-900">{event.location || "TBD"}</p>
+                        {event.address && (
+                          <p className="text-sm text-gray-500 mt-1">{event.address}</p>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  <Button className="w-full bg-primary hover:bg-primary/90 text-white mb-3">Register Now</Button>
+                  <Button className="w-full bg-primary hover:bg-primary/90 text-white mb-3">
+                    Register Now
+                  </Button>
 
-                  <p className="text-center text-sm text-gray-500">
-                    Only {event.maxAttendees - event.attendees} spots left
-                  </p>
+                  {event.price && event.price !== "0" && (
+                    <p className="text-center text-sm text-gray-500">
+                      Registration fee: ₦{event.price}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -497,42 +546,54 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold mb-8">Related Events</h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[1, 2, 3].map((item) => (
-                <div
-                  key={item}
-                  className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-                >
-                  <div className="relative h-48">
-                    <Image
-                      src={`/placeholder.svg?height=300&width=500&text=Event+${item}`}
-                      alt={`Related Event ${item}`}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-
-                  <div className="p-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Calendar className="h-4 w-4 text-primary" />
-                      <span className="text-sm text-gray-500">20. 10. 2022</span>
+            {relatedLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : relatedEvents && relatedEvents.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {relatedEvents.slice(0, 3).map((relatedEvent: Event) => (
+                  <div
+                    key={relatedEvent.id}
+                    className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+                  >
+                    <div className="relative h-48">
+                      <Image
+                        src={relatedEvent.imageUrl || "/placeholder.svg"}
+                        alt={relatedEvent.name}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
 
-                    <h3 className="font-bold text-lg mb-2">Bible Study Workshop</h3>
-                    <p className="text-gray-600 text-sm mb-4">
-                      Learn effective methods for studying and understanding the Bible
-                    </p>
+                    <div className="p-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <span className="text-sm text-gray-500">
+                          {formatDate(relatedEvent.date)}
+                        </span>
+                      </div>
 
-                    <Link
-                      href={`/events/${item + 10}`}
-                      className="text-primary font-medium hover:text-primary/80 transition-colors"
-                    >
-                      Learn More
-                    </Link>
+                      <h3 className="font-bold text-lg mb-2">{relatedEvent.name}</h3>
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                        {relatedEvent.description || "Join us for this exciting event"}
+                      </p>
+
+                      <Link
+                        href={`/events/${relatedEvent.id}`}
+                        className="text-primary font-medium hover:text-primary/80 transition-colors"
+                      >
+                        Learn More
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No related events available at this time.</p>
+              </div>
+            )}
           </div>
         </section>
       </div>

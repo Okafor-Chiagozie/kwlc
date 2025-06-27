@@ -1,135 +1,239 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { use, useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowLeft, MapPin, Users, Phone, Mail, Award, Heart, BookOpen } from "lucide-react"
+import { ArrowLeft, MapPin, Users, Phone, Mail, Award, Heart, BookOpen, AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import MainLayout from "@/components/main-layout"
+import { useApi } from "@/hooks/useApi"
+import { getAllMinisters } from "@/services/minister"
+import { getAllBranches } from "@/services/branch"
+import { Minister } from "@/types/minister"
+import { Branch } from "@/types/branch"
 
-const pastorsData = {
-  "senior-pastor-john": {
-    name: "Pastor John Adebayo",
-    title: "Senior Pastor",
-    branch: "Main Campus - Victoria Island",
-    role: "Lead Pastor",
-    image: "/placeholder.svg?height=600&width=600",
-    phone: "+234 70 433 2832",
-    email: "pastor.john@kwlc.org",
-    experience: "15+ Years",
-    specialization: ["Leadership", "Church Planting", "Biblical Teaching"],
-    members: "2,500+",
-    bio: "Pastor John Adebayo has been the Senior Pastor of Kingdom Ways Living Church since 2009. With over 15 years of ministry experience, he has led the church through tremendous growth and expansion. His passion for biblical teaching and church planting has resulted in the establishment of multiple branches across Nigeria. Pastor John holds a Master's degree in Theology and is known for his practical, life-changing messages that bridge the gap between scripture and daily living.",
-    education: [
-      "Master of Theology - Lagos Baptist Seminary",
-      "Bachelor of Arts in Religious Studies - University of Lagos",
-      "Certificate in Church Leadership - Redeemed Christian Bible College",
-    ],
-    achievements: [
-      "Planted 5 church branches across Nigeria",
-      "Authored 3 books on Christian leadership",
-      "Mentored over 50 pastors and church leaders",
-      "Led church growth from 200 to 2,500+ members",
-    ],
-    ministries: [
-      "Senior Leadership Team",
-      "Church Planting Initiative",
-      "Pastoral Training Program",
-      "Community Outreach",
-    ],
-    schedule: [
-      { day: "Sunday", time: "8:00 AM - 12:00 PM", activity: "Sunday Service" },
-      { day: "Wednesday", time: "6:00 PM - 8:00 PM", activity: "Bible Study" },
-      { day: "Friday", time: "2:00 PM - 4:00 PM", activity: "Pastoral Counseling" },
-      { day: "Saturday", time: "10:00 AM - 12:00 PM", activity: "Leadership Meeting" },
-    ],
-  },
-  "pastor-grace": {
-    name: "Pastor Grace Okafor",
-    title: "Associate Pastor",
-    branch: "Lekki Branch",
-    role: "Branch Pastor",
-    image: "/placeholder.svg?height=600&width=600",
-    phone: "+234 80 123 4567",
-    email: "pastor.grace@kwlc.org",
-    experience: "8+ Years",
-    specialization: ["Women's Ministry", "Youth Development", "Counseling"],
-    members: "800+",
-    bio: "Pastor Grace Okafor leads the vibrant Lekki Branch of Kingdom Ways Living Church. With a heart for women's empowerment and youth development, she has transformed countless lives through her compassionate ministry approach. Her background in psychology and counseling brings a unique perspective to pastoral care, making her a sought-after counselor and mentor.",
-    education: [
-      "Master of Arts in Counseling Psychology - Covenant University",
-      "Bachelor of Theology - Nigerian Baptist Seminary",
-      "Certificate in Women's Ministry Leadership",
-    ],
-    achievements: [
-      "Established Women's Empowerment Program",
-      "Counseled over 500 individuals and families",
-      "Led youth ministry growth by 300%",
-      "Organized annual women's conference with 1000+ attendees",
-    ],
-    ministries: ["Women's Ministry", "Youth Development", "Marriage Counseling", "Community Support"],
-    schedule: [
-      { day: "Sunday", time: "9:00 AM - 1:00 PM", activity: "Sunday Service" },
-      { day: "Tuesday", time: "6:00 PM - 8:00 PM", activity: "Women's Meeting" },
-      { day: "Thursday", time: "3:00 PM - 5:00 PM", activity: "Counseling Sessions" },
-      { day: "Saturday", time: "4:00 PM - 6:00 PM", activity: "Youth Fellowship" },
-    ],
-  },
-  "pastor-david": {
-    name: "Pastor David Ogundimu",
-    title: "Youth Pastor",
-    branch: "Ikeja Branch",
-    role: "Youth & Young Adults",
-    image: "/placeholder.svg?height=600&width=600",
-    phone: "+234 90 876 5432",
-    email: "pastor.david@kwlc.org",
-    experience: "5+ Years",
-    specialization: ["Youth Ministry", "Music", "Digital Evangelism"],
-    members: "600+",
-    bio: "Pastor David Ogundimu is a dynamic young leader who connects powerfully with the next generation. His innovative approach to ministry combines traditional biblical teaching with modern technology and creative arts. Under his leadership, the youth ministry has become one of the most vibrant and fastest-growing departments in the church.",
-    education: [
-      "Bachelor of Music - University of Lagos",
-      "Diploma in Youth Ministry - Daystar Christian Centre",
-      "Certificate in Digital Media Ministry",
-    ],
-    achievements: [
-      "Launched online youth platform with 2000+ followers",
-      "Organized youth concerts reaching 5000+ young people",
-      "Developed digital discipleship curriculum",
-      "Led mission trips to 3 African countries",
-    ],
-    ministries: ["Youth Ministry", "Music Ministry", "Digital Evangelism", "Young Adults Fellowship"],
-    schedule: [
-      { day: "Sunday", time: "10:00 AM - 2:00 PM", activity: "Youth Service" },
-      { day: "Wednesday", time: "7:00 PM - 9:00 PM", activity: "Youth Bible Study" },
-      { day: "Friday", time: "6:00 PM - 8:00 PM", activity: "Music Practice" },
-      { day: "Saturday", time: "2:00 PM - 4:00 PM", activity: "Youth Outreach" },
-    ],
-  },
+interface MinisterWithBranch extends Minister {
+  branch?: Branch;
 }
 
-export default function PastorDetailPage({ params }: { params: { id: string } }) {
-  const [pastor, setPastor] = useState<any>(null)
+export default function PastorDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  // Unwrap the params Promise using React.use()
+  const { id } = use(params)
+  
+  const [minister, setMinister] = useState<MinisterWithBranch | null>(null)
+  const [ministerNotFound, setMinisterNotFound] = useState(false)
+
+  // Fetch ministers data
+  const { 
+    data: ministersResponse, 
+    loading: ministersLoading, 
+    error: ministersError,
+    refetch: refetchMinisters 
+  } = useApi(() => getAllMinisters(), [])
+
+  // Fetch branches data
+  const { 
+    data: branchesResponse, 
+    loading: branchesLoading, 
+    error: branchesError,
+    refetch: refetchBranches 
+  } = useApi(() => getAllBranches({
+    pageSize: 100,
+    pageNumber: 1
+  }), [])
+
+  // Helper function to check if error is "No Record found."
+  const isNoRecordsError = (error: string | null) => {
+    return error && error.toLowerCase().includes("no record found")
+  }
 
   useEffect(() => {
-    if (params.id) {
-      setPastor(pastorsData[params.id as keyof typeof pastorsData])
+    if (id && ministersResponse?.data && branchesResponse?.data) {
+      // Find minister by ID
+      const foundMinister = ministersResponse.data.find((m: Minister) => m.id.toString() === id)
+      
+      if (foundMinister) {
+        // Find associated branch
+        const associatedBranch = branchesResponse.data.find((b: Branch) => b.id === foundMinister.branchId)
+        
+        setMinister({
+          ...foundMinister,
+          branch: associatedBranch
+        })
+        setMinisterNotFound(false)
+      } else {
+        setMinisterNotFound(true)
+        setMinister(null)
+      }
     }
-  }, [params.id])
+  }, [id, ministersResponse, branchesResponse])
 
-  if (!pastor) {
+  // Loading state
+  if (ministersLoading || branchesLoading) {
     return (
       <MainLayout>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading Pastor Details...</h1>
+          </div>
+        </div>
+      </MainLayout>
+    )
+  }
+
+  // Error state for ministers
+  if (ministersError && !isNoRecordsError(ministersError)) {
+    return (
+      <MainLayout>
+        <div className="min-h-screen bg-gray-50">
+          {/* Back Button */}
+          <div className="bg-white border-b">
+            <div className="container mx-auto px-4 py-4">
+              <Link href="/pastors">
+                <Button variant="ghost" className="text-primary hover:text-primary/80">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Pastors
+                </Button>
+              </Link>
+            </div>
+          </div>
+          
+          <section className="py-16">
+            <div className="container mx-auto px-4">
+              <div className="text-center max-w-md mx-auto">
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Unable to Load Pastor Details</h2>
+                <p className="text-gray-600 mb-4">{ministersError}</p>
+                <Button onClick={refetchMinisters}>Try Again</Button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </MainLayout>
+    )
+  }
+
+  // Minister not found
+  if (ministerNotFound || (ministersResponse && !ministersLoading && !minister)) {
+    return (
+      <MainLayout>
+        <div className="min-h-screen bg-gray-50">
+          {/* Back Button */}
+          <div className="bg-white border-b">
+            <div className="container mx-auto px-4 py-4">
+              <Link href="/pastors">
+                <Button variant="ghost" className="text-primary hover:text-primary/80">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Pastors
+                </Button>
+              </Link>
+            </div>
+          </div>
+          
+          <section className="py-16">
+            <div className="container mx-auto px-4">
+              <div className="text-center max-w-md mx-auto">
+                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Pastor Not Found</h2>
+                <p className="text-gray-600 mb-4">The pastor you're looking for doesn't exist or may have been removed.</p>
+                <Link href="/pastors">
+                  <Button>View All Pastors</Button>
+                </Link>
+              </div>
+            </div>
+          </section>
+        </div>
+      </MainLayout>
+    )
+  }
+
+  // No ministers found (empty state)
+  if (isNoRecordsError(ministersError) || (ministersResponse?.data && ministersResponse.data.length === 0)) {
+    return (
+      <MainLayout>
+        <div className="min-h-screen bg-gray-50">
+          {/* Back Button */}
+          <div className="bg-white border-b">
+            <div className="container mx-auto px-4 py-4">
+              <Link href="/pastors">
+                <Button variant="ghost" className="text-primary hover:text-primary/80">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Pastors
+                </Button>
+              </Link>
+            </div>
+          </div>
+          
+          <section className="py-16">
+            <div className="container mx-auto px-4">
+              <div className="flex flex-col items-center justify-center py-20">
+                <Users className="h-12 w-12 text-gray-400 mb-4" />
+                <p className="text-gray-600 mb-2">No pastors found</p>
+                <p className="text-sm text-gray-500 text-center">Please check back later or contact us for more information.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </MainLayout>
+    )
+  }
+
+  if (!minister) {
+    return (
+      <MainLayout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading...</h1>
           </div>
         </div>
       </MainLayout>
     )
   }
+
+  // Helper function to get minister title based on role
+  const getMinisterTitle = (roleId: string) => {
+    switch (roleId) {
+      case 'SeniorPastor':
+        return 'Senior Pastor'
+      case 'AssociatePastor':
+        return 'Associate Pastor'
+      case 'YouthPastor':
+        return 'Youth Pastor'
+      case 'WomenMinister':
+        return 'Women\'s Minister'
+      case 'ChildrenMinister':
+        return 'Children\'s Minister'
+      default:
+        return 'Minister'
+    }
+  }
+
+  // Helper function to get minister specializations based on role
+  const getMinisterSpecializations = (roleId: string) => {
+    switch (roleId) {
+      case 'SeniorPastor':
+        return ['Leadership', 'Church Planting', 'Biblical Teaching']
+      case 'AssociatePastor':
+        return ['Pastoral Care', 'Counseling', 'Community Outreach']
+      case 'YouthPastor':
+        return ['Youth Ministry', 'Music', 'Digital Evangelism']
+      case 'WomenMinister':
+        return ['Women\'s Ministry', 'Marriage Counseling', 'Family Life']
+      case 'ChildrenMinister':
+        return ['Children\'s Ministry', 'Sunday School', 'Family Ministry']
+      default:
+        return ['Ministry', 'Pastoral Care']
+    }
+  }
+
+  // Format minister name
+  const ministerName = `${minister.firstName || ''} ${minister.middleName ? minister.middleName + ' ' : ''}${minister.lastName || ''}`.trim()
+  const ministerTitle = getMinisterTitle(minister.ministerRoleId)
+  const specializations = getMinisterSpecializations(minister.ministerRoleId)
 
   return (
     <MainLayout>
@@ -152,7 +256,12 @@ export default function PastorDetailPage({ params }: { params: { id: string } })
             {/* Pastor Image */}
             <div className="lg:col-span-1">
               <div className="relative h-96 lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl">
-                <Image src={pastor.image || "/placeholder.svg"} alt={pastor.name} fill className="object-cover" />
+                <Image 
+                  src={minister.imageUrl || "/placeholder.svg?height=600&width=600"} 
+                  alt={ministerName} 
+                  fill 
+                  className="object-cover" 
+                />
               </div>
             </div>
 
@@ -160,9 +269,9 @@ export default function PastorDetailPage({ params }: { params: { id: string } })
             <div className="lg:col-span-2">
               <div className="space-y-6">
                 <div>
-                  <Badge className="bg-primary/10 text-primary mb-4">{pastor.title}</Badge>
-                  <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{pastor.name}</h1>
-                  <p className="text-xl text-gray-600 mb-6">{pastor.bio}</p>
+                  <Badge className="bg-primary/10 text-primary mb-4">{ministerTitle}</Badge>
+                  <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{ministerName}</h1>
+                  <p className="text-xl text-gray-600 mb-6">{minister.biography || 'A dedicated servant of God, committed to spreading the Gospel and serving the community with love and compassion.'}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -171,7 +280,9 @@ export default function PastorDetailPage({ params }: { params: { id: string } })
                       <MapPin className="h-5 w-5 text-primary" />
                       <div>
                         <p className="font-medium text-gray-900">Branch</p>
-                        <p className="text-gray-600">{pastor.branch}</p>
+                        <p className="text-gray-600">
+                          {minister.branch ? `${minister.branch.name} - ${minister.branch.location}` : 'Branch information not available'}
+                        </p>
                       </div>
                     </div>
 
@@ -179,7 +290,7 @@ export default function PastorDetailPage({ params }: { params: { id: string } })
                       <Users className="h-5 w-5 text-primary" />
                       <div>
                         <p className="font-medium text-gray-900">Ministry Role</p>
-                        <p className="text-gray-600">{pastor.role}</p>
+                        <p className="text-gray-600">{ministerTitle}</p>
                       </div>
                     </div>
                   </div>
@@ -189,7 +300,7 @@ export default function PastorDetailPage({ params }: { params: { id: string } })
                       <Phone className="h-5 w-5 text-primary" />
                       <div>
                         <p className="font-medium text-gray-900">Phone</p>
-                        <p className="text-gray-600">{pastor.phone}</p>
+                        <p className="text-gray-600">{minister.phoneNumber || 'Contact information not available'}</p>
                       </div>
                     </div>
 
@@ -197,14 +308,14 @@ export default function PastorDetailPage({ params }: { params: { id: string } })
                       <Mail className="h-5 w-5 text-primary" />
                       <div>
                         <p className="font-medium text-gray-900">Email</p>
-                        <p className="text-gray-600">{pastor.email}</p>
+                        <p className="text-gray-600">{minister.email || 'Email not available'}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-3 pt-4">
-                  {pastor.specialization.map((spec: string) => (
+                  {specializations.map((spec: string) => (
                     <Badge key={spec} variant="outline" className="text-primary border-primary">
                       {spec}
                     </Badge>
@@ -216,74 +327,84 @@ export default function PastorDetailPage({ params }: { params: { id: string } })
         </div>
       </section>
 
-      {/* Detailed Information */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Education & Achievements */}
-            <div className="space-y-8">
+      {/* Branch Information Section */}
+      {minister.branch && (
+        <section className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">Branch Information</h2>
+            
+            <div className="max-w-4xl mx-auto">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5 text-primary" />
-                    Education
+                    <MapPin className="h-5 w-5 text-primary" />
+                    {minister.branch.name}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-3">
-                    {pastor.education.map((edu: string, index: number) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                        <span className="text-gray-700">{edu}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Award className="h-5 w-5 text-primary" />
-                    Key Achievements
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {pastor.achievements.map((achievement: string, index: number) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                        <span className="text-gray-700">{achievement}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Ministries */}
-            <div className="space-y-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Heart className="h-5 w-5 text-primary" />
-                    Ministry Areas
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 gap-3">
-                    {pastor.ministries.map((ministry: string, index: number) => (
-                      <div key={index} className="p-3 bg-primary/5 rounded-lg border border-primary/10">
-                        <span className="text-gray-700 font-medium">{ministry}</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <p className="font-medium text-gray-900">Address</p>
+                        <p className="text-gray-600">{minister.branch.address}</p>
                       </div>
-                    ))}
+                      
+                      <div>
+                        <p className="font-medium text-gray-900">Location</p>
+                        <p className="text-gray-600">{minister.branch.location}</p>
+                      </div>
+                      
+                      <div>
+                        <p className="font-medium text-gray-900">State</p>
+                        <p className="text-gray-600">{minister.branch.state}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <p className="font-medium text-gray-900">Phone</p>
+                        <p className="text-gray-600">{minister.branch.phoneNumber}</p>
+                      </div>
+                      
+                      <div>
+                        <p className="font-medium text-gray-900">Email</p>
+                        <p className="text-gray-600">{minister.branch.email}</p>
+                      </div>
+                      
+                      <div>
+                        <p className="font-medium text-gray-900">Country</p>
+                        <p className="text-gray-600">{minister.branch.country}</p>
+                      </div>
+                    </div>
                   </div>
+                  
+                  {minister.branch.welcomeAddress && (
+                    <div className="mt-6 pt-6 border-t">
+                      <p className="font-medium text-gray-900 mb-2">Welcome Message</p>
+                      <p className="text-gray-600">{minister.branch.welcomeAddress}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* Error state for branches (if there's an issue loading branch data) */}
+      {branchesError && !isNoRecordsError(branchesError) && (
+        <section className="py-8 bg-yellow-50">
+          <div className="container mx-auto px-4">
+            <div className="text-center max-w-md mx-auto">
+              <AlertCircle className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
+              <p className="text-sm text-yellow-700 mb-2">Unable to load branch information</p>
+              <Button variant="outline" size="sm" onClick={refetchBranches}>
+                Retry
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
     </MainLayout>
   )
 }

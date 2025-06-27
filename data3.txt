@@ -1,0 +1,454 @@
+curl -X 'GET' \
+  'https://kwlc-e6dhgtd9bvg6bkea.canadacentral-01.azurewebsites.net/api/v1/Livestream/GetLivestreamUrl' \
+  -H 'accept: text/plain'
+Expected response:
+{
+  "data": [
+    {
+      "id": 0,
+      "eventId": 0,
+      "firstName": "string",
+      "lastName": "string",
+      "phoneNumber": "string",
+      "email": "string",
+      "file": "string",
+      "ticketNumber": "string",
+      "seatNumber": 0,
+      "price": 0,
+      "paymentStatus": true,
+      "imageUrl": "string",
+      "eventName": "string"
+    }
+  ],
+  "isSuccessful": true,
+  "errors": [
+    {
+      "field": "string",
+      "description": "string"
+    }
+  ],
+  "responseMessage": "string",
+  "responseCode": "string"
+}
+
+curl -X 'POST' \
+  'https://kwlc-e6dhgtd9bvg6bkea.canadacentral-01.azurewebsites.net/api/v1/Livestream/GetCompletedStreams' \
+  -H 'accept: text/plain' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "pageSize": 0,
+  "pageNumber": 0,
+  "searchParams": {
+    "additionalProp1": "string",
+    "additionalProp2": "string",
+    "additionalProp3": "string"
+  }
+}'
+Expected response:
+{
+  "data": [
+    {
+      "id": 0,
+      "eventId": 0,
+      "firstName": "string",
+      "lastName": "string",
+      "phoneNumber": "string",
+      "email": "string",
+      "file": "string",
+      "ticketNumber": "string",
+      "seatNumber": 0,
+      "price": 0,
+      "paymentStatus": true,
+      "imageUrl": "string",
+      "eventName": "string"
+    }
+  ],
+  "isSuccessful": true,
+  "errors": [
+    {
+      "field": "string",
+      "description": "string"
+    }
+  ],
+  "responseMessage": "string",
+  "responseCode": "string"
+}
+
+curl -X 'POST' \
+  'https://kwlc-e6dhgtd9bvg6bkea.canadacentral-01.azurewebsites.net/api/v1/Livestream/GetUpcomingStreams' \
+  -H 'accept: text/plain' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "pageSize": 0,
+  "pageNumber": 0,
+  "searchParams": {
+    "additionalProp1": "string",
+    "additionalProp2": "string",
+    "additionalProp3": "string"
+  }
+}'
+Expected response:
+{
+  "data": [
+    {
+      "id": 0,
+      "eventId": 0,
+      "firstName": "string",
+      "lastName": "string",
+      "phoneNumber": "string",
+      "email": "string",
+      "file": "string",
+      "ticketNumber": "string",
+      "seatNumber": 0,
+      "price": 0,
+      "paymentStatus": true,
+      "imageUrl": "string",
+      "eventName": "string"
+    }
+  ],
+  "isSuccessful": true,
+  "errors": [
+    {
+      "field": "string",
+      "description": "string"
+    }
+  ],
+  "responseMessage": "string",
+  "responseCode": "string"
+}
+
+curl -X 'POST' \
+  'https://kwlc-e6dhgtd9bvg6bkea.canadacentral-01.azurewebsites.net/api/v1/Livestream/GetAllAvailableStreams' \
+  -H 'accept: text/plain' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "pageSize": 0,
+  "pageNumber": 0,
+  "searchParams": {
+    "additionalProp1": "string",
+    "additionalProp2": "string",
+    "additionalProp3": "string"
+  }
+}'
+Expected response:
+{
+  "data": [
+    {
+      "id": 0,
+      "eventId": 0,
+      "firstName": "string",
+      "lastName": "string",
+      "phoneNumber": "string",
+      "email": "string",
+      "file": "string",
+      "ticketNumber": "string",
+      "seatNumber": 0,
+      "price": 0,
+      "paymentStatus": true,
+      "imageUrl": "string",
+      "eventName": "string"
+    }
+  ],
+  "isSuccessful": true,
+  "errors": [
+    {
+      "field": "string",
+      "description": "string"
+    }
+  ],
+  "responseMessage": "string",
+  "responseCode": "string"
+}
+
+curl -X 'GET' \
+  'https://kwlc-e6dhgtd9bvg6bkea.canadacentral-01.azurewebsites.net/api/v1/Livestream/GetStreamDetailsByURL?url=memmeme' \
+  -H 'accept: text/plain'
+Expected response:
+{
+  "data": [
+    {
+      "id": 0,
+      "eventId": 0,
+      "firstName": "string",
+      "lastName": "string",
+      "phoneNumber": "string",
+      "email": "string",
+      "file": "string",
+      "ticketNumber": "string",
+      "seatNumber": 0,
+      "price": 0,
+      "paymentStatus": true,
+      "imageUrl": "string",
+      "eventName": "string"
+    }
+  ],
+  "isSuccessful": true,
+  "errors": [
+    {
+      "field": "string",
+      "description": "string"
+    }
+  ],
+  "responseMessage": "string",
+  "responseCode": "string"
+}
+
+curl -X 'GET' \
+  'https://kwlc-e6dhgtd9bvg6bkea.canadacentral-01.azurewebsites.net/api/v1/Livestream/GetStreamDetailsById?videoId=mmdmd' \
+  -H 'accept: text/plain'
+Expected response:
+{
+  "data": [
+    {
+      "id": 0,
+      "eventId": 0,
+      "firstName": "string",
+      "lastName": "string",
+      "phoneNumber": "string",
+      "email": "string",
+      "file": "string",
+      "ticketNumber": "string",
+      "seatNumber": 0,
+      "price": 0,
+      "paymentStatus": true,
+      "imageUrl": "string",
+      "eventName": "string"
+    }
+  ],
+  "isSuccessful": true,
+  "errors": [
+    {
+      "field": "string",
+      "description": "string"
+    }
+  ],
+  "responseMessage": "string",
+  "responseCode": "string"
+}
+
+curl -X 'DELETE' \
+  'https://kwlc-e6dhgtd9bvg6bkea.canadacentral-01.azurewebsites.net/api/v1/Livestream/DeleteStream?id=2' \
+  -H 'accept: text/plain'
+Expected response:
+{
+  "data": [
+    {
+      "id": 0,
+      "eventId": 0,
+      "firstName": "string",
+      "lastName": "string",
+      "phoneNumber": "string",
+      "email": "string",
+      "file": "string",
+      "ticketNumber": "string",
+      "seatNumber": 0,
+      "price": 0,
+      "paymentStatus": true,
+      "imageUrl": "string",
+      "eventName": "string"
+    }
+  ],
+  "isSuccessful": true,
+  "errors": [
+    {
+      "field": "string",
+      "description": "string"
+    }
+  ],
+  "responseMessage": "string",
+  "responseCode": "string"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+curl -X 'POST' \
+  'https://kwlc-e6dhgtd9bvg6bkea.canadacentral-01.azurewebsites.net/api/v1/Ticket/CreateOrUpdateTicket' \
+  -H 'accept: text/plain' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "id": 0,
+  "eventId": 0,
+  "firstName": "string",
+  "lastName": "string",
+  "phoneNumber": "string",
+  "email": "string",
+  "file": "string"
+}'
+Expected response:
+{
+  "data": [
+    {
+      "id": 0,
+      "dateCreated": "2025-06-27T12:41:21.271Z",
+      "lastModified": "2025-06-27T12:41:21.271Z",
+      "eventId": 0,
+      "firstName": "string",
+      "lastName": "string",
+      "phoneNumber": "string",
+      "eventName": "string",
+      "email": "string",
+      "ticketNumber": "string",
+      "seatNumber": 0,
+      "price": 0,
+      "paymentStatus": true,
+      "imageUrl": "string"
+    }
+  ],
+  "isSuccessful": true,
+  "errors": [
+    {
+      "field": "string",
+      "description": "string"
+    }
+  ],
+  "responseMessage": "string",
+  "responseCode": "string"
+}
+
+curl -X 'GET' \
+  'https://kwlc-e6dhgtd9bvg6bkea.canadacentral-01.azurewebsites.net/api/v1/Ticket/GetTicket?ticketNumber=3' \
+  -H 'accept: text/plain'
+Expected response:
+{
+  "data": [
+    {
+      "id": 0,
+      "eventId": 0,
+      "firstName": "string",
+      "lastName": "string",
+      "phoneNumber": "string",
+      "email": "string",
+      "file": "string",
+      "ticketNumber": "string",
+      "seatNumber": 0,
+      "price": 0,
+      "paymentStatus": true,
+      "imageUrl": "string",
+      "eventName": "string"
+    }
+  ],
+  "isSuccessful": true,
+  "errors": [
+    {
+      "field": "string",
+      "description": "string"
+    }
+  ],
+  "responseMessage": "string",
+  "responseCode": "string"
+}
+
+curl -X 'GET' \
+  'https://kwlc-e6dhgtd9bvg6bkea.canadacentral-01.azurewebsites.net/api/v1/Ticket/GetTicketById?id=3' \
+  -H 'accept: text/plain'
+Expected response:
+{
+  "data": [
+    {
+      "id": 0,
+      "eventId": 0,
+      "firstName": "string",
+      "lastName": "string",
+      "phoneNumber": "string",
+      "email": "string",
+      "file": "string",
+      "ticketNumber": "string",
+      "seatNumber": 0,
+      "price": 0,
+      "paymentStatus": true,
+      "imageUrl": "string",
+      "eventName": "string"
+    }
+  ],
+  "isSuccessful": true,
+  "errors": [
+    {
+      "field": "string",
+      "description": "string"
+    }
+  ],
+  "responseMessage": "string",
+  "responseCode": "string"
+}
+
+curl -X 'GET' \
+  'https://kwlc-e6dhgtd9bvg6bkea.canadacentral-01.azurewebsites.net/api/v1/Ticket/VerifyTicketPayment?ticketNumber=2' \
+  -H 'accept: text/plain'
+Expected response:
+{
+  "data": [
+    {
+      "id": 0,
+      "eventId": 0,
+      "firstName": "string",
+      "lastName": "string",
+      "phoneNumber": "string",
+      "email": "string",
+      "file": "string",
+      "ticketNumber": "string",
+      "seatNumber": 0,
+      "price": 0,
+      "paymentStatus": true,
+      "imageUrl": "string",
+      "eventName": "string"
+    }
+  ],
+  "isSuccessful": true,
+  "errors": [
+    {
+      "field": "string",
+      "description": "string"
+    }
+  ],
+  "responseMessage": "string",
+  "responseCode": "string"
+}
+
+curl -X 'DELETE' \
+  'https://kwlc-e6dhgtd9bvg6bkea.canadacentral-01.azurewebsites.net/api/v1/Ticket/DeleteTicket?ticketId=2' \
+  -H 'accept: text/plain'
+Expected response:
+{
+  "data": [
+    {
+      "id": 0,
+      "name": "string",
+      "lgaId": 0,
+      "lga": "string",
+      "stateId": 0,
+      "state": "string",
+      "email": "string",
+      "countryId": 0,
+      "country": "string",
+      "address": "string",
+      "location": "string",
+      "isDeleted": true,
+      "phoneNumber": "string",
+      "dateCreated": "string",
+      "imageUrl": "string",
+      "welcomeAddress": "string",
+      "dateDeleted": "2025-06-27T12:46:34.248Z"
+    }
+  ],
+  "isSuccessful": true,
+  "errors": [
+    {
+      "field": "string",
+      "description": "string"
+    }
+  ],
+  "responseMessage": "string",
+  "responseCode": "string"
+}

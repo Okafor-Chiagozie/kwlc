@@ -9,10 +9,36 @@ import Image from "next/image"
 import MainLayout from "@/components/main-layout"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
-// import { Alert, AlertDescription } from "@/components/ui/alert"
 import { getAllBranches } from "@/services/branch"
 import { useApi } from "@/hooks/useApi"
 import { Branch, GetAllBranchesRequest } from "@/types/branch"
+
+// Loading component
+const LoadingState = () => (
+  <div className="flex flex-col items-center justify-center py-20">
+    <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+    <p className="text-gray-600">Loading our locations...</p>
+  </div>
+)
+
+// Empty state component
+const EmptyState = () => (
+  <div className="flex flex-col items-center justify-center py-20">
+    <MapPin className="h-12 w-12 text-gray-400 mb-4" />
+    <p className="text-gray-600 mb-2">No branches found</p>
+    <p className="text-sm text-gray-500 text-center">Please check back later or contact us for more information.</p>
+  </div>
+)
+
+// Error state component
+const ErrorState = ({ error, onRetry }: { error: string; onRetry: () => void }) => (
+  <div className="text-center max-w-md mx-auto py-20">
+    <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+    <h2 className="text-xl font-semibold mb-2">Unable to Load Branches</h2>
+    <p className="text-gray-600 mb-4">{error}</p>
+    <Button onClick={onRetry}>Try Again</Button>
+  </div>
+)
 
 export default function BranchesPage() {
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null)
@@ -35,6 +61,17 @@ export default function BranchesPage() {
   const branches = branchesResponse?.data || []
   const totalBranches = branchesResponse?.totalCount || 0
 
+  // Helper function to check if error is "No Record found.", so it will use empty state instead of throwing error
+  const isNoRecordsError = (error: string | null) => {
+    return error && error.toLowerCase().includes("no record found")
+  }
+
+  // Check if we should show empty state
+  const isEmptyState = !branchesLoading && (
+    (!branchesError && branches.length === 0) ||
+    isNoRecordsError(branchesError)
+  )
+
   // Format date helper
   const formatEstablishedYear = (dateString: string) => {
     return new Date(dateString).getFullYear().toString()
@@ -55,128 +92,10 @@ export default function BranchesPage() {
     return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`
   }
 
-  // Loading state - only show full loading for the branches grid, not the whole page
-  if (branchesLoading) {
-    return (
-      <MainLayout>
-        <div className="min-h-screen bg-gray-50">
-          {/* Hero Section - Always shown */}
-          <section className="bg-gradient-to-r from-primary to-primary/80 text-white py-20">
-            <div className="container mx-auto px-4 text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">Our Branches</h1>
-              <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-                Kingdom Ways Living Church has grown to serve communities across Nigeria, spreading the gospel and
-                building strong faith communities.
-              </p>
-              <div className="flex flex-wrap justify-center gap-8 text-center">
-                <div>
-                  <div className="text-3xl font-bold">{totalBranches}</div>
-                  <div className="text-sm opacity-90">Branches</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold">14</div>
-                  <div className="text-sm opacity-90">Years of Service</div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Loading state for branches grid */}
-          <section className="py-16">
-            <div className="container mx-auto px-4">
-              <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                <p className="text-lg text-gray-600">Loading branches...</p>
-              </div>
-            </div>
-          </section>
-
-          {/* Call to Action - Always shown */}
-          <section className="bg-primary text-white py-16">
-            <div className="container mx-auto px-4 text-center">
-              <h2 className="text-3xl font-bold mb-4">Join Our Growing Family</h2>
-              <p className="text-xl mb-8 max-w-2xl mx-auto">
-                Find a branch near you and become part of our vibrant community of believers.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button variant="secondary" size="lg">
-                  Find Nearest Branch
-                </Button>
-                <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary">
-                  Contact Us
-                </Button>
-              </div>
-            </div>
-          </section>
-        </div>
-      </MainLayout>
-    )
-  }
-
-  // Error state - show error in branches section only
-  if (branchesError) {
-    return (
-      <MainLayout>
-        <div className="min-h-screen bg-gray-50">
-          {/* Hero Section - Always shown */}
-          <section className="bg-gradient-to-r from-primary to-primary/80 text-white py-20">
-            <div className="container mx-auto px-4 text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">Our Branches</h1>
-              <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-                Kingdom Ways Living Church has grown to serve communities across Nigeria, spreading the gospel and
-                building strong faith communities.
-              </p>
-              <div className="flex flex-wrap justify-center gap-8 text-center">
-                <div>
-                  <div className="text-3xl font-bold">0</div>
-                  <div className="text-sm opacity-90">Branches</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold">14</div>
-                  <div className="text-sm opacity-90">Years of Service</div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Error state for branches section */}
-          <section className="py-16">
-            <div className="container mx-auto px-4">
-              <div className="text-center max-w-md mx-auto">
-                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Unable to Load Branches</h2>
-                <p className="text-gray-600 mb-4">{branchesError}</p>
-                <Button onClick={refetchBranches}>Try Again</Button>
-              </div>
-            </div>
-          </section>
-
-          {/* Call to Action - Always shown */}
-          <section className="bg-primary text-white py-16">
-            <div className="container mx-auto px-4 text-center">
-              <h2 className="text-3xl font-bold mb-4">Join Our Growing Family</h2>
-              <p className="text-xl mb-8 max-w-2xl mx-auto">
-                Find a branch near you and become part of our vibrant community of believers.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button variant="secondary" size="lg">
-                  Find Nearest Branch
-                </Button>
-                <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary">
-                  Contact Us
-                </Button>
-              </div>
-            </div>
-          </section>
-        </div>
-      </MainLayout>
-    )
-  }
-
   return (
     <MainLayout>
       <div className="min-h-screen bg-gray-50">
-        {/* Hero Section */}
+        {/* Hero Section - Always shown */}
         <section className="bg-gradient-to-r from-primary to-primary/80 text-white py-20">
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">Our Branches</h1>
@@ -186,7 +105,7 @@ export default function BranchesPage() {
             </p>
             <div className="flex flex-wrap justify-center gap-8 text-center">
               <div>
-                <div className="text-3xl font-bold">{totalBranches}</div>
+                <div className="text-3xl font-bold">{branchesLoading ? '...' : totalBranches}</div>
                 <div className="text-sm opacity-90">Branches</div>
               </div>
               <div>
@@ -197,14 +116,25 @@ export default function BranchesPage() {
           </div>
         </section>
 
-        {/* Branches Grid */}
+        {/* Branches Section */}
         <section className="py-16">
           <div className="container mx-auto px-4">
-            {branches.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-xl text-gray-600">No branches found.</p>
-              </div>
-            ) : (
+            {/* Loading State */}
+            {branchesLoading && <LoadingState />}
+
+            {/* Error State - only show for actual errors, not "no records" */}
+            {branchesError && !isNoRecordsError(branchesError) && (
+              <ErrorState 
+                error={branchesError} 
+                onRetry={refetchBranches} 
+              />
+            )}
+
+            {/* Empty State */}
+            {isEmptyState && <EmptyState />}
+
+            {/* Branches Grid - Only show when we have data and no errors (except no records) */}
+            {!branchesLoading && (!branchesError || isNoRecordsError(branchesError)) && branches.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {branches.map((branch) => (
                   <Card
@@ -273,7 +203,7 @@ export default function BranchesPage() {
           </div>
         </section>
 
-        {/* Call to Action */}
+        {/* Call to Action - Always shown */}
         <section className="bg-primary text-white py-16">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold mb-4">Join Our Growing Family</h2>

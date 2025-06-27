@@ -1,0 +1,155 @@
+Using this details, get latest 4 projects and integrate it with the ui
+I have already defined the types and services functions, so use them when implementing
+Just give me the code of the ui with the necessary implementations
+Note that the donationProjects array in the ui is a dummy data and should be replaced by the API response
+Don't delete any part of the ui for no reason, and import only necessary functions for the ui not something that will not be used
+I have also provided other related types and services that you will be needing.
+Note that this is a next.js and typescript project
+Also if the response message is "No record found", let it use empty state and not throw error
+
+
+Also this page is using dynamic route
+
+
+// lib/axios.ts
+import axios from 'axios'
+
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://kwlc-e6dhgtd9bvg6bkea.canadacentral-01.azurewebsites.net',
+  // withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 30000, // 30 seconds timeout
+})
+
+// Request interceptor
+api.interceptors.request.use(
+  (config) => {
+    // Add any auth tokens here if needed
+    // const token = localStorage.getItem('token')
+    // if (token) {
+    //   config.headers.Authorization = `Bearer ${token}`
+    // }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// Response interceptor
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API Error:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+      url: error.config?.url,
+    })
+    
+    // Handle specific error cases
+    if (error.response?.status === 401) {
+      // Handle unauthorized access
+      // Could redirect to login or refresh token
+    }
+    
+    return Promise.reject(error)
+  }
+)
+
+export default api
+
+// hooks/useApi.ts
+import { useEffect, useState, useCallback } from 'react'
+
+export const useApi = <T>(
+  callback: () => Promise<T>, 
+  deps: any[] = []
+) => {
+  const [data, setData] = useState<T | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [status, setStatus] = useState<number | null>(null)
+
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    setStatus(null)
+    
+    try {
+      const result = await callback()
+      setData(result)
+      setStatus(200)
+    } catch (err: any) {
+      // Extract error message from different possible sources
+      let errorMessage = 'An unexpected error occurred'
+      
+      if (err?.response?.data?.responseMessage) {
+        errorMessage = err.response.data.responseMessage
+      } else if (err?.response?.data?.message) {
+        errorMessage = err.response.data.message
+      } else if (err?.response?.data?.errors && Array.isArray(err.response.data.errors) && err.response.data.errors.length > 0) {
+        errorMessage = err.response.data.errors.map((e: any) => e.description || e.message).join(', ')
+      } else if (err?.message) {
+        errorMessage = err.message
+      }
+      
+      setError(errorMessage)
+      setStatus(err?.response?.status || 500)
+      setData(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [callback])
+
+  useEffect(() => {
+    fetchData()
+  }, deps)
+
+  return { 
+    data, 
+    loading, 
+    error, 
+    status, 
+    refetch: fetchData 
+  }
+}
+
+The error state should look like this
+And let the error not affect the whole page, let it be inside the respective section
+{/* Show empty state */}
+<section className="py-16">
+  <div className="container mx-auto px-4">
+    <div className="text-center max-w-md mx-auto">
+      <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+      <h2 className="text-xl font-semibold mb-2">Unable to Load Branches</h2>
+      <p className="text-gray-600 mb-4">{branchesError}</p>
+      <Button onClick={refetchBranches}>Try Again</Button>
+    </div>
+  </div>
+</section>
+
+Empty state should look something like this
+{/* Show empty state */}
+{!loading && !error && locations.length === 0 && (
+  <div className="flex flex-col items-center justify-center py-20">
+    <MapPin className="h-12 w-12 text-gray-400 mb-4" />
+    <p className="text-gray-600 mb-2">No branches found</p>
+    <p className="text-sm text-gray-500 text-center">Please check back later or contact us for more information.</p>
+  </div>
+)}
+
+Loading state should be something like this
+const LoadingState = () => (
+  <div className="flex flex-col items-center justify-center py-20">
+    <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+    <p className="text-gray-600">Loading our locations...</p>
+  </div>
+)
+
+// Helper function to check if error is "No Record found.", so it will use empty state instead of throwing error
+  const isNoRecordsError = (error: string | null) => {
+    return error && error.toLowerCase().includes("no record found")
+  }

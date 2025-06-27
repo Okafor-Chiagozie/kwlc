@@ -1,67 +1,100 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Calendar, Clock, MapPin, Search, ChevronRight, Filter } from "lucide-react"
+import { Calendar, Clock, MapPin, Search, ChevronRight, Filter, AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import MainLayout from "@/components/main-layout"
-
-const events = [
-  {
-    id: 1,
-    title: "Youth Empowerment Program",
-    date: "14. 10. 2022",
-    time: "8:00 am - 10:30 am",
-    location: "KINGDOM WAYS LIVING CHURCH",
-    address: "24 Prince Ibrahim Eletu Avenue, Shoprite Circle Mall Road Jakande Bus Stop, Osapa London,Lagos",
-    description: "Dolor sit amet, consectetur adipiscing elit, sed do eiusmo",
-    image: "/images/youth-empowerment.png",
-  },
-  {
-    id: 2,
-    title: "Youth Empowerment Program",
-    date: "14. 10. 2022",
-    time: "8:00 am - 10:30 am",
-    location: "KINGDOM WAYS LIVING CHURCH",
-    address: "24 Prince Ibrahim Eletu Avenue, Shoprite Circle Mall Road Jakande Bus Stop, Osapa London,Lagos",
-    description: "Dolor sit amet, consectetur adipiscing elit, sed do eiusmo",
-    image: "/images/sunday-worship.png",
-  },
-  {
-    id: 3,
-    title: "Sunday Worship Service",
-    date: "16. 10. 2022",
-    time: "9:00 am - 11:30 am",
-    location: "KINGDOM WAYS LIVING CHURCH",
-    address: "24 Prince Ibrahim Eletu Avenue, Shoprite Circle Mall Road Jakande Bus Stop, Osapa London,Lagos",
-    description: "Join us for a powerful time of worship and the Word with Pastor Ken",
-    image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/previous-sunday-1-mvsBAuZ8fv6sQ9BIEJLOZ7sL3xWqBZ.png",
-  },
-  {
-    id: 4,
-    title: "Prayer & Intercession",
-    date: "18. 10. 2022",
-    time: "6:00 pm - 8:00 pm",
-    location: "KINGDOM WAYS LIVING CHURCH",
-    address: "24 Prince Ibrahim Eletu Avenue, Shoprite Circle Mall Road Jakande Bus Stop, Osapa London,Lagos",
-    description: "A powerful evening of prayer and intercession for spiritual breakthrough",
-    image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/previous-sunday-3-0cWkRXuoGw3r8yqCXIqVL0agA5oU4R.png",
-  },
-]
+import { useApi } from "@/hooks/useApi"
+import { searchEvents, getFeaturedEvents } from "@/services/event"
+import { getAllBranches } from "@/services/branch"
+import { Event } from "@/types/event"
+import { Branch } from "@/types/branch"
 
 export default function EventsPage() {
   const [viewMode, setViewMode] = useState("list") // list, calendar, day
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedDate, setSelectedDate] = useState("")
 
-  const filteredEvents = events.filter(
-    (event) =>
-      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.description.toLowerCase().includes(searchQuery.toLowerCase()),
+  // Helper function to check if error is "No Record found."
+  const isNoRecordsError = (error: string | null) => {
+    return error && error.toLowerCase().includes("no record found")
+  }
+
+  // API calls
+  const {
+    data: eventsResponse,
+    loading: eventsLoading,
+    error: eventsError,
+    refetch: refetchEvents
+  } = useApi(() => searchEvents({
+    pageSize: 10,
+    pageNumber: 1,
+    searchParams: searchQuery ? { search: searchQuery } : undefined
+  }), [searchQuery])
+
+  const {
+    data: branchesResponse,
+    loading: branchesLoading,
+    error: branchesError,
+    refetch: refetchBranches
+  } = useApi(() => getAllBranches({
+    pageSize: 100,
+    pageNumber: 1
+  }), [])
+
+  // Featured events API call
+  const {
+    data: featuredEventsResponse,
+    loading: featuredEventsLoading,
+    error: featuredEventsError,
+    refetch: refetchFeaturedEvents
+  } = useApi(() => getFeaturedEvents(), [])
+
+  // Extract data from API responses
+  const events = eventsResponse?.data || []
+  const branches = branchesResponse?.data || []
+  const featuredEvents = Array.isArray(featuredEventsResponse) ? featuredEventsResponse : []
+
+  // Create a map of branch ID to branch name for easy lookup
+  const branchMap = branches.reduce((acc: Record<number, string>, branch: Branch) => {
+    acc[branch.id] = branch.name
+    return acc
+  }, {})
+
+  // Filter events based on search and date
+  const filteredEvents = events.filter((event: Event) => {
+    const matchesSearch = searchQuery
+      ? event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.description.toLowerCase().includes(searchQuery.toLowerCase())
+      : true
+
+    const matchesDate = selectedDate
+      ? event.date === selectedDate
+      : true
+
+    return matchesSearch && matchesDate
+  })
+
+  const handleSearch = () => {
+    refetchEvents()
+  }
+
+  // Get the first featured event (or null if none available)
+  const featuredEvent = featuredEvents.length > 0 ? featuredEvents[0] : null
+
+  // Check if we should show empty state instead of error
+  const shouldShowEventsError = eventsError && !isNoRecordsError(eventsError)
+  const shouldShowFeaturedError = featuredEventsError && !isNoRecordsError(featuredEventsError)
+
+  // Loading State Component
+  const LoadingState = () => (
+    <div className="flex flex-col items-center justify-center py-20">
+      <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+      <p className="text-gray-600">Loading events...</p>
+    </div>
   )
 
   return (
@@ -125,8 +158,19 @@ export default function EventsPage() {
                 </div>
 
                 <div className="flex items-end">
-                  <Button className="w-full py-6 bg-primary hover:bg-primary/90 text-white rounded-xl">
-                    Find Events
+                  <Button 
+                    className="w-full py-6 bg-primary hover:bg-primary/90 text-white rounded-xl"
+                    onClick={handleSearch}
+                    disabled={eventsLoading}
+                  >
+                    {eventsLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Searching...
+                      </>
+                    ) : (
+                      "Find Events"
+                    )}
                   </Button>
                 </div>
               </div>
@@ -167,94 +211,139 @@ export default function EventsPage() {
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between mb-12">
               <h2 className="text-3xl font-bold text-gray-900">Upcoming Events</h2>
-              <div className="text-sm text-gray-500">Showing {filteredEvents.length} events</div>
+              <div className="text-sm text-gray-500">
+                {eventsLoading ? "Loading..." : `Showing ${filteredEvents.length} events`}
+              </div>
             </div>
 
-            <div className="space-y-8">
-              {filteredEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:translate-y-[-4px] group"
-                >
-                  <div className="grid md:grid-cols-3 gap-6">
-                    <div className="relative h-64 md:h-auto overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
-                      <Image
-                        src={event.image || "/placeholder.svg"}
-                        alt={event.title}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                      <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-md z-20">
-                        <div className="text-xs font-semibold text-gray-500">PRICE</div>
-                        <div className="text-lg font-bold text-primary">1,000</div>
-                      </div>
-                    </div>
+            {/* Error State - Only show for real errors, not "No Record found." */}
+            {shouldShowEventsError && (
+              <div className="mb-12">
+                <div className="text-center max-w-md mx-auto">
+                  <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">Unable to Load Events</h3>
+                  <p className="text-gray-600 mb-4">{eventsError}</p>
+                  <Button onClick={refetchEvents}>Try Again</Button>
+                </div>
+              </div>
+            )}
 
-                    <div className="p-6 md:p-8 md:col-span-2 flex flex-col">
-                      <div className="flex-1">
-                        <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary transition-colors">
-                          {event.title}
-                        </h3>
+            {/* Loading State */}
+            {eventsLoading && <LoadingState />}
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                          <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <Calendar className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-500 mb-0.5">Date</p>
-                              <p className="font-medium text-gray-900">{event.date}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <Clock className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-500 mb-0.5">Time</p>
-                              <p className="font-medium text-gray-900">{event.time}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-start gap-3 md:col-span-2">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <MapPin className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-500 mb-0.5">Location</p>
-                              <p className="font-medium text-gray-900">{event.location}</p>
-                              <p className="text-sm text-gray-500 mt-1">{event.address}</p>
-                            </div>
+            {/* Events List */}
+            {!eventsLoading && !shouldShowEventsError && (
+              <div className="space-y-8">
+                {filteredEvents.map((event: Event) => (
+                  <div
+                    key={event.id}
+                    className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:translate-y-[-4px] group"
+                  >
+                    <div className="grid md:grid-cols-3 gap-6">
+                      <div className="relative h-64 md:h-auto overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+                        <Image
+                          src={event.imageUrl || "/placeholder.svg"}
+                          alt={event.name}
+                          fill
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-md z-20">
+                          <div className="text-xs font-semibold text-gray-500">PRICE</div>
+                          <div className="text-lg font-bold text-primary">
+                            {event.price || `₦${event.fee.toLocaleString()}`}
                           </div>
                         </div>
-
-                        <p className="text-gray-600 mb-6">{event.description}</p>
                       </div>
 
-                      <div className="flex items-center justify-between">
-                        <Link
-                          href={`/events/${event.id}`}
-                          className="inline-flex items-center gap-2 text-primary font-medium hover:text-primary/80 transition-colors"
-                        >
-                          READ MORE
-                          <ChevronRight className="h-4 w-4" />
-                        </Link>
+                      <div className="p-6 md:p-8 md:col-span-2 flex flex-col">
+                        <div className="flex-1">
+                          <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary transition-colors">
+                            {event.name}
+                          </h3>
 
-                        <Button className="bg-primary hover:bg-primary/90 text-white">Register Now</Button>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <Calendar className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-sm text-gray-500 mb-0.5">Date</p>
+                                <p className="font-medium text-gray-900">
+                                  {new Date(event.date).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <Clock className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-sm text-gray-500 mb-0.5">Time</p>
+                                <p className="font-medium text-gray-900">
+                                  {event.startTime} - {event.closeTime}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-start gap-3 md:col-span-2">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <MapPin className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-sm text-gray-500 mb-0.5">Location</p>
+                                <p className="font-medium text-gray-900">
+                                  {branchMap[event.branchId] || event.location}
+                                </p>
+                                <p className="text-sm text-gray-500 mt-1">{event.address}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <p className="text-gray-600 mb-6">{event.description}</p>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <Link
+                            href={`/events/${event.id}`}
+                            className="inline-flex items-center gap-2 text-primary font-medium hover:text-primary/80 transition-colors"
+                          >
+                            READ MORE
+                            <ChevronRight className="h-4 w-4" />
+                          </Link>
+
+                          <Button className="bg-primary hover:bg-primary/90 text-white">
+                            Register Now
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
 
-            <div className="mt-12 flex justify-center">
-              <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-100">
-                Load More Events
-              </Button>
-            </div>
+                {/* Empty state - shows for both no events and "No Record found." error */}
+                {filteredEvents.length === 0 && (
+                  <div className="text-center py-16">
+                    <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-600 mb-2">No Events Found</h3>
+                    <p className="text-gray-500">
+                      {searchQuery || selectedDate 
+                        ? "Try adjusting your search criteria" 
+                        : "No upcoming events at the moment"}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!eventsLoading && !shouldShowEventsError && filteredEvents.length > 0 && (
+              <div className="mt-12 flex justify-center">
+                <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-100">
+                  Load More Events
+                </Button>
+              </div>
+            )}
           </div>
         </section>
 
@@ -273,82 +362,124 @@ export default function EventsPage() {
                 Featured Event
               </h2>
               <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                Join us for our special annual conference with guest speakers from around the world
+                Join us for our special featured event with exciting programs and activities
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div className="relative">
-                <div className="absolute -top-6 -left-6 w-32 h-32 bg-primary/10 rounded-full mix-blend-multiply"></div>
-                <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-primary/10 rounded-full mix-blend-multiply"></div>
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                  <Image
-                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/previous-sunday-2-U32r6iEgfd2Lfx6ankMMHQVltVVlpX.png"
-                    alt="Annual Conference"
-                    width={600}
-                    height={400}
-                    className="w-full h-auto object-cover"
-                  />
+            {/* Featured Event Loading State */}
+            {featuredEventsLoading && (
+              <div className="flex flex-col items-center justify-center py-20">
+                <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+                <p className="text-gray-600">Loading featured event...</p>
+              </div>
+            )}
+
+            {/* Featured Event Error State - Only show for real errors */}
+            {shouldShowFeaturedError && (
+              <div className="text-center max-w-md mx-auto">
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Unable to Load Featured Event</h3>
+                <p className="text-gray-600 mb-4">{featuredEventsError}</p>
+                <Button onClick={refetchFeaturedEvents}>Try Again</Button>
+              </div>
+            )}
+
+            {/* Featured Event Content */}
+            {!featuredEventsLoading && !shouldShowFeaturedError && featuredEvent && (
+              <div className="grid md:grid-cols-2 gap-12 items-center">
+                <div className="relative">
+                  <div className="absolute -top-6 -left-6 w-32 h-32 bg-primary/10 rounded-full mix-blend-multiply"></div>
+                  <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-primary/10 rounded-full mix-blend-multiply"></div>
+                  <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                    <Image
+                      src={featuredEvent.imageUrl || "/placeholder.svg"}
+                      alt={featuredEvent.name}
+                      width={600}
+                      height={400}
+                      className="w-full h-auto object-cover"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  {featuredEvent.maxAttendance && featuredEvent.attendanceCount && 
+                   featuredEvent.attendanceCount / featuredEvent.maxAttendance > 0.8 && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 rounded-full text-red-600 font-medium text-sm mb-6">
+                      <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                      <span>Limited Seats Available</span>
+                    </div>
+                  )}
+
+                  <h3 className="text-3xl font-bold mb-6">{featuredEvent.name}</h3>
+
+                  <div className="space-y-4 mb-8">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Calendar className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Date</p>
+                        <p className="font-medium text-gray-900">
+                          {new Date(featuredEvent.date).toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Clock className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Time</p>
+                        <p className="font-medium text-gray-900">
+                          {featuredEvent.startTime} - {featuredEvent.closeTime}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+                        <MapPin className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Location</p>
+                        <p className="font-medium text-gray-900">
+                          {branchMap[featuredEvent.branchId] || featuredEvent.location}
+                        </p>
+                        <p className="text-sm text-gray-500 mt-1">{featuredEvent.address}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-gray-600 mb-8">{featuredEvent.description}</p>
+
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <Button className="bg-primary hover:bg-primary/90 text-white">
+                      Register Now
+                    </Button>
+                    <Link href={`/events/${featuredEvent.id}`}>
+                      <Button variant="outline" className="border-primary text-primary hover:bg-primary/5 w-full">
+                        Learn More
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
+            )}
 
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 rounded-full text-red-600 font-medium text-sm mb-6">
-                  <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                  <span>Limited Seats Available</span>
-                </div>
-
-                <h3 className="text-3xl font-bold mb-6">Annual Faith Conference 2022</h3>
-
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Calendar className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Date</p>
-                      <p className="font-medium text-gray-900">22. 10. 2022 - 24. 10. 2022</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Clock className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Time</p>
-                      <p className="font-medium text-gray-900">9:00 am - 5:00 pm (Daily)</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-                      <MapPin className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Location</p>
-                      <p className="font-medium text-gray-900">KINGDOM WAYS LIVING CHURCH</p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        24 Prince Ibrahim Eletu Avenue, Shoprite Circle Mall Road Jakande Bus Stop, Osapa London,Lagos
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-gray-600 mb-8">
-                  Join us for three days of powerful teaching, worship, and fellowship at our Annual Faith Conference.
-                  This year's theme is "Advancing the Kingdom" with special guest speakers and workshops designed to
-                  equip and empower you in your spiritual journey.
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Button className="bg-primary hover:bg-primary/90 text-white">Register Now</Button>
-                  <Button variant="outline" className="border-primary text-primary hover:bg-primary/5">
-                    Learn More
-                  </Button>
-                </div>
+            {/* No Featured Event State - shows for both no events and "No Record found." error */}
+            {!featuredEventsLoading && !shouldShowFeaturedError && !featuredEvent && (
+              <div className="text-center py-16">
+                <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">No Featured Event</h3>
+                <p className="text-gray-500">Check back soon for our next featured event!</p>
               </div>
-            </div>
+            )}
           </div>
         </section>
 
