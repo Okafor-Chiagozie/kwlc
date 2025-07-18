@@ -519,14 +519,13 @@ export default function PastorsPage() {
                     <div>
                       <Label htmlFor="branch">Branch Assignment</Label>
                       <Select 
-                        value={newMinister.branchId?.toString() || ""} 
+                        value={newMinister.branchId?.toString() || undefined} 
                         onValueChange={(value) => setNewMinister({ ...newMinister, branchId: value ? Number(value) : null })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select branch (optional)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">No Branch Assignment</SelectItem>
                           {branches.map(branch => (
                             <SelectItem key={branch.id} value={branch.id.toString()}>
                               {branch.name}
@@ -723,14 +722,13 @@ export default function PastorsPage() {
                   <div>
                     <Label>Branch</Label>
                     <Select 
-                      value={editingMinister.branchId?.toString() || ""} 
+                      value={editingMinister.branchId?.toString() || undefined} 
                       onValueChange={(value) => setEditingMinister({ ...editingMinister, branchId: value ? Number(value) : null })}
                     >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select branch (optional)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No Branch Assignment</SelectItem>
                         {branches.map(branch => (
                           <SelectItem key={branch.id} value={branch.id.toString()}>
                             {branch.name}
