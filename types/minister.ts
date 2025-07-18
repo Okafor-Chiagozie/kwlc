@@ -1,32 +1,66 @@
-export interface CreateOrUpdateMinisterRequest {
-  id: number;
-  email: string;
-  branchId: number;
-  lastName: string;
-  biography: string;
-  firstName: string;
-  phoneNumber: string;
-  middleName: string;
-  imageFile: string;
-  ministerRoleId: string;
+// Base interfaces
+export interface ApiError {
+  field: string;
+  description: string;
 }
 
-export interface SearchMinistersRequest {
+export interface StandardApiResponse<T = any> {
+  data: T;
+  isSuccessful: boolean;
+  errors: ApiError[];
+  responseMessage: string;
+  responseCode: string;
+}
+
+export interface PaginatedApiResponse<T = any> extends StandardApiResponse<T> {
+  totalCount: number;
+  totalPages: number;
+}
+
+export interface SearchFilter {
   pageSize: number;
   pageNumber: number;
   searchParams?: Record<string, string>;
 }
 
-export interface Minister {
+// Enums from API documentation
+export enum MinisterRole {
+  GeneralOverseer = "GeneralOverseer",
+  Lead = "Lead",
+  Youth = "Youth",
+  Associate = "Associate",
+  Children = "Children",
+  Missions = "Missions",
+  Worship = "Worship"
+}
+
+// Request/Response schemas exactly as defined in API documentation
+
+// AddMinisterViewModel from API
+export interface AddMinisterViewModel {
+  id?: number | null;
+  email: string;
+  branchId?: number | null;
+  lastName: string;
+  biography: string;
+  firstName: string;
+  phoneNumber: string;
+  middleName: string;
+  imageFile?: File | null;
+  ministerRoleId: MinisterRole;
+}
+
+// EventViewModel from API (used in minister responses)
+export interface EventViewModel {
   id: number;
   name: string;
   date: string;
   startTime: string;
   closeTime: string;
-  branchId: number;
+  branchId?: number | null;
   eventTypeId: number;
-  fee: number;
-  maxAttendance: number;
+  fee?: number | null;
+  maxAttendance?: number | null;
   description: string;
   location: string;
   address: string;
@@ -37,31 +71,34 @@ export interface Minister {
   price: string;
   attendanceCount: number;
   attendees: string;
-  dateDeleted: string;
+  dateDeleted?: string;
 }
 
-export interface ApiError {
-  field: string;
-  description: string;
+// UserViewModel from API (used in some minister responses)
+export interface UserViewModel {
+  id: number;
+  dateCreated: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  middleName: string;
+  isBanned: boolean;
+  phoneNumber: string;
+  userTypeId: string;
+  loginFailedCount: number;
 }
 
-export interface StandardApiResponse<T = any> {
-  data: T;
-  isSuccessful: boolean;
-  errors?: ApiError[];
-  responseMessage: string;
-  responseCode: string;
-  totalCount?: number;
-  totalPages?: number;
-}
+// Request types
+export type CreateOrUpdateMinisterRequest = AddMinisterViewModel;
+export type SearchMinistersRequest = SearchFilter;
 
-export interface CreateOrUpdateMinisterResponse extends Minister {}
+// Response types based on API documentation
+export interface EventViewModelListPaginationResult extends PaginatedApiResponse<EventViewModel[]> {}
+export interface EventViewModelListResult extends StandardApiResponse<EventViewModel[]> {}
+export interface UserViewModelListResult extends StandardApiResponse<UserViewModel[]> {}
 
-export interface SearchMinistersResponse extends StandardApiResponse<Minister[]> {
-  totalCount: number;
-  totalPages: number;
-}
-
-export interface GetAllMinistersResponse extends StandardApiResponse<Minister[]> {}
-
-export interface DeleteMinisterResponse extends StandardApiResponse<Minister[]> {}
+// Response interfaces matching API exactly
+export interface CreateOrUpdateMinisterResponse extends EventViewModel {}
+export interface SearchMinistersResponse extends EventViewModelListPaginationResult {}
+export interface GetAllMinistersResponse extends EventViewModelListResult {}
+export interface DeleteMinisterResponse extends EventViewModelListResult {}

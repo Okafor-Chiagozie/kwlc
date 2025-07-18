@@ -1,3 +1,4 @@
+// Base interfaces
 export interface ApiError {
   field: string;
   description: string;
@@ -11,57 +12,110 @@ export interface StandardApiResponse<T = any> {
   responseCode: string;
 }
 
-export interface ChurchProject {
+export interface SearchFilter {
+  pageSize: number;
+  pageNumber: number;
+  searchParams?: Record<string, string>;
+}
+
+// Enums
+export enum ImageCategory {
+  CarouselImage = "CarouselImage",
+  GalleryImages = "GalleryImages", 
+  PreviewImage = "PreviewImage",
+  ThumbnailImage = "ThumbnailImage",
+  Headshots = "Headshots",
+  TicketImage = "TicketImage"
+}
+
+// Request/Response schemas exactly as defined in API documentation
+
+// AddChurchProjectViewModel from API
+export interface AddChurchProjectViewModel {
+  id?: number | null;
+  name: string;
+  location: string;
+  targetAmount: number;
+  description: string;
+}
+
+// ChurchProjectPageViewModel from API
+export interface ChurchProjectPageViewModel {
   id: number;
   name: string;
   location: string;
   targetAmount: number;
   description: string;
-  imageUrl?: string;
-  amountRaised?: number;
-  isDeleted?: boolean;
+  imageUrl: string;
+  amountRaised: number;
+  isDeleted: boolean;
   dateDeleted?: string;
-  carouselImages?: string[];
-  previewImages?: string[];
-  galleryImages?: string[];
+  carouselImages: string[];
 }
 
-export interface ChurchProjectImage {
+// ChurchProjectViewModel from API  
+export interface ChurchProjectViewModel {
+  id?: number | null;
+  name: string;
+  location: string;
+  targetAmount: number;
+  description: string;
+  isDeleted: boolean;
+  imageUrl: string;
+  amountRaised: number;
+  dateDeleted?: string;
+  carouselImages: string[];
+  previewImages: string[];
+  galleryImages: string[];
+}
+
+// AddProjectImageViewModel from API
+export interface AddProjectImageViewModel {
+  imageTitle: string;
+  file: File[];
+  imageCategoryId: ImageCategory;
+  projectId: number;
+}
+
+// UpdateImageRequest from API
+export interface UpdateImageRequest {
+  id: number;
+  file: File;
+}
+
+// ProjectImageViewModel from API
+export interface ProjectImageViewModel {
   id: number;
   imageUrl: string;
   imageTitle: string;
   imageName: string;
-  imageCategoryId: 'CarouselImage' | 'PreviewImage' | 'GalleryImage';
+  imageCategoryId: ImageCategory;
   projectId: number;
 }
 
-export interface CreateOrUpdateProjectRequest {
-  id: number | null;
-  name: string;
-  location: string;
-  targetAmount: number;
-  description: string;
-}
+// Request types
+export type CreateOrUpdateProjectRequest = AddChurchProjectViewModel;
+export type SearchProjectsRequest = SearchFilter;
+export type CreateProjectImagesRequest = AddProjectImageViewModel;
+export type UpdateProjectImagesRequest = UpdateImageRequest;
 
-export interface CreateOrUpdateProjectImagesRequest {
-  imageTitle: string;
-  file: string[];
-  imageCategoryId: 'CarouselImage' | 'PreviewImage' | 'GalleryImage';
-  projectId: number | null;
-}
+// Response types based on API documentation
+export interface Int32ListResult extends StandardApiResponse<number[]> {}
+export interface Int32Result extends StandardApiResponse<number> {}
+export interface ChurchProjectPageViewModelListResult extends StandardApiResponse<ChurchProjectPageViewModel[]> {}
+export interface ChurchProjectViewModelResult extends StandardApiResponse<ChurchProjectViewModel> {}
+export interface ProjectImageViewModelListResult extends StandardApiResponse<ProjectImageViewModel[]> {}
+export interface ProjectImageViewModelResult extends StandardApiResponse<ProjectImageViewModel> {}
 
-export interface SearchProjectsRequest {
-  pageSize: number;
-  pageNumber: number;
-  searchParams: Record<string, string>;
-}
+// Response interfaces matching API exactly
+export interface CreateOrUpdateProjectResponse extends Int32ListResult {}
+export interface GetProjectsResponse extends ChurchProjectPageViewModelListResult {}
+export interface SearchProjectsResponse extends ChurchProjectPageViewModelListResult {}
+export interface GetProjectResponse extends ChurchProjectViewModelResult {}
+export interface DeleteProjectResponse extends Int32Result {}
 
-export interface GetProjectsResponse extends StandardApiResponse<ChurchProject[]> {}
-export interface GetProjectResponse extends StandardApiResponse<ChurchProject> {}
-export interface CreateOrUpdateProjectResponse extends StandardApiResponse<number> {}
-export interface DeleteProjectResponse extends StandardApiResponse<number> {}
-
-export interface GetProjectImagesResponse extends StandardApiResponse<ChurchProjectImage[]> {}
-export interface GetProjectImageResponse extends StandardApiResponse<ChurchProjectImage> {}
-export interface CreateOrUpdateProjectImagesResponse extends StandardApiResponse<number> {}
-export interface DeleteProjectImageResponse extends StandardApiResponse<number> {}
+export interface CreateProjectImagesResponse extends Int32Result {}
+export interface UpdateProjectImagesResponse extends Int32Result {}
+export interface GetProjectImagesResponse extends ProjectImageViewModelListResult {}
+export interface GetProjectImageResponse extends ProjectImageViewModelResult {}
+export interface DeleteProjectImageResponse extends Int32Result {}

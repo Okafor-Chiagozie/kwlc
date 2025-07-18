@@ -5,17 +5,21 @@ import {
   GetAllBranchesRequest,
   GetAllBranchesResponse,
   GetBranchDetailsResponse,
+  GetBranchesLocationsResponse,
   DeleteBranchResponse,
-  CreateOrUpdateBranchImagesRequest,
-  CreateOrUpdateBranchImagesResponse,
+  CreateBranchImagesRequest,
+  UpdateBranchImagesRequest,
+  CreateBranchImagesResponse,
+  UpdateBranchImagesResponse,
   GetBranchImagesResponse,
   GetBranchImageResponse,
   DeleteBranchImageResponse,
   CreateOrUpdateWeeklyActivityRequest,
   CreateOrUpdateWeeklyActivityResponse,
   GetWeeklyActivityResponse,
-  DeleteWeeklyActivityResponse,
   GetWeeklyActivitiesResponse,
+  GetAllWeeklyActivitiesResponse,
+  DeleteWeeklyActivityResponse,
   CreateBranchReportRequest,
   UpdateBranchReportRequest,
   CreateBranchReportResponse,
@@ -23,7 +27,8 @@ import {
   GetBranchReportsRequest,
   GetBranchReportsResponse,
   GetBranchReportResponse,
-  DeleteBranchReportResponse
+  DeleteBranchReportResponse,
+  ImageCategory
 } from '@/types/branch';
 
 // Branch CRUD operations
@@ -56,6 +61,13 @@ export const getBranchDetails = async (
   return response.data;
 };
 
+export const getBranchesLocations = async (): Promise<GetBranchesLocationsResponse> => {
+  const response = await api.get<GetBranchesLocationsResponse>(
+    '/api/v1/Branch/GetBranchesLocations'
+  );
+  return response.data;
+};
+
 export const deleteBranch = async (
   branchId: number
 ): Promise<DeleteBranchResponse> => {
@@ -66,12 +78,44 @@ export const deleteBranch = async (
 };
 
 // Branch Images operations
-export const createOrUpdateBranchImages = async (
-  payload: CreateOrUpdateBranchImagesRequest
-): Promise<CreateOrUpdateBranchImagesResponse> => {
-  const response = await api.post<CreateOrUpdateBranchImagesResponse>(
-    '/api/v1/Branch/CreateOrUpdateBranchImages',
-    payload
+export const createBranchImages = async (
+  payload: CreateBranchImagesRequest
+): Promise<CreateBranchImagesResponse> => {
+  // Create FormData for multipart/form-data as specified in API
+  const formData = new FormData();
+  
+  // Append files array
+  payload.file.forEach((file) => {
+    formData.append('File', file);
+  });
+  
+  const response = await api.post<CreateBranchImagesResponse>(
+    `/api/v1/Branch/CreateBranchImages?categoryId=${payload.categoryId}&branchId=${payload.branchId}`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+  return response.data;
+};
+
+export const updateBranchImages = async (
+  payload: UpdateBranchImagesRequest
+): Promise<UpdateBranchImagesResponse> => {
+  // Create FormData for multipart/form-data as specified in API
+  const formData = new FormData();
+  formData.append('file', payload.file);
+  
+  const response = await api.put<UpdateBranchImagesResponse>(
+    `/api/v1/Branch/UpdateBranchImages?Id=${payload.id}`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
   );
   return response.data;
 };
@@ -126,21 +170,28 @@ export const getWeeklyActivity = async (
   return response.data;
 };
 
-export const deleteWeeklyActivity = async (
-  branchId: number,
-  imageId: number // Note: API uses imageId parameter name, might be a typo in the API
-): Promise<DeleteWeeklyActivityResponse> => {
-  const response = await api.delete<DeleteWeeklyActivityResponse>(
-    `/api/v1/Branch/DeleteWeeklyActivity?branchId=${branchId}&imageId=${imageId}`
-  );
-  return response.data;
-};
-
 export const getWeeklyActivities = async (
   branchId: number
 ): Promise<GetWeeklyActivitiesResponse> => {
   const response = await api.get<GetWeeklyActivitiesResponse>(
     `/api/v1/Branch/GetWeeklyActivities?branchId=${branchId}`
+  );
+  return response.data;
+};
+
+export const getAllWeeklyActivities = async (): Promise<GetAllWeeklyActivitiesResponse> => {
+  const response = await api.get<GetAllWeeklyActivitiesResponse>(
+    '/api/v1/Branch/GetAllWeeklyActivities'
+  );
+  return response.data;
+};
+
+export const deleteWeeklyActivity = async (
+  branchId: number,
+  imageId: number // Note: API parameter is named "imageId" not "activityId"
+): Promise<DeleteWeeklyActivityResponse> => {
+  const response = await api.delete<DeleteWeeklyActivityResponse>(
+    `/api/v1/Branch/DeleteWeeklyActivity?branchId=${branchId}&imageId=${imageId}`
   );
   return response.data;
 };
@@ -170,10 +221,11 @@ export const getBranchReports = async (
   branchId: number,
   payload: GetBranchReportsRequest
 ): Promise<GetBranchReportsResponse> => {
+  // API shows GET with requestBody, which is unusual but following the spec
   const response = await api.get<GetBranchReportsResponse>(
     `/api/v1/Branch/GetBranchReports?branchId=${branchId}`,
     {
-      data: payload // For GET request with body
+      data: payload
     }
   );
   return response.data;

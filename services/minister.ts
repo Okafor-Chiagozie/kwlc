@@ -5,17 +5,19 @@ import {
   SearchMinistersRequest,
   SearchMinistersResponse,
   GetAllMinistersResponse,
-  DeleteMinisterResponse,
-  StandardApiResponse,
-  Minister
+  DeleteMinisterResponse
 } from '@/types/minister';
 
+const BASE_URL = '/api/v1/Minister';
+
+// Minister operations
 export const createOrUpdateMinister = async (
-  minister: CreateOrUpdateMinisterRequest
+  payload: CreateOrUpdateMinisterRequest
 ): Promise<CreateOrUpdateMinisterResponse> => {
+  // Note: API endpoint has a typo - "CreateOrUpdateMinster" instead of "CreateOrUpdateMinister"
   const response = await api.post<CreateOrUpdateMinisterResponse>(
-    '/api/v1/Minister/CreateOrUpdateMinster',
-    minister
+    `${BASE_URL}/CreateOrUpdateMinster`,
+    payload
   );
   return response.data;
 };
@@ -24,7 +26,7 @@ export const searchMinisters = async (
   payload: SearchMinistersRequest
 ): Promise<SearchMinistersResponse> => {
   const response = await api.post<SearchMinistersResponse>(
-    '/api/v1/Minister/SearchMinisters',
+    `${BASE_URL}/SearchMinisters`,
     payload
   );
   return response.data;
@@ -32,7 +34,7 @@ export const searchMinisters = async (
 
 export const getAllMinisters = async (): Promise<GetAllMinistersResponse> => {
   const response = await api.get<GetAllMinistersResponse>(
-    '/api/v1/Minister/GetAllMinisters'
+    `${BASE_URL}/GetAllMinisters`
   );
   return response.data;
 };
@@ -41,7 +43,7 @@ export const deleteMinister = async (
   id: number
 ): Promise<DeleteMinisterResponse> => {
   const response = await api.delete<DeleteMinisterResponse>(
-    `/api/v1/Minister/DeleteMinister?id=${id}`
+    `${BASE_URL}/DeleteMinister?id=${id}`
   );
   return response.data;
 };

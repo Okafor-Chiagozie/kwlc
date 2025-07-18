@@ -1,4 +1,4 @@
-// types/livestream.ts
+// Base interfaces
 export interface ApiError {
   field: string;
   description: string;
@@ -12,8 +12,17 @@ export interface StandardApiResponse<T = any> {
   responseCode: string;
 }
 
-export interface LivestreamData {
-  id: number;
+export interface SearchFilter {
+  pageSize: number;
+  pageNumber: number;
+  searchParams?: Record<string, string>;
+}
+
+// Request/Response schemas exactly as defined in API documentation
+
+// TicketViewModel from API (used in livestream responses)
+export interface TicketViewModel {
+  id?: number | null;
   eventId: number;
   firstName: string;
   lastName: string;
@@ -21,32 +30,26 @@ export interface LivestreamData {
   email: string;
   file: string;
   ticketNumber: string;
-  seatNumber: number;
+  seatNumber?: number | null;
   price: number;
   paymentStatus: boolean;
   imageUrl: string;
   eventName: string;
 }
 
-export interface PaginatedRequest {
-  pageSize: number;
-  pageNumber: number;
-  searchParams?: Record<string, string>;
-}
+// Request types
+export type GetCompletedStreamsRequest = SearchFilter;
+export type GetUpcomingStreamsRequest = SearchFilter;
+export type GetAllAvailableStreamsRequest = SearchFilter;
 
-export interface GetLivestreamUrlResponse extends StandardApiResponse<LivestreamData[]> {}
+// Response types based on API documentation
+export interface TicketViewModelListResult extends StandardApiResponse<TicketViewModel[]> {}
 
-export interface GetCompletedStreamsRequest extends PaginatedRequest {}
-export interface GetCompletedStreamsResponse extends StandardApiResponse<LivestreamData[]> {}
-
-export interface GetUpcomingStreamsRequest extends PaginatedRequest {}
-export interface GetUpcomingStreamsResponse extends StandardApiResponse<LivestreamData[]> {}
-
-export interface GetAllAvailableStreamsRequest extends PaginatedRequest {}
-export interface GetAllAvailableStreamsResponse extends StandardApiResponse<LivestreamData[]> {}
-
-export interface GetStreamDetailsByURLResponse extends StandardApiResponse<LivestreamData[]> {}
-
-export interface GetStreamDetailsByIdResponse extends StandardApiResponse<LivestreamData[]> {}
-
-export interface DeleteStreamResponse extends StandardApiResponse<LivestreamData[]> {}
+// Response interfaces matching API exactly
+export interface GetLivestreamUrlResponse extends TicketViewModelListResult {}
+export interface GetCompletedStreamsResponse extends TicketViewModelListResult {}
+export interface GetUpcomingStreamsResponse extends TicketViewModelListResult {}
+export interface GetAllAvailableStreamsResponse extends TicketViewModelListResult {}
+export interface GetStreamDetailsByURLResponse extends TicketViewModelListResult {}
+export interface GetStreamDetailsByIdResponse extends TicketViewModelListResult {}
+export interface DeleteStreamResponse extends TicketViewModelListResult {}

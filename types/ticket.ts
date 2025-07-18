@@ -1,3 +1,4 @@
+// Base interfaces
 export interface ApiError {
   field: string;
   description: string;
@@ -11,50 +12,57 @@ export interface StandardApiResponse<T = any> {
   responseCode: string;
 }
 
-export interface CreateOrUpdateTicketRequest {
-  id: number;
+// Request/Response schemas exactly as defined in API documentation
+
+// AddTicketViewModel from API
+export interface AddTicketViewModel {
+  id?: number | null;
   eventId: number;
   firstName: string;
   lastName: string;
   phoneNumber: string;
   email: string;
-  file: string;
+  file?: File | null;
 }
 
-export interface TicketCreateResponse {
+// Ticket from API (detailed ticket object)
+export interface Ticket {
   id: number;
-  dateCreated: string;
-  lastModified: string;
+  dateCreated: string; // DateTime
+  lastModified: string; // DateTime
+  eventId: number;
+  email: string;
+  price: number;
+  seatNumber?: number | null;
+  lastName: string;
+  eventName: string;
+  firstName: string;
+  reference: string;
+  imageUrl: string;
+  phoneNumber: string;
+  paymentStatus: boolean;
+  ticketNumber: string;
+}
+
+// TicketViewModel from API
+export interface TicketViewModel {
+  id?: number | null;
   eventId: number;
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  eventName: string;
   email: string;
+  file?: File | null;
   ticketNumber: string;
-  seatNumber: number;
+  seatNumber?: number | null;
   price: number;
   paymentStatus: boolean;
   imageUrl: string;
-}
-
-export interface TicketData {
-  id: number;
-  eventId: number;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  email: string;
-  file: string;
-  ticketNumber: string;
-  seatNumber: number;
-  price: number;
-  paymentStatus: boolean;
-  imageUrl: string;
   eventName: string;
 }
 
-export interface DeleteTicketResponse {
+// BranchViewModel from API (used in delete response)
+export interface BranchViewModel {
   id: number;
   name: string;
   lgaId: number;
@@ -71,15 +79,20 @@ export interface DeleteTicketResponse {
   dateCreated: string;
   imageUrl: string;
   welcomeAddress: string;
-  dateDeleted: string;
+  dateDeleted?: string;
 }
 
-export interface CreateOrUpdateTicketResponse extends StandardApiResponse<TicketCreateResponse[]> {}
+// Request types
+export type CreateOrUpdateTicketRequest = AddTicketViewModel;
 
-export interface GetTicketResponse extends StandardApiResponse<TicketData[]> {}
+// Response types based on API documentation
+export interface TicketListResult extends StandardApiResponse<Ticket[]> {}
+export interface TicketViewModelListResult extends StandardApiResponse<TicketViewModel[]> {}
+export interface BranchViewModelListResult extends StandardApiResponse<BranchViewModel[]> {}
 
-export interface GetTicketByIdResponse extends StandardApiResponse<TicketData[]> {}
-
-export interface VerifyTicketPaymentResponse extends StandardApiResponse<TicketData[]> {}
-
-export interface DeleteTicketApiResponse extends StandardApiResponse<DeleteTicketResponse[]> {}
+// Response interfaces matching API exactly
+export interface CreateOrUpdateTicketResponse extends TicketListResult {}
+export interface GetTicketResponse extends TicketViewModelListResult {}
+export interface GetTicketByIdResponse extends TicketViewModelListResult {}
+export interface VerifyTicketPaymentResponse extends TicketViewModelListResult {}
+export interface DeleteTicketResponse extends BranchViewModelListResult {}
