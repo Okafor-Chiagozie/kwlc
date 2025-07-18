@@ -31,6 +31,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import { getUserById } from "@/services/user"
+import { UserViewModel } from "@/types/user"
 
 const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -50,7 +52,8 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [userId, setUserId] = useState("")
+  const [currentUser, setCurrentUser] = useState<UserViewModel | null>(null)
+  const [isLoadingUser, setIsLoadingUser] = useState(true)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -58,18 +61,73 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const auth = localStorage.getItem("adminAuth")
     const userIdFromStorage = localStorage.getItem("userId")
 
+    // Uncomment this for actual authentication check
     // if (!auth) {
     //   router.push("/admin/login")
     //   return
     // }
 
-    setUserId(userIdFromStorage || "")
+    // Fetch user details if userId exists
+    const fetchUserDetails = async () => {
+      if (userIdFromStorage && !isNaN(Number(userIdFromStorage))) {
+        try {
+          setIsLoadingUser(true)
+          const response = await getUserById(Number(userIdFromStorage))
+          if (response.isSuccessful && response.data) {
+            setCurrentUser(response.data)
+          }
+        } catch (error) {
+          console.error("Failed to fetch user details:", error)
+          // If user fetch fails, we can still show basic info
+        } finally {
+          setIsLoadingUser(false)
+        }
+      } else {
+        setIsLoadingUser(false)
+      }
+    }
+
+    fetchUserDetails()
   }, [router])
 
   const handleLogout = () => {
     localStorage.removeItem("adminAuth")
     localStorage.removeItem("userId")
+    setCurrentUser(null)
     router.push("/admin/login")
+  }
+
+  const getDisplayName = () => {
+    if (currentUser) {
+      const fullName = [currentUser.firstName, currentUser.middleName, currentUser.lastName]
+        .filter(Boolean)
+        .join(" ")
+      return fullName || currentUser.email || "Admin User"
+    }
+    return "Admin User"
+  }
+
+  const getInitials = () => {
+    if (currentUser) {
+      const firstInitial = currentUser.firstName?.charAt(0)?.toUpperCase() || ""
+      const lastInitial = currentUser.lastName?.charAt(0)?.toUpperCase() || ""
+      return firstInitial + lastInitial || currentUser.email?.charAt(0)?.toUpperCase() || "AU"
+    }
+    return "AU"
+  }
+
+  const getUserRole = () => {
+    if (currentUser) {
+      return currentUser.userTypeId === "Admin" ? "Administrator" : "User"
+    }
+    return "Administrator"
+  }
+
+  const getUserStatus = () => {
+    if (currentUser) {
+      return currentUser.isBanned ? "Suspended" : "Active"
+    }
+    return "Active"
   }
 
   return (
@@ -153,10 +211,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
 
           <div className="flex items-center gap-4">
-            {userId && (
-              <Badge variant="secondary" className="hidden sm:inline-flex">
-                User: {userId}
-              </Badge>
+            {/* User Status Badge */}
+            {currentUser && (
+              <div className="hidden sm:flex items-center gap-2">
+                <Badge 
+                  variant={getUserStatus() === "Active" ? "secondary" : "destructive"} 
+                  className="text-xs"
+                >
+                  {getUserStatus()}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {getUserRole()}
+                </Badge>
+              </div>
             )}
 
             <DropdownMenu>
@@ -164,24 +231,55 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <Button variant="ghost" className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                    <AvatarFallback>AD</AvatarFallback>
+                    <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                      {getInitials()}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="hidden sm:block text-left">
-                    <div className="text-sm font-medium">Admin User</div>
-                    {userId && <div className="text-xs text-gray-500">ID: {userId}</div>}
+                    <div className="text-sm font-medium">
+                      {isLoadingUser ? "Loading..." : getDisplayName()}
+                    </div>
+                    {currentUser && (
+                      <div className="text-xs text-gray-500">
+                        {currentUser.email}
+                      </div>
+                    )}
                   </div>
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-1.5 text-sm font-medium">
-                  Admin User
-                  {userId && <div className="text-xs text-gray-500">User ID: {userId}</div>}
+              <DropdownMenuContent align="end" className="w-64">
+                <div className="px-2 py-1.5 text-sm">
+                  <div className="font-medium">{getDisplayName()}</div>
+                  {currentUser && (
+                    <>
+                      <div className="text-xs text-gray-500 mt-1">{currentUser.email}</div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge 
+                          variant={getUserStatus() === "Active" ? "secondary" : "destructive"} 
+                          className="text-xs"
+                        >
+                          {getUserStatus()}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {getUserRole()}
+                        </Badge>
+                      </div>
+                      {currentUser.phoneNumber && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          📞 {currentUser.phoneNumber}
+                        </div>
+                      )}
+                      <div className="text-xs text-gray-400 mt-1">
+                        Member since {new Date(currentUser.dateCreated).toLocaleDateString()}
+                      </div>
+                    </>
+                  )}
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Settings className="h-4 w-4 mr-2" />
-                  Settings
+                  Account Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600">

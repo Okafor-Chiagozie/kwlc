@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
 import { Toaster } from "@/components/ui/sonner"
-import { loginUser } from "@/services/user"
+import { login } from "@/services/user"
 import { LoginRequest } from "@/types/user"
 
 export default function AdminLogin() {
@@ -58,7 +58,7 @@ export default function AdminLogin() {
         password: formData.password
       }
 
-      const response = await loginUser(loginData)
+      const response = await login(loginData)
 
       if (response.isSuccessful) {
         // Store auth info in localStorage (you might want to use a more secure method)
@@ -112,109 +112,111 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/KWLC%20Logo%201-aSNedKIy42avfHJjhU8zekfvcwmgKh.png"
-                alt="KWLC Logo"
-                width={80}
-                height={80}
-                className="object-contain"
-              />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">Church Admin Dashboard</h1>
-          </div>
-
-          {/* API Error Display */}
-          {apiError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
-              <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <h3 className="text-sm font-medium text-red-800">Login Failed</h3>
-                <p className="text-sm text-red-700 mt-1">{apiError}</p>
+      <div className="flex-1 bg-white flex">
+        <div className="w-full overflow-y-auto py-8 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 space-y-8 flex items-center justify-center" style={{ maxHeight: '100vh' }}>
+          <div className="w-full max-w-md space-y-8">
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                <Image
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/KWLC%20Logo%201-aSNedKIy42avfHJjhU8zekfvcwmgKh.png"
+                  alt="KWLC Logo"
+                  width={80}
+                  height={80}
+                  className="object-contain"
+                />
               </div>
+              <h1 className="text-2xl font-bold text-gray-900">Church Admin Dashboard</h1>
             </div>
-          )}
 
-          <Card className="border-0 shadow-none">
-            <CardContent className="p-0">
-              <form onSubmit={handleLogin} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="sr-only">
-                    Email or Username
-                  </Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <Input
-                      id="username"
-                      type="text"
-                      placeholder="Your login or Email"
-                      value={formData.username}
-                      onChange={(e) => handleInputChange("username", e.target.value)}
-                      className={`pl-10 h-12 border-gray-200 focus:border-primary ${
-                        errors.username ? "border-red-500" : ""
-                      }`}
-                      disabled={isLoading}
-                      required
-                    />
-                  </div>
-                  {errors.username && <p className="text-sm text-red-600 mt-1">{errors.username}</p>}
+            {/* API Error Display */}
+            {apiError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
+                <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="text-sm font-medium text-red-800">Login Failed</h3>
+                  <p className="text-sm text-red-700 mt-1">{apiError}</p>
                 </div>
+              </div>
+            )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="sr-only">
-                    Password
-                  </Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Password"
-                      value={formData.password}
-                      onChange={(e) => handleInputChange("password", e.target.value)}
-                      className={`pl-10 pr-10 h-12 border-gray-200 focus:border-primary ${
-                        errors.password ? "border-red-500" : ""
-                      }`}
-                      disabled={isLoading}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            <Card className="border-0 shadow-none">
+              <CardContent className="p-0">
+                <form onSubmit={handleLogin} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="username" className="sr-only">
+                      Email or Username
+                    </Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                      <Input
+                        id="username"
+                        type="text"
+                        placeholder="Your login or Email"
+                        value={formData.username}
+                        onChange={(e) => handleInputChange("username", e.target.value)}
+                        className={`pl-10 h-12 border-gray-200 focus:border-primary ${
+                          errors.username ? "border-red-500" : ""
+                        }`}
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                    {errors.username && <p className="text-sm text-red-600 mt-1">{errors.username}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="sr-only">
+                      Password
+                    </Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Password"
+                        value={formData.password}
+                        onChange={(e) => handleInputChange("password", e.target.value)}
+                        className={`pl-10 pr-10 h-12 border-gray-200 focus:border-primary ${
+                          errors.password ? "border-red-500" : ""
+                        }`}
+                        disabled={isLoading}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {errors.password && <p className="text-sm text-red-600 mt-1">{errors.password}</p>}
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <button type="button" className="text-sm text-primary hover:text-primary/80">
+                      Forgotten Password?
                     </button>
                   </div>
-                  {errors.password && <p className="text-sm text-red-600 mt-1">{errors.password}</p>}
-                </div>
 
-                <div className="flex items-center justify-between">
-                  <button type="button" className="text-sm text-primary hover:text-primary/80">
-                    Forgotten Password?
-                  </button>
-                </div>
+                  <Button
+                    type="submit"
+                    className="w-full h-12 bg-black hover:bg-gray-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Signing In..." : "Sign In"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
 
-                <Button
-                  type="submit"
-                  className="w-full h-12 bg-black hover:bg-gray-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Signing In..." : "Sign In"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          <div className="text-center text-sm text-gray-500">© Kingdom Ways 2024</div>
+            <div className="text-center text-sm text-gray-500">© Kingdom Ways 2024</div>
+          </div>
         </div>
       </div>
 
       {/* Right Side - Branding */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 items-center justify-center p-8 relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 items-center justify-center p-8 relative overflow-hidden" style={{ height: '100vh', overflow: 'hidden' }}>
         <div className="absolute inset-0">
           <Image
             src="/images/geometric-bg.png"

@@ -12,8 +12,8 @@ import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, User, Mail, Phone, Lock, ArrowLeft, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 import { Toaster } from "@/components/ui/sonner"
-import { registerOrUpdateUser } from "@/services/user"
-import { RegisterOrUpdateUserRequest } from "@/types/user"
+import { registration } from "@/services/user"
+import { RegistrationRequest, UserType } from "@/types/user"
 
 export default function AdminRegister() {
   const [formData, setFormData] = useState({
@@ -45,7 +45,7 @@ export default function AdminRegister() {
 
     if (!formData.phoneNumber.trim()) {
       newErrors.phoneNumber = "Phone number is required"
-    } else if (!/^[+]?[\d]{7,15}$/.test(formData.phoneNumber.replace(/\s/g, ""))) {
+    } else if (!/^[+]?[\d\s\-\(\)]{7,15}$/.test(formData.phoneNumber.replace(/\s/g, ""))) {
       newErrors.phoneNumber = "Please enter a valid phone number"
     }
 
@@ -82,26 +82,26 @@ export default function AdminRegister() {
       // Split the name into parts for the API
       const nameParts = formData.name.trim().split(" ")
       const firstName = nameParts[0] || ""
-      const lastName = nameParts[nameParts.length - 1] || ""
+      const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : ""
       const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(" ") : ""
 
-      const registrationData: RegisterOrUpdateUserRequest = {
-        userId: null,
+      const registrationData: RegistrationRequest = {
         firstName,
         lastName,
         middleName,
         email: formData.email,
         password: formData.password,
         phoneNumber: formData.phoneNumber,
-        imageFile: null, // Changed from "" to null
-        userTypeId: "Admin" // Changed back to "Admin"
+        userTypeId: UserType.Admin
       }
 
-      const response = await registerOrUpdateUser(registrationData)
+      const response = await registration(registrationData)
 
       if (response.isSuccessful) {
         toast.success("Registration successful! Please login with your credentials.")
-        router.push("/admin/login")
+        setTimeout(() => {
+          router.push("/admin/login")
+        }, 1500)
       } else {
         if (response.errors && response.errors.length > 0) {
           const errorMessages = response.errors.map(error => error.description).join(", ")
@@ -173,8 +173,8 @@ export default function AdminRegister() {
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Registration Form (Scrollable) */}
-      <div className="flex-1 overflow-y-auto bg-white">
-        <div className="w-full max-w-md mx-auto p-8 space-y-8">
+      <div className="flex-1 bg-white flex">
+        <div className="w-full overflow-y-auto py-8 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 space-y-8" style={{ maxHeight: '100vh' }}>
           {/* Logo */}
           <div className="text-center">
             <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
@@ -351,7 +351,7 @@ export default function AdminRegister() {
       </div>
 
       {/* Right Side - Hero Section (Fixed) */}
-      <div className="hidden lg:block flex-1 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative">
+      <div className="hidden lg:block flex-1 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative" style={{ height: '100vh', overflow: 'hidden' }}>
         {/* Background Pattern */}
         <div className="absolute inset-0">
           <Image
