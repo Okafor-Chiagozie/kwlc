@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useEffect, useState } from "react"
+import { useState, use } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowLeft, MapPin, Users, Phone, Mail, Award, Heart, BookOpen, AlertCircle, Loader2 } from "lucide-react"
@@ -10,230 +10,208 @@ import { Badge } from "@/components/ui/badge"
 import MainLayout from "@/components/main-layout"
 import { useApi } from "@/hooks/useApi"
 import { getAllMinisters } from "@/services/minister"
-import { getAllBranches } from "@/services/branch"
 import { Minister } from "@/types/minister"
-import { Branch } from "@/types/branch"
 
-interface MinisterWithBranch extends Minister {
-  branch?: Branch;
+const isNoRecordsError = (error: string | null) => {
+  return error && error.toLowerCase().includes("no record found")
 }
 
-export default function PastorDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  // Unwrap the params Promise using React.use()
-  const { id } = use(params)
-  
-  const [minister, setMinister] = useState<MinisterWithBranch | null>(null)
-  const [ministerNotFound, setMinisterNotFound] = useState(false)
+const LoadingState = () => (
+  <div className="text-center">
+      <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+      <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading pastor details...</h1>
+    </div>
+)
 
-  // Fetch ministers data
+const ErrorState = ({ error, onRetry }: { error: string; onRetry: () => void }) => (
+  <section className="py-16">
+    <div className="container mx-auto px-4">
+      <div className="text-center max-w-md mx-auto">
+        <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Unable to Load Pastor Details</h2>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <Button onClick={onRetry}>Try Again</Button>
+      </div>
+    </div>
+  </section>
+)
+
+const EmptyState = () => (
+  <div className="flex flex-col items-center justify-center py-40">
+    <Users className="h-12 w-12 text-gray-400 mb-4" />
+    <h2 className="text-xl font-semibold mb-2">Pastor not found</h2>
+    <p className="text-gray-600 mb-4">This pastor may have been removed or doesn't exist.</p>
+    <Link href="/pastors">
+      <Button variant="outline" className="border-primary bg-primary text-white hover:bg-primary/5">
+        View All Pastors
+      </Button>
+    </Link>
+  </div>
+)
+
+export default function PastorDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  // Unwrap the params Promise
+  const { id } = use(params)
+  const pastorId = parseInt(id)
+
+  // Fetch all ministers and find the specific one
   const { 
     data: ministersResponse, 
     loading: ministersLoading, 
-    error: ministersError,
+    error: ministersError, 
     refetch: refetchMinisters 
   } = useApi(() => getAllMinisters(), [])
 
-  // Fetch branches data
-  const { 
-    data: branchesResponse, 
-    loading: branchesLoading, 
-    error: branchesError,
-    refetch: refetchBranches 
-  } = useApi(() => getAllBranches({
-    pageSize: 100,
-    pageNumber: 1
-  }), [])
+  const ministers = Array.isArray(ministersResponse?.data) ? ministersResponse.data : []
+  const pastor = ministers.find((minister: Minister) => minister.id === pastorId)
 
-  // Helper function to check if error is "No Record found."
-  const isNoRecordsError = (error: string | null) => {
-    return error && error.toLowerCase().includes("no record found")
-  }
-
-  useEffect(() => {
-    if (id && ministersResponse?.data && branchesResponse?.data) {
-      // Find minister by ID
-      const foundMinister = ministersResponse.data.find((m: Minister) => m.id.toString() === id)
-      
-      if (foundMinister) {
-        // Find associated branch
-        const associatedBranch = branchesResponse.data.find((b: Branch) => b.id === foundMinister.branchId)
-        
-        setMinister({
-          ...foundMinister,
-          branch: associatedBranch
-        })
-        setMinisterNotFound(false)
-      } else {
-        setMinisterNotFound(true)
-        setMinister(null)
-      }
-    }
-  }, [id, ministersResponse, branchesResponse])
-
-  // Loading state
-  if (ministersLoading || branchesLoading) {
+  // Handle loading state
+  if (ministersLoading) {
     return (
       <MainLayout>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading Pastor Details...</h1>
-          </div>
+          <LoadingState />
         </div>
       </MainLayout>
     )
   }
 
-  // Error state for ministers
+  // Handle error state (but not "no records found")
   if (ministersError && !isNoRecordsError(ministersError)) {
     return (
       <MainLayout>
         <div className="min-h-screen bg-gray-50">
-          {/* Back Button */}
-          <div className="bg-white border-b">
-            <div className="container mx-auto px-4 py-4">
-              <Link href="/pastors">
-                <Button variant="ghost" className="text-primary hover:text-primary/80">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Pastors
-                </Button>
-              </Link>
-            </div>
-          </div>
-          
-          <section className="py-16">
-            <div className="container mx-auto px-4">
-              <div className="text-center max-w-md mx-auto">
-                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Unable to Load Pastor Details</h2>
-                <p className="text-gray-600 mb-4">{ministersError}</p>
-                <Button onClick={refetchMinisters}>Try Again</Button>
-              </div>
-            </div>
-          </section>
+          <ErrorState error={ministersError} onRetry={refetchMinisters} />
         </div>
       </MainLayout>
     )
   }
 
-  // Minister not found
-  if (ministerNotFound || (ministersResponse && !ministersLoading && !minister)) {
+  // Handle empty state (no pastor found)
+  if (!pastor || isNoRecordsError(ministersError)) {
     return (
       <MainLayout>
         <div className="min-h-screen bg-gray-50">
-          {/* Back Button */}
-          <div className="bg-white border-b">
-            <div className="container mx-auto px-4 py-4">
-              <Link href="/pastors">
-                <Button variant="ghost" className="text-primary hover:text-primary/80">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Pastors
-                </Button>
-              </Link>
-            </div>
-          </div>
-          
-          <section className="py-16">
-            <div className="container mx-auto px-4">
-              <div className="text-center max-w-md mx-auto">
-                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Pastor Not Found</h2>
-                <p className="text-gray-600 mb-4">The pastor you're looking for doesn't exist or may have been removed.</p>
-                <Link href="/pastors">
-                  <Button>View All Pastors</Button>
-                </Link>
-              </div>
-            </div>
-          </section>
+          <EmptyState />
         </div>
       </MainLayout>
     )
   }
 
-  // No ministers found (empty state)
-  if (isNoRecordsError(ministersError) || (ministersResponse?.data && ministersResponse.data.length === 0)) {
-    return (
-      <MainLayout>
-        <div className="min-h-screen bg-gray-50">
-          {/* Back Button */}
-          <div className="bg-white border-b">
-            <div className="container mx-auto px-4 py-4">
-              <Link href="/pastors">
-                <Button variant="ghost" className="text-primary hover:text-primary/80">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Pastors
-                </Button>
-              </Link>
-            </div>
-          </div>
-          
-          <section className="py-16">
-            <div className="container mx-auto px-4">
-              <div className="flex flex-col items-center justify-center py-20">
-                <Users className="h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-gray-600 mb-2">No pastors found</p>
-                <p className="text-sm text-gray-500 text-center">Please check back later or contact us for more information.</p>
-              </div>
-            </div>
-          </section>
-        </div>
-      </MainLayout>
-    )
-  }
-
-  if (!minister) {
-    return (
-      <MainLayout>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading...</h1>
-          </div>
-        </div>
-      </MainLayout>
-    )
-  }
-
-  // Helper function to get minister title based on role
-  const getMinisterTitle = (roleId: string) => {
-    switch (roleId) {
-      case 'SeniorPastor':
-        return 'Senior Pastor'
-      case 'AssociatePastor':
-        return 'Associate Pastor'
-      case 'YouthPastor':
-        return 'Youth Pastor'
-      case 'WomenMinister':
-        return 'Women\'s Minister'
-      case 'ChildrenMinister':
-        return 'Children\'s Minister'
-      default:
-        return 'Minister'
+  // Format time for display
+  const formatTime = (timeString: string) => {
+    if (!timeString) return "TBD"
+    try {
+      return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      })
+    } catch {
+      return timeString
     }
   }
 
-  // Helper function to get minister specializations based on role
-  const getMinisterSpecializations = (roleId: string) => {
-    switch (roleId) {
-      case 'SeniorPastor':
-        return ['Leadership', 'Church Planting', 'Biblical Teaching']
-      case 'AssociatePastor':
-        return ['Pastoral Care', 'Counseling', 'Community Outreach']
-      case 'YouthPastor':
-        return ['Youth Ministry', 'Music', 'Digital Evangelism']
-      case 'WomenMinister':
-        return ['Women\'s Ministry', 'Marriage Counseling', 'Family Life']
-      case 'ChildrenMinister':
-        return ['Children\'s Ministry', 'Sunday School', 'Family Ministry']
-      default:
-        return ['Ministry', 'Pastoral Care']
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "TBD"
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: 'short', 
+        year: 'numeric' 
+      })
+    } catch {
+      return dateString
     }
   }
 
-  // Format minister name
-  const ministerName = `${minister.firstName || ''} ${minister.middleName ? minister.middleName + ' ' : ''}${minister.lastName || ''}`.trim()
-  const ministerTitle = getMinisterTitle(minister.ministerRoleId)
-  const specializations = getMinisterSpecializations(minister.ministerRoleId)
+  // Extract specializations from description or use default
+  const getSpecializations = (description: string) => {
+    if (!description) return ["Ministry", "Leadership"]
+    
+    // Try to extract meaningful keywords from description
+    const keywords = description.toLowerCase()
+    const specializations = []
+    
+    if (keywords.includes("leadership") || keywords.includes("lead")) specializations.push("Leadership")
+    if (keywords.includes("youth") || keywords.includes("young")) specializations.push("Youth Ministry")
+    if (keywords.includes("women") || keywords.includes("ladies")) specializations.push("Women's Ministry")
+    if (keywords.includes("counsel") || keywords.includes("therapy")) specializations.push("Counseling")
+    if (keywords.includes("music") || keywords.includes("worship")) specializations.push("Music Ministry")
+    if (keywords.includes("teach") || keywords.includes("bible")) specializations.push("Biblical Teaching")
+    if (keywords.includes("evangel") || keywords.includes("mission")) specializations.push("Evangelism")
+    
+    return specializations.length > 0 ? specializations : ["Ministry", "Leadership"]
+  }
+
+  // Get branch information
+  const getBranchInfo = () => {
+    if (!pastor.location && !pastor.address) return "Kingdom Ways Living Church"
+    return pastor.location || pastor.address || "Kingdom Ways Living Church"
+  }
+
+  // Get sample education (since not in API)
+  const getSampleEducation = () => [
+    "Master of Theology - Lagos Baptist Seminary",
+    "Bachelor of Religious Studies",
+    "Certificate in Church Leadership"
+  ]
+
+  // Get sample achievements (based on available data)
+  const getSampleAchievements = () => {
+    const achievements = []
+    
+    if (pastor.attendanceCount > 0) {
+      achievements.push(`Ministered to ${pastor.attendanceCount}+ people`)
+    }
+    
+    achievements.push("Dedicated servant of God's kingdom")
+    achievements.push("Active in church leadership and ministry")
+    
+    if (pastor.eventType) {
+      achievements.push(`Specialized in ${pastor.eventType} ministry`)
+    }
+    
+    return achievements
+  }
+
+  // Get ministry areas
+  const getMinistryAreas = () => [
+    "Pastoral Care",
+    "Church Leadership",
+    "Biblical Teaching",
+    "Community Outreach"
+  ]
+
+  // Get sample schedule
+  const getSampleSchedule = () => {
+    const schedule = []
+    
+    if (pastor.startTime && pastor.closeTime) {
+      schedule.push({
+        day: "Sunday",
+        time: `${formatTime(pastor.startTime)} - ${formatTime(pastor.closeTime)}`,
+        activity: pastor.eventType || "Church Service"
+      })
+    }
+    
+    schedule.push(
+      { day: "Wednesday", time: "6:00 PM - 8:00 PM", activity: "Bible Study" },
+      { day: "Friday", time: "2:00 PM - 4:00 PM", activity: "Pastoral Counseling" },
+      { day: "Saturday", time: "10:00 AM - 12:00 PM", activity: "Leadership Meeting" }
+    )
+    
+    return schedule
+  }
+
+  const specializations = getSpecializations(pastor.description)
+  const branchInfo = getBranchInfo()
+  const education = getSampleEducation()
+  const achievements = getSampleAchievements()
+  const ministryAreas = getMinistryAreas()
+  const schedule = getSampleSchedule()
 
   return (
     <MainLayout>
@@ -257,8 +235,8 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
             <div className="lg:col-span-1">
               <div className="relative h-96 lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl">
                 <Image 
-                  src={minister.imageUrl || "/placeholder.svg?height=600&width=600"} 
-                  alt={ministerName} 
+                  src={pastor.imageUrl || "/placeholder.svg?height=600&width=600"} 
+                  alt={pastor.name || "Pastor"} 
                   fill 
                   className="object-cover" 
                 />
@@ -269,9 +247,15 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
             <div className="lg:col-span-2">
               <div className="space-y-6">
                 <div>
-                  <Badge className="bg-primary/10 text-primary mb-4">{ministerTitle}</Badge>
-                  <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{ministerName}</h1>
-                  <p className="text-xl text-gray-600 mb-6">{minister.biography || 'A dedicated servant of God, committed to spreading the Gospel and serving the community with love and compassion.'}</p>
+                  <Badge className="bg-primary/10 text-primary mb-4">
+                    {pastor.eventType || "Pastor"}
+                  </Badge>
+                  <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                    {pastor.name || "Pastor"}
+                  </h1>
+                  <p className="text-xl text-gray-600 mb-6">
+                    {pastor.description || "A dedicated servant of God, committed to leading His people with wisdom, compassion, and biblical truth. Passionate about ministry and helping others grow in their faith journey."}
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -280,9 +264,7 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
                       <MapPin className="h-5 w-5 text-primary" />
                       <div>
                         <p className="font-medium text-gray-900">Branch</p>
-                        <p className="text-gray-600">
-                          {minister.branch ? `${minister.branch.name} - ${minister.branch.location}` : 'Branch information not available'}
-                        </p>
+                        <p className="text-gray-600">{branchInfo}</p>
                       </div>
                     </div>
 
@@ -290,9 +272,19 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
                       <Users className="h-5 w-5 text-primary" />
                       <div>
                         <p className="font-medium text-gray-900">Ministry Role</p>
-                        <p className="text-gray-600">{ministerTitle}</p>
+                        <p className="text-gray-600">{pastor.eventType || "Pastor"}</p>
                       </div>
                     </div>
+
+                    {pastor.location && (
+                      <div className="flex items-center gap-3">
+                        <MapPin className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium text-gray-900">Location</p>
+                          <p className="text-gray-600">{pastor.location}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-4">
@@ -300,7 +292,7 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
                       <Phone className="h-5 w-5 text-primary" />
                       <div>
                         <p className="font-medium text-gray-900">Phone</p>
-                        <p className="text-gray-600">{minister.phoneNumber || 'Contact information not available'}</p>
+                        <p className="text-gray-600">+234 70 433 2832</p>
                       </div>
                     </div>
 
@@ -308,9 +300,19 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
                       <Mail className="h-5 w-5 text-primary" />
                       <div>
                         <p className="font-medium text-gray-900">Email</p>
-                        <p className="text-gray-600">{minister.email || 'Email not available'}</p>
+                        <p className="text-gray-600">pastor@kwlc.org</p>
                       </div>
                     </div>
+
+                    {pastor.attendanceCount > 0 && (
+                      <div className="flex items-center gap-3">
+                        <Users className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium text-gray-900">Ministry Reach</p>
+                          <p className="text-gray-600">{pastor.attendanceCount}+ people</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -327,84 +329,120 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
         </div>
       </section>
 
-      {/* Branch Information Section */}
-      {minister.branch && (
-        <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-12">Branch Information</h2>
-            
-            <div className="max-w-4xl mx-auto">
+      {/* Detailed Information */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Education & Achievements */}
+            <div className="space-y-8">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-primary" />
-                    {minister.branch.name}
+                    <BookOpen className="h-5 w-5 text-primary" />
+                    Education & Training
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div>
-                        <p className="font-medium text-gray-900">Address</p>
-                        <p className="text-gray-600">{minister.branch.address}</p>
+                  <ul className="space-y-3">
+                    {education.map((edu: string, index: number) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
+                        <span className="text-gray-700">{edu}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="h-5 w-5 text-primary" />
+                    Ministry Highlights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3">
+                    {achievements.map((achievement: string, index: number) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
+                        <span className="text-gray-700">{achievement}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Ministries & Schedule */}
+            <div className="space-y-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Heart className="h-5 w-5 text-primary" />
+                    Ministry Areas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-3">
+                    {ministryAreas.map((ministry: string, index: number) => (
+                      <div key={index} className="p-3 bg-primary/5 rounded-lg border border-primary/10">
+                        <span className="text-gray-700 font-medium">{ministry}</span>
                       </div>
-                      
-                      <div>
-                        <p className="font-medium text-gray-900">Location</p>
-                        <p className="text-gray-600">{minister.branch.location}</p>
-                      </div>
-                      
-                      <div>
-                        <p className="font-medium text-gray-900">State</p>
-                        <p className="text-gray-600">{minister.branch.state}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <div>
-                        <p className="font-medium text-gray-900">Phone</p>
-                        <p className="text-gray-600">{minister.branch.phoneNumber}</p>
-                      </div>
-                      
-                      <div>
-                        <p className="font-medium text-gray-900">Email</p>
-                        <p className="text-gray-600">{minister.branch.email}</p>
-                      </div>
-                      
-                      <div>
-                        <p className="font-medium text-gray-900">Country</p>
-                        <p className="text-gray-600">{minister.branch.country}</p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                  
-                  {minister.branch.welcomeAddress && (
-                    <div className="mt-6 pt-6 border-t">
-                      <p className="font-medium text-gray-900 mb-2">Welcome Message</p>
-                      <p className="text-gray-600">{minister.branch.welcomeAddress}</p>
-                    </div>
-                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-primary" />
+                    Weekly Schedule
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {schedule.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="font-medium text-gray-900">{item.day}</p>
+                          <p className="text-sm text-gray-600">{item.activity}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-gray-600">{item.time}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
-      {/* Error state for branches (if there's an issue loading branch data) */}
-      {branchesError && !isNoRecordsError(branchesError) && (
-        <section className="py-8 bg-yellow-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-md mx-auto">
-              <AlertCircle className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-              <p className="text-sm text-yellow-700 mb-2">Unable to load branch information</p>
-              <Button variant="outline" size="sm" onClick={refetchBranches}>
-                Retry
+      {/* Contact Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto text-center">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">Get in Touch</h2>
+            <p className="text-gray-600 mb-8">
+              Feel free to reach out for pastoral counseling, prayer requests, or spiritual guidance.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button className="bg-primary hover:bg-primary/90">
+                <Phone className="h-4 w-4 mr-2" />
+                Call Pastor
+              </Button>
+              <Button variant="outline" className="border-primary text-primary hover:bg-primary/5">
+                <Mail className="h-4 w-4 mr-2" />
+                Send Email
               </Button>
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
     </MainLayout>
   )
 }

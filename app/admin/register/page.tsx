@@ -9,15 +9,17 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Eye, EyeOff, User, Mail, Phone, Lock, ArrowLeft } from "lucide-react"
+import { Eye, EyeOff, User, Mail, Phone, Lock, ArrowLeft, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 import { Toaster } from "@/components/ui/sonner"
+import { registerOrUpdateUser } from "@/services/user"
+import { RegisterOrUpdateUserRequest } from "@/types/user"
 
 export default function AdminRegister() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone: "",
+    phoneNumber: "",
     password: "",
     confirmPassword: "",
   })
@@ -25,6 +27,7 @@ export default function AdminRegister() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [apiError, setApiError] = useState<string | null>(null)
   const router = useRouter()
 
   const validateForm = () => {
@@ -40,10 +43,10 @@ export default function AdminRegister() {
       newErrors.email = "Please enter a valid email address"
     }
 
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required"
-    } else if (!/^[+]?[1-9][\d]{0,15}$/.test(formData.phone.replace(/\s/g, ""))) {
-      newErrors.phone = "Please enter a valid phone number"
+    if (!formData.phoneNumber.trim()) {
+      newErrors.phoneNumber = "Phone number is required"
+    } else if (!/^[+]?[\d]{7,15}$/.test(formData.phoneNumber.replace(/\s/g, ""))) {
+      newErrors.phoneNumber = "Please enter a valid phone number"
     }
 
     if (!formData.password) {
@@ -66,6 +69,7 @@ export default function AdminRegister() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setApiError(null)
 
     if (!validateForm()) {
       toast.error("Please fix the errors in the form")
@@ -75,13 +79,82 @@ export default function AdminRegister() {
     setIsLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      // Split the name into parts for the API
+      const nameParts = formData.name.trim().split(" ")
+      const firstName = nameParts[0] || ""
+      const lastName = nameParts[nameParts.length - 1] || ""
+      const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(" ") : ""
 
-      toast.success("Registration successful! Please login with your credentials.")
-      router.push("/admin/login")
-    } catch (error) {
-      toast.error("Registration failed. Please try again.")
+      const registrationData: RegisterOrUpdateUserRequest = {
+        userId: null,
+        firstName,
+        lastName,
+        middleName,
+        email: formData.email,
+        password: formData.password,
+        phoneNumber: formData.phoneNumber,
+        imageFile: null, // Changed from "" to null
+        userTypeId: "Admin" // Changed back to "Admin"
+      }
+
+      const response = await registerOrUpdateUser(registrationData)
+
+      if (response.isSuccessful) {
+        toast.success("Registration successful! Please login with your credentials.")
+        router.push("/admin/login")
+      } else {
+        if (response.errors && response.errors.length > 0) {
+          const errorMessages = response.errors.map(error => error.description).join(", ")
+          setApiError(errorMessages)
+          toast.error(errorMessages)
+        } else {
+          setApiError(response.responseMessage || "Registration failed")
+          toast.error(response.responseMessage || "Registration failed")
+        }
+      }
+    } catch (error: any) {
+      console.error("Registration error:", error)
+      console.log("Error response data:", error?.response?.data)
+      
+      let errorMessage = "Registration failed. Please try again."
+      
+      // Handle different error response structures
+      if (error?.response?.data) {
+        const errorData = error.response.data
+        
+        // Handle .NET validation error format
+        if (errorData.errors && typeof errorData.errors === 'object') {
+          const errorMessages = []
+          for (const field in errorData.errors) {
+            if (Array.isArray(errorData.errors[field])) {
+              errorMessages.push(`${field}: ${errorData.errors[field].join(', ')}`)
+            } else {
+              errorMessages.push(`${field}: ${errorData.errors[field]}`)
+            }
+          }
+          errorMessage = errorMessages.join(" | ")
+        }
+        // Handle standard API response format
+        else if (errorData.responseMessage) {
+          errorMessage = errorData.responseMessage
+        }
+        // Handle standard API errors array
+        else if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+          errorMessage = errorData.errors.map((e: any) => e.description || e.message).join(", ")
+        }
+        // Handle title + detail format
+        else if (errorData.title) {
+          errorMessage = errorData.title
+          if (errorData.detail) {
+            errorMessage += ": " + errorData.detail
+          }
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
+      setApiError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -91,6 +164,9 @@ export default function AdminRegister() {
     setFormData({ ...formData, [field]: value })
     if (errors[field]) {
       setErrors({ ...errors, [field]: "" })
+    }
+    if (apiError) {
+      setApiError(null)
     }
   }
 
@@ -113,6 +189,17 @@ export default function AdminRegister() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
             <p className="text-gray-600">Join the KWLC Admin Portal</p>
           </div>
+
+          {/* API Error Display */}
+          {apiError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
+              <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="text-sm font-medium text-red-800">Registration Failed</h3>
+                <p className="text-sm text-red-700 mt-1">{apiError}</p>
+              </div>
+            </div>
+          )}
 
           {/* Registration Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -159,24 +246,24 @@ export default function AdminRegister() {
             </div>
 
             <div>
-              <Label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+              <Label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
                 Phone Number
               </Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <Input
-                  id="phone"
+                  id="phoneNumber"
                   type="tel"
                   placeholder="Enter your phone number"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange("phone", e.target.value)}
+                  value={formData.phoneNumber}
+                  onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
                   className={`pl-12 h-12 bg-gray-50 border-gray-200 focus:bg-white transition-colors ${
-                    errors.phone ? "border-red-500" : ""
+                    errors.phoneNumber ? "border-red-500" : ""
                   }`}
                   disabled={isLoading}
                 />
               </div>
-              {errors.phone && <p className="text-sm text-red-600 mt-1">{errors.phone}</p>}
+              {errors.phoneNumber && <p className="text-sm text-red-600 mt-1">{errors.phoneNumber}</p>}
             </div>
 
             <div>

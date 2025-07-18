@@ -89,9 +89,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   if (eventLoading) {
     return (
       <MainLayout>
-        {/* <div className="min-h-screen">
-          <LoadingState />
-        </div> */}
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <LoadingState />
         </div>

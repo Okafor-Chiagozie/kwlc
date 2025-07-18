@@ -5,41 +5,108 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { Eye, EyeOff, User, Lock } from "lucide-react"
+import { Eye, EyeOff, User, Lock, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
 import { Toaster } from "@/components/ui/sonner"
+import { loginUser } from "@/services/user"
+import { LoginRequest } from "@/types/user"
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [formData, setFormData] = useState({
+    username: "",
+    password: ""
+  })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [apiError, setApiError] = useState<string | null>(null)
   const router = useRouter()
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.username.trim()) {
+      newErrors.username = "Email or username is required"
+    }
+
+    if (!formData.password.trim()) {
+      newErrors.password = "Password is required"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
+    setApiError(null)
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Dummy login validation
-    if (email === "admin@admin.com" && password === "admin") {
-      localStorage.setItem("adminAuth", "true")
-      localStorage.setItem("adminRole", "super_admin")
-      toast.success("Login successful! Redirecting to dashboard...")
-      setTimeout(() => {
-        router.push("/admin/dashboard")
-      }, 1000)
-    } else {
-      toast.error("Invalid email or password. Please try again.")
+    if (!validateForm()) {
+      toast.error("Please fill in all required fields")
+      return
     }
 
-    setIsLoading(false)
+    setIsLoading(true)
+
+    try {
+      const loginData: LoginRequest = {
+        username: formData.username,
+        password: formData.password
+      }
+
+      const response = await loginUser(loginData)
+
+      if (response.isSuccessful) {
+        // Store auth info in localStorage (you might want to use a more secure method)
+        localStorage.setItem("adminAuth", "true")
+        localStorage.setItem("userId", response.data.toString())
+        
+        toast.success("Login successful! Redirecting to dashboard...")
+        setTimeout(() => {
+          router.push("/admin/dashboard")
+        }, 1000)
+      } else {
+        if (response.errors && response.errors.length > 0) {
+          const errorMessages = response.errors.map(error => error.description).join(", ")
+          setApiError(errorMessages)
+          toast.error(errorMessages)
+        } else {
+          setApiError(response.responseMessage || "Login failed")
+          toast.error(response.responseMessage || "Login failed")
+        }
+      }
+    } catch (error: any) {
+      console.error("Login error:", error)
+      
+      let errorMessage = "Login failed. Please try again."
+      
+      if (error?.response?.data?.responseMessage) {
+        errorMessage = error.response.data.responseMessage
+      } else if (error?.response?.data?.errors && Array.isArray(error.response.data.errors) && error.response.data.errors.length > 0) {
+        errorMessage = error.response.data.errors.map((e: any) => e.description || e.message).join(", ")
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
+      setApiError(errorMessage)
+      toast.error(errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData({ ...formData, [field]: value })
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: "" })
+    }
+    if (apiError) {
+      setApiError(null)
+    }
   }
 
   return (
@@ -60,25 +127,40 @@ export default function AdminLogin() {
             <h1 className="text-2xl font-bold text-gray-900">Church Admin Dashboard</h1>
           </div>
 
+          {/* API Error Display */}
+          {apiError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
+              <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="text-sm font-medium text-red-800">Login Failed</h3>
+                <p className="text-sm text-red-700 mt-1">{apiError}</p>
+              </div>
+            </div>
+          )}
+
           <Card className="border-0 shadow-none">
             <CardContent className="p-0">
               <form onSubmit={handleLogin} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="sr-only">
-                    Email
+                  <Label htmlFor="username" className="sr-only">
+                    Email or Username
                   </Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                     <Input
-                      id="email"
-                      type="email"
+                      id="username"
+                      type="text"
                       placeholder="Your login or Email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 h-12 border-gray-200 focus:border-primary"
+                      value={formData.username}
+                      onChange={(e) => handleInputChange("username", e.target.value)}
+                      className={`pl-10 h-12 border-gray-200 focus:border-primary ${
+                        errors.username ? "border-red-500" : ""
+                      }`}
+                      disabled={isLoading}
                       required
                     />
                   </div>
+                  {errors.username && <p className="text-sm text-red-600 mt-1">{errors.username}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -91,9 +173,12 @@ export default function AdminLogin() {
                       id="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 pr-10 h-12 border-gray-200 focus:border-primary"
+                      value={formData.password}
+                      onChange={(e) => handleInputChange("password", e.target.value)}
+                      className={`pl-10 pr-10 h-12 border-gray-200 focus:border-primary ${
+                        errors.password ? "border-red-500" : ""
+                      }`}
+                      disabled={isLoading}
                       required
                     />
                     <button
@@ -104,6 +189,7 @@ export default function AdminLogin() {
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
                   </div>
+                  {errors.password && <p className="text-sm text-red-600 mt-1">{errors.password}</p>}
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -114,7 +200,7 @@ export default function AdminLogin() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-black hover:bg-gray-800 text-white"
+                  className="w-full h-12 bg-black hover:bg-gray-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isLoading}
                 >
                   {isLoading ? "Signing In..." : "Sign In"}

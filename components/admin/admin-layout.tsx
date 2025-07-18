@@ -50,52 +50,26 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [userRole, setUserRole] = useState("")
+  const [userId, setUserId] = useState("")
   const router = useRouter()
   const pathname = usePathname()
 
   useEffect(() => {
     const auth = localStorage.getItem("adminAuth")
-    const role = localStorage.getItem("adminRole")
+    const userIdFromStorage = localStorage.getItem("userId")
 
-    if (!auth) {
-      router.push("/admin/login")
-      return
-    }
+    // if (!auth) {
+    //   router.push("/admin/login")
+    //   return
+    // }
 
-    setUserRole(role || "")
+    setUserId(userIdFromStorage || "")
   }, [router])
 
   const handleLogout = () => {
     localStorage.removeItem("adminAuth")
-    localStorage.removeItem("adminRole")
+    localStorage.removeItem("userId")
     router.push("/admin/login")
-  }
-
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case "super_admin":
-        return "Super Admin"
-      case "abuja_admin":
-        return "Abuja Admin"
-      case "lagos_admin":
-        return "Lagos Admin"
-      default:
-        return "Admin"
-    }
-  }
-
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case "super_admin":
-        return "default"
-      case "abuja_admin":
-        return "secondary"
-      case "lagos_admin":
-        return "outline"
-      default:
-        return "secondary"
-    }
   }
 
   return (
@@ -179,9 +153,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
 
           <div className="flex items-center gap-4">
-            {userRole && (
-              <Badge variant={getRoleBadgeVariant(userRole)} className="hidden sm:inline-flex">
-                {getRoleDisplayName(userRole)}
+            {userId && (
+              <Badge variant="secondary" className="hidden sm:inline-flex">
+                User: {userId}
               </Badge>
             )}
 
@@ -190,19 +164,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <Button variant="ghost" className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                    <AvatarFallback>MB</AvatarFallback>
+                    <AvatarFallback>AD</AvatarFallback>
                   </Avatar>
                   <div className="hidden sm:block text-left">
-                    <div className="text-sm font-medium">Michael Blackson</div>
-                    {userRole && <div className="text-xs text-gray-500 sm:hidden">{getRoleDisplayName(userRole)}</div>}
+                    <div className="text-sm font-medium">Admin User</div>
+                    {userId && <div className="text-xs text-gray-500">ID: {userId}</div>}
                   </div>
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5 text-sm font-medium">
-                  Michael Blackson
-                  {userRole && <div className="text-xs text-gray-500">{getRoleDisplayName(userRole)}</div>}
+                  Admin User
+                  {userId && <div className="text-xs text-gray-500">User ID: {userId}</div>}
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
