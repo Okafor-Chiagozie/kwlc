@@ -36,7 +36,7 @@ export default function ChurchInfoPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Church Information State - Load from API
+  // Church Information State - Initialize with empty data since we don't have a get endpoint
   const [churchInfo, setChurchInfo] = useState<CreateOrUpdateChurchDetailsRequest>({
     id: null,
     name: "",
@@ -46,6 +46,9 @@ export default function ChurchInfoPage() {
     phoneNumber: "",
     welcomeAddress: ""
   })
+
+  // Track if church info has been loaded/set before
+  const [hasChurchInfo, setHasChurchInfo] = useState(false)
 
   // Service Schedule State
   const [serviceSchedules, setServiceSchedules] = useState<any[]>([])
@@ -76,7 +79,7 @@ export default function ChurchInfoPage() {
       setIsLoading(true)
       setError(null)
 
-      // Load all data in parallel - including homepage data
+      // Load all data in parallel - including homepage data for church info
       const [homePageData, branchesData, serviceSchedulesData, churchDaysData] = await Promise.allSettled([
         getHomePage(),
         getAllBranches({ pageSize: 100, pageNumber: 1 }),
@@ -84,20 +87,21 @@ export default function ChurchInfoPage() {
         getAllChurchdays()
       ])
 
-      // Handle homepage data - this should contain church information
+      // Handle homepage data - this contains church information
       if (homePageData.status === 'fulfilled' && homePageData.value.isSuccessful) {
         const homeData = homePageData.value.data
         console.log('Homepage data:', homeData)
         console.log('Homepage data type:', typeof homeData)
         console.log('Homepage data is array:', Array.isArray(homeData))
         
-        // The API seems to return church data directly in the response
+        // The API returns church data - could be object or array
         if (homeData) {
-          // If it's an array, take the first item
+          // If it's an array, take the first item, otherwise use the object directly
           const churchData = Array.isArray(homeData) ? homeData[0] : homeData
           
           if (churchData && typeof churchData === 'object') {
             console.log('Setting church data:', churchData)
+            // Update church info with data from API
             setChurchInfo({
               id: churchData.id || null,
               name: churchData.name || "",
@@ -107,10 +111,23 @@ export default function ChurchInfoPage() {
               phoneNumber: churchData.phoneNumber || "",
               welcomeAddress: churchData.welcomeAddress || ""
             })
+            setHasChurchInfo(true)
           }
         }
       } else {
         console.error('Failed to load homepage data:', homePageData)
+        // Set default values if homepage data fails
+        if (!hasChurchInfo) {
+          setChurchInfo({
+            id: null,
+            name: "",
+            email: "",
+            address: "",
+            location: "",
+            phoneNumber: "",
+            welcomeAddress: ""
+          })
+        }
       }
 
       // Handle branches data
@@ -148,17 +165,47 @@ export default function ChurchInfoPage() {
 
   const handleSaveChurchInfo = async () => {
     try {
+      // Validate required fields
+      if (!churchInfo.name.trim()) {
+        toast.error("Church name is required")
+        return
+      }
+      if (!churchInfo.email.trim()) {
+        toast.error("Church email is required")
+        return
+      }
+
       setIsSaving(true)
       setError(null)
 
+      console.log('Saving church info:', churchInfo)
       const response = await createOrUpdateChurchDetails(churchInfo)
+
+      console.log('Church info save response:', response)
 
       if (response.isSuccessful) {
         toast.success("Church information updated successfully!")
         setIsEditing(false)
+        
+        // If the response contains updated data, use it
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          const updatedInfo = response.data[0]
+          if (updatedInfo && typeof updatedInfo === 'object') {
+            setChurchInfo({
+              id: updatedInfo.id || churchInfo.id,
+              name: updatedInfo.name || churchInfo.name,
+              email: updatedInfo.email || churchInfo.email,
+              address: updatedInfo.address || churchInfo.address,
+              location: updatedInfo.location || churchInfo.location,
+              phoneNumber: updatedInfo.phoneNumber || churchInfo.phoneNumber,
+              welcomeAddress: updatedInfo.welcomeAddress || churchInfo.welcomeAddress
+            })
+          }
+        }
       } else {
-        const errorMessage = response.errors?.map(e => e.description).join(', ') || response.responseMessage
-        throw new Error(errorMessage || 'Failed to update church information')
+        const errorMessage = response.errors?.map(e => e.description).join(', ') || response.responseMessage || 'Failed to update church information'
+        console.error('Church info save error:', errorMessage)
+        throw new Error(errorMessage)
       }
     } catch (err: any) {
       console.error('Error saving church info:', err)
@@ -262,6 +309,14 @@ export default function ChurchInfoPage() {
     return { hour: hour || 0, minute: minute || 0 }
   }
 
+  const handleInputChange = (field: keyof CreateOrUpdateChurchDetailsRequest, value: string) => {
+    setChurchInfo(prev => ({ ...prev, [field]: value }))
+    // Clear any existing errors when user starts typing
+    if (error) {
+      setError(null)
+    }
+  }
+
   if (isLoading) {
     return (
       <AdminLayout>
@@ -321,13 +376,14 @@ export default function ChurchInfoPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="churchName">Church Name</Label>
+                    <Label htmlFor="churchName">Church Name *</Label>
                     <Input
                       id="churchName"
                       value={churchInfo.name}
-                      onChange={(e) => setChurchInfo({ ...churchInfo, name: e.target.value })}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
                       disabled={!isEditing}
                       placeholder="Enter church name"
+                      required
                     />
                   </div>
                   <div>
@@ -335,7 +391,7 @@ export default function ChurchInfoPage() {
                     <Input
                       id="location"
                       value={churchInfo.location}
-                      onChange={(e) => setChurchInfo({ ...churchInfo, location: e.target.value })}
+                      onChange={(e) => handleInputChange('location', e.target.value)}
                       disabled={!isEditing}
                       placeholder="Enter church location"
                     />
@@ -345,7 +401,7 @@ export default function ChurchInfoPage() {
                     <Textarea
                       id="welcomeAddress"
                       value={churchInfo.welcomeAddress}
-                      onChange={(e) => setChurchInfo({ ...churchInfo, welcomeAddress: e.target.value })}
+                      onChange={(e) => handleInputChange('welcomeAddress', e.target.value)}
                       disabled={!isEditing}
                       placeholder="Enter welcome message"
                       rows={3}
@@ -367,7 +423,7 @@ export default function ChurchInfoPage() {
                     <Textarea
                       id="address"
                       value={churchInfo.address}
-                      onChange={(e) => setChurchInfo({ ...churchInfo, address: e.target.value })}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
                       disabled={!isEditing}
                       placeholder="Enter full address"
                       rows={3}
@@ -378,48 +434,47 @@ export default function ChurchInfoPage() {
                     <Input
                       id="phone"
                       value={churchInfo.phoneNumber}
-                      onChange={(e) => setChurchInfo({ ...churchInfo, phoneNumber: e.target.value })}
+                      onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
                       disabled={!isEditing}
                       placeholder="Enter phone number"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">Email *</Label>
                     <Input
                       id="email"
                       value={churchInfo.email}
-                      onChange={(e) => setChurchInfo({ ...churchInfo, email: e.target.value })}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
                       disabled={!isEditing}
                       placeholder="Enter email address"
                       type="email"
+                      required
                     />
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {isEditing && (
-              <div className="flex justify-end gap-2">
-                <Button 
-                  onClick={handleSaveChurchInfo} 
-                  disabled={isSaving}
-                  className="mr-2"
-                >
-                  {isSaving ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4 mr-2" />
-                  )}
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsEditing(false)}
-                  disabled={isSaving}
-                >
-                  Cancel
-                </Button>
-              </div>
+            {/* Show a helpful note about church information */}
+            {!isEditing && (
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-blue-500 rounded-full p-1">
+                      <Church className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-blue-900">Church Information</h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        {hasChurchInfo && churchInfo.name
+                          ? "Click 'Edit Info' to modify your church details. These details will be used across the platform."
+                          : "Please fill in your church information to get started. This information will be displayed on your website and used in communications."
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
 
@@ -652,36 +707,6 @@ export default function ChurchInfoPage() {
                 </CardContent>
               </Card>
             </div>
-
-            {/* 
-            COMMENTED OUT: Mission & Vision section - No API endpoints found for these
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Mission & Vision</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="mission">Mission Statement</Label>
-                  <Textarea
-                    id="mission"
-                    value="Preaching the word, teaching the principles of the kingdom and demonstrating the power of the kingdom."
-                    disabled={!isEditing}
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="vision">Vision Statement</Label>
-                  <Textarea
-                    id="vision"
-                    value="To raise a generation of kingdom minded believers who will impact their world for Christ."
-                    disabled={!isEditing}
-                    rows={3}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-            */}
           </TabsContent>
         </Tabs>
       </div>
