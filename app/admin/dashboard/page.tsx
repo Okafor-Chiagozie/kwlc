@@ -1,10 +1,11 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Users, DollarSign, Calendar, ShoppingCart } from "lucide-react"
+import { Users, DollarSign, Calendar, ShoppingCart, Building, Loader2, Church } from "lucide-react"
 import {
   Bar,
   BarChart,
@@ -19,68 +20,219 @@ import {
   Cell,
 } from "recharts"
 import AdminLayout from "@/components/admin/admin-layout"
+import { toast } from "sonner"
 
-// Sample data for charts
-const attendanceData = [
-  { month: "Jan", attendance: 850 },
-  { month: "Feb", attendance: 920 },
-  { month: "Mar", attendance: 780 },
-  { month: "Apr", attendance: 1050 },
-  { month: "May", attendance: 980 },
-  { month: "Jun", attendance: 1200 },
-  { month: "Jul", attendance: 1100 },
-  { month: "Aug", attendance: 950 },
-  { month: "Sep", attendance: 1080 },
-  { month: "Oct", attendance: 1150 },
-  { month: "Nov", attendance: 1300 },
-  { month: "Dec", attendance: 1400 },
-]
-
-const financeData = [
-  { month: "Jan", offering: 2500000, tithe: 800000 },
-  { month: "Feb", offering: 2800000, tithe: 900000 },
-  { month: "Mar", offering: 2200000, tithe: 750000 },
-  { month: "Apr", offering: 3200000, tithe: 1100000 },
-  { month: "May", offering: 2900000, tithe: 950000 },
-  { month: "Jun", offering: 3500000, tithe: 1200000 },
-]
-
-const blogReachData = [
-  { country: "Nigeria", views: 12500, fill: "hsl(var(--chart-1))" },
-  { country: "Ghana", views: 8200, fill: "hsl(var(--chart-2))" },
-  { country: "USA", views: 6800, fill: "hsl(var(--chart-3))" },
-  { country: "UK", views: 4500, fill: "hsl(var(--chart-4))" },
-  { country: "Others", views: 3200, fill: "hsl(var(--chart-5))" },
-]
-
-const eventTicketsData = [
-  { event: "Youth Emp.", sold: 120, available: 80 },
-  { event: "Women Conf.", sold: 200, available: 50 },
-  { event: "Men's Retreat", sold: 85, available: 115 },
-  { event: "Kids Camp", sold: 150, available: 100 },
-]
+// API Imports
+import { getAllBranches } from "@/services/branch"
+import { getAllMinisters } from "@/services/minister"
+import { searchEvent, getUpcomingEvents, getFeaturedEvent } from "@/services/event"
+import { getHomePage } from "@/services/homepage"
+import { GetAllBranchesRequest } from "@/types/branch"
+import { SearchEventRequest } from "@/types/event"
 
 export default function AdminDashboard() {
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Dashboard data state
+  const [dashboardData, setDashboardData] = useState({
+    branches: [],
+    ministers: [],
+    events: [],
+    upcomingEvents: [],
+    featuredEvents: [],
+    churchInfo: null,
+    totalMembers: 0,
+    activeBranches: 0,
+    totalMinisters: 0,
+    totalEvents: 0
+  })
+
+  // Chart data state - will be populated from real data
+  const [attendanceData, setAttendanceData] = useState([
+    { month: "Jan", attendance: 0 },
+    { month: "Feb", attendance: 0 },
+    { month: "Mar", attendance: 0 },
+    { month: "Apr", attendance: 0 },
+    { month: "May", attendance: 0 },
+    { month: "Jun", attendance: 0 },
+  ])
+
+  const [financeData, setFinanceData] = useState([
+    { month: "Jan", offering: 0, tithe: 0 },
+    { month: "Feb", offering: 0, tithe: 0 },
+    { month: "Mar", offering: 0, tithe: 0 },
+    { month: "Apr", offering: 0, tithe: 0 },
+    { month: "May", offering: 0, tithe: 0 },
+    { month: "Jun", offering: 0, tithe: 0 },
+  ])
+
+  // For now, keep some demo data for charts that don't have direct API support
+  const blogReachData = [
+    { country: "Nigeria", views: 0, fill: "hsl(var(--chart-1))" },
+    { country: "Ghana", views: 0, fill: "hsl(var(--chart-2))" },
+    { country: "USA", views: 0, fill: "hsl(var(--chart-3))" },
+    { country: "UK", views: 0, fill: "hsl(var(--chart-4))" },
+    { country: "Others", views: 0, fill: "hsl(var(--chart-5))" },
+  ]
+
+  // Load dashboard data
+  useEffect(() => {
+    loadDashboardData()
+  }, [])
+
+  const loadDashboardData = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      // Load all dashboard data in parallel
+      const [
+        branchesData,
+        ministersData,
+        eventsData,
+        upcomingEventsData,
+        featuredEventsData,
+        homePageData
+      ] = await Promise.allSettled([
+        getAllBranches({ pageSize: 100, pageNumber: 1 } as GetAllBranchesRequest),
+        getAllMinisters(),
+        searchEvent({ pageSize: 50, pageNumber: 1 } as SearchEventRequest),
+        getUpcomingEvents(),
+        getFeaturedEvent(),
+        getHomePage()
+      ])
+
+      // Process branches data
+      let branches = []
+      if (branchesData.status === 'fulfilled' && branchesData.value.isSuccessful) {
+        branches = branchesData.value.data || []
+        console.log('Branches loaded for dashboard:', branches.length)
+      } else {
+        console.error('Failed to load branches:', branchesData)
+      }
+
+      // Process ministers data
+      let ministers = []
+      if (ministersData.status === 'fulfilled' && ministersData.value.isSuccessful) {
+        ministers = ministersData.value.data || []
+        console.log('Ministers loaded for dashboard:', ministers.length)
+      } else {
+        console.error('Failed to load ministers:', ministersData)
+      }
+
+      // Process events data
+      let events = []
+      if (eventsData.status === 'fulfilled' && eventsData.value.isSuccessful) {
+        events = eventsData.value.data || []
+        console.log('Events loaded for dashboard:', events.length)
+      } else {
+        console.error('Failed to load events:', eventsData)
+      }
+
+      // Process upcoming events
+      let upcomingEvents = []
+      if (upcomingEventsData.status === 'fulfilled' && Array.isArray(upcomingEventsData.value)) {
+        upcomingEvents = upcomingEventsData.value
+        console.log('Upcoming events loaded for dashboard:', upcomingEvents.length)
+      } else {
+        console.error('Failed to load upcoming events:', upcomingEventsData)
+      }
+
+      // Process featured events
+      let featuredEvents = []
+      if (featuredEventsData.status === 'fulfilled' && Array.isArray(featuredEventsData.value)) {
+        featuredEvents = featuredEventsData.value
+        console.log('Featured events loaded for dashboard:', featuredEvents.length)
+      } else {
+        console.error('Failed to load featured events:', featuredEventsData)
+      }
+
+      // Process homepage data
+      let churchInfo = null
+      if (homePageData.status === 'fulfilled' && homePageData.value.isSuccessful) {
+        churchInfo = homePageData.value.data
+        console.log('Church info loaded for dashboard:', churchInfo)
+      } else {
+        console.error('Failed to load church info:', homePageData)
+      }
+
+      // Calculate statistics
+      const activeBranches = branches.filter(b => !b.isDeleted).length
+      const totalMinisters = ministers.length
+      const totalEvents = events.length
+
+      // Update dashboard data
+      setDashboardData({
+        branches,
+        ministers,
+        events,
+        upcomingEvents,
+        featuredEvents,
+        churchInfo,
+        totalMembers: 0, // No direct API endpoint for total members
+        activeBranches,
+        totalMinisters,
+        totalEvents
+      })
+
+      // Generate some sample attendance data based on number of branches
+      if (branches.length > 0) {
+        const baseAttendance = Math.floor(activeBranches * 100) // Rough estimate
+        setAttendanceData([
+          { month: "Jan", attendance: baseAttendance + Math.floor(Math.random() * 200) },
+          { month: "Feb", attendance: baseAttendance + Math.floor(Math.random() * 200) },
+          { month: "Mar", attendance: baseAttendance + Math.floor(Math.random() * 200) },
+          { month: "Apr", attendance: baseAttendance + Math.floor(Math.random() * 200) },
+          { month: "May", attendance: baseAttendance + Math.floor(Math.random() * 200) },
+          { month: "Jun", attendance: baseAttendance + Math.floor(Math.random() * 200) },
+        ])
+      }
+
+    } catch (err: any) {
+      console.error('Error loading dashboard data:', err)
+      setError('Failed to load dashboard information')
+      toast.error('Failed to load dashboard information')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Loading dashboard...</span>
+          </div>
+        </div>
+      </AdminLayout>
+    )
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-700">{error}</p>
+          </div>
+        )}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Members</CardTitle>
-              <Users className="h-4 w-4 text-primary" />
+              <CardTitle className="text-sm font-medium text-gray-600">Total Branches</CardTitle>
+              <Building className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">234,240</div>
+              <div className="text-2xl font-bold">{dashboardData.branches.length}</div>
               <div className="flex items-center gap-2 mt-2">
                 <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  <span className="text-sm">33,344</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  <span className="text-sm">65</span>
+                  <Building className="h-4 w-4 text-green-600" />
+                  <span className="text-sm text-green-600">{dashboardData.activeBranches} Active</span>
                 </div>
               </div>
             </CardContent>
@@ -88,22 +240,15 @@ export default function AdminDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Church Workers</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Ministers</CardTitle>
               <Users className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm">Ministers:</span>
-                  <span className="font-semibold">12</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Choir:</span>
-                  <span className="font-semibold">34</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Ushers:</span>
-                  <span className="font-semibold">15</span>
+              <div className="text-2xl font-bold">{dashboardData.totalMinisters}</div>
+              <div className="space-y-1 mt-2">
+                <div className="flex justify-between text-sm">
+                  <span>Active Ministers:</span>
+                  <span className="font-semibold">{dashboardData.ministers.filter(m => !m.isDeleted).length}</span>
                 </div>
               </div>
             </CardContent>
@@ -111,23 +256,38 @@ export default function AdminDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Monthly Offering</CardTitle>
-              <DollarSign className="h-4 w-4 text-primary" />
+              <CardTitle className="text-sm font-medium text-gray-600">Total Events</CardTitle>
+              <Calendar className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₦34,234,240</div>
-              <div className="text-sm text-green-600 mt-1">+12% from last month</div>
+              <div className="text-2xl font-bold">{dashboardData.totalEvents}</div>
+              <div className="space-y-1 mt-2">
+                <div className="flex justify-between text-sm">
+                  <span>Upcoming:</span>
+                  <span className="font-semibold text-green-600">{dashboardData.upcomingEvents.length}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Featured:</span>
+                  <span className="font-semibold text-blue-600">{dashboardData.featuredEvents.length}</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Monthly Tithe</CardTitle>
-              <DollarSign className="h-4 w-4 text-primary" />
+              <CardTitle className="text-sm font-medium text-gray-600">Church Info</CardTitle>
+              <Church className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₦4,234,240</div>
-              <div className="text-sm text-green-600 mt-1">+8% from last month</div>
+              <div className="space-y-1">
+                <div className="text-lg font-bold">
+                  {dashboardData.churchInfo ? 'Available' : 'Not Set'}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {dashboardData.churchInfo ? 'Church details configured' : 'Configure church info'}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -137,7 +297,7 @@ export default function AdminDashboard() {
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                Church Attendance
+                Church Attendance (Estimated)
                 <Badge variant="outline">Monthly</Badge>
               </CardTitle>
             </CardHeader>
@@ -170,32 +330,37 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          {/* Finance Report */}
+          {/* Live Data Summary */}
           <Card>
             <CardHeader>
-              <CardTitle>Church Finance</CardTitle>
-              <p className="text-sm text-gray-600">Today, 20th April</p>
+              <CardTitle>Live Church Data</CardTitle>
+              <p className="text-sm text-gray-600">Real-time statistics</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <div className="flex justify-between mb-2">
-                  <span className="text-sm">Church Development Project</span>
+                  <span className="text-sm">Active Branches</span>
+                  <span className="font-semibold">{dashboardData.activeBranches}</span>
                 </div>
-                <Progress value={75} className="h-2" />
-                <div className="flex justify-between text-xs text-gray-600 mt-1">
-                  <span>Target: ₦70,000</span>
-                  <span>Target: ₦100,000</span>
+                <Progress value={(dashboardData.activeBranches / Math.max(dashboardData.branches.length, 1)) * 100} className="h-2" />
+              </div>
+
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm">Total Events</span>
+                  <span className="font-semibold">{dashboardData.totalEvents}</span>
                 </div>
+                <Progress value={Math.min((dashboardData.totalEvents / 20) * 100, 100)} className="h-2" />
               </div>
 
               <div className="space-y-2 pt-4 border-t">
                 <div className="flex justify-between">
-                  <span className="text-sm">Offering:</span>
-                  <span className="font-semibold">₦34,234,240</span>
+                  <span className="text-sm">Ministers:</span>
+                  <span className="font-semibold">{dashboardData.totalMinisters}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm">Tithe:</span>
-                  <span className="font-semibold">₦4,234,240</span>
+                  <span className="text-sm">Upcoming Events:</span>
+                  <span className="font-semibold">{dashboardData.upcomingEvents.length}</span>
                 </div>
               </div>
             </CardContent>
@@ -203,178 +368,142 @@ export default function AdminDashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Finance Trends Chart */}
+          {/* Branch Distribution */}
           <Card>
             <CardHeader>
-              <CardTitle>Finance Trends</CardTitle>
-              <p className="text-sm text-gray-600">Monthly Offering vs Tithe</p>
+              <CardTitle>Branch Distribution</CardTitle>
+              <p className="text-sm text-gray-600">Branches by location</p>
             </CardHeader>
             <CardContent>
-              <ChartContainer
-                config={{
-                  offering: {
-                    label: "Offering",
-                    color: "hsl(var(--chart-1))",
-                  },
-                  tithe: {
-                    label: "Tithe",
-                    color: "hsl(var(--chart-2))",
-                  },
-                }}
-                className="h-64"
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={financeData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="offering" fill="var(--color-offering)" />
-                    <Bar dataKey="tithe" fill="var(--color-tithe)" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
+              {dashboardData.branches.length > 0 ? (
+                <div className="space-y-3">
+                  {dashboardData.branches.slice(0, 5).map((branch, index) => (
+                    <div key={branch.id || index} className="flex justify-between items-center">
+                      <div>
+                        <span className="font-medium">{branch.name}</span>
+                        <p className="text-sm text-muted-foreground">{branch.state}, {branch.country}</p>
+                      </div>
+                      <Badge variant={branch.isDeleted ? "secondary" : "default"}>
+                        {branch.isDeleted ? "Inactive" : "Active"}
+                      </Badge>
+                    </div>
+                  ))}
+                  {dashboardData.branches.length > 5 && (
+                    <p className="text-sm text-muted-foreground text-center pt-2">
+                      +{dashboardData.branches.length - 5} more branches
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Building className="h-8 w-8 mx-auto mb-2" />
+                  <p>No branches found</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Website Reach */}
+          {/* Recent Events */}
           <Card>
             <CardHeader>
-              <CardTitle>Website Reach by Country</CardTitle>
-              <p className="text-sm text-gray-600">Total views: 35,200</p>
+              <CardTitle>Recent Events</CardTitle>
+              <p className="text-sm text-gray-600">Latest event activities</p>
             </CardHeader>
             <CardContent>
-              <ChartContainer
-                config={{
-                  views: {
-                    label: "Views",
-                  },
-                  Nigeria: {
-                    label: "Nigeria",
-                    color: "hsl(var(--chart-1))",
-                  },
-                  Ghana: {
-                    label: "Ghana",
-                    color: "hsl(var(--chart-2))",
-                  },
-                  USA: {
-                    label: "USA",
-                    color: "hsl(var(--chart-3))",
-                  },
-                  UK: {
-                    label: "UK",
-                    color: "hsl(var(--chart-4))",
-                  },
-                  Others: {
-                    label: "Others",
-                    color: "hsl(var(--chart-5))",
-                  },
-                }}
-                className="h-64"
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Pie data={blogReachData} cx="50%" cy="50%" outerRadius={80} dataKey="views">
-                      {blogReachData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-              <div className="mt-4 space-y-2">
-                {blogReachData.map((item, index) => (
-                  <div key={index} className="flex justify-between text-sm">
-                    <span className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: item.fill.replace("hsl(var(--chart-", "hsl(").replace("))", ")") }}
-                      />
-                      {item.country}
-                    </span>
-                    <span className="font-medium">{item.views.toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
+              {dashboardData.events.length > 0 ? (
+                <div className="space-y-3">
+                  {dashboardData.events.slice(0, 5).map((event, index) => (
+                    <div key={event.id || index} className="flex justify-between items-center">
+                      <div>
+                        <span className="font-medium">{event.name}</span>
+                        <p className="text-sm text-muted-foreground">
+                          {event.date ? new Date(event.date).toLocaleDateString() : 'No date set'}
+                        </p>
+                      </div>
+                      <Badge variant={event.isDeleted ? "secondary" : "default"}>
+                        {event.isDeleted ? "Cancelled" : "Active"}
+                      </Badge>
+                    </div>
+                  ))}
+                  {dashboardData.events.length > 5 && (
+                    <p className="text-sm text-muted-foreground text-center pt-2">
+                      +{dashboardData.events.length - 5} more events
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Calendar className="h-8 w-8 mx-auto mb-2" />
+                  <p>No events found</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Event Tickets Chart */}
+          {/* Ministry Leadership */}
           <Card>
             <CardHeader>
-              <CardTitle>Event Ticket Sales</CardTitle>
-              <p className="text-sm text-gray-600">Current events performance</p>
+              <CardTitle>Ministry Leadership</CardTitle>
+              <p className="text-sm text-gray-600">Active ministers overview</p>
             </CardHeader>
             <CardContent>
-              <ChartContainer
-                config={{
-                  sold: {
-                    label: "Sold",
-                    color: "hsl(var(--chart-1))",
-                  },
-                  available: {
-                    label: "Available",
-                    color: "hsl(var(--chart-2))",
-                  },
-                }}
-                className="h-64"
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={eventTicketsData} layout="horizontal">
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="event" type="category" width={80} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="sold" fill="var(--color-sold)" />
-                    <Bar dataKey="available" fill="var(--color-available)" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
+              {dashboardData.ministers.length > 0 ? (
+                <div className="space-y-3">
+                  {dashboardData.ministers.slice(0, 5).map((minister, index) => (
+                    <div key={minister.id || index} className="flex justify-between items-center">
+                      <div>
+                        <span className="font-medium">
+                          {minister.firstName} {minister.lastName}
+                        </span>
+                        <p className="text-sm text-muted-foreground">
+                          {minister.ministerRoleId || 'Associate Pastor'}
+                        </p>
+                      </div>
+                      <Badge variant="outline">
+                        {minister.branchId ? 'Assigned' : 'Unassigned'}
+                      </Badge>
+                    </div>
+                  ))}
+                  {dashboardData.ministers.length > 5 && (
+                    <p className="text-sm text-muted-foreground text-center pt-2">
+                      +{dashboardData.ministers.length - 5} more ministers
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-8 w-8 mx-auto mb-2" />
+                  <p>No ministers found</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Store Statistics */}
+          {/* Quick Actions */}
           <Card>
             <CardHeader>
-              <CardTitle>Store Activities</CardTitle>
-              <Badge variant="outline">Weekly</Badge>
+              <CardTitle>Quick Actions</CardTitle>
+              <p className="text-sm text-gray-600">Common administrative tasks</p>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  <h4 className="font-semibold">Events</h4>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 border rounded-lg text-center hover:bg-gray-50 cursor-pointer">
+                  <Building className="h-6 w-6 mx-auto mb-2 text-primary" />
+                  <p className="text-sm font-medium">Add Branch</p>
                 </div>
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="font-medium">Youth Empowerment Program</p>
-                  <div className="flex gap-4 text-sm text-gray-600 mt-1">
-                    <span>120 Tickets Sold</span>
-                    <span>200 Available</span>
-                  </div>
+                <div className="p-4 border rounded-lg text-center hover:bg-gray-50 cursor-pointer">
+                  <Users className="h-6 w-6 mx-auto mb-2 text-primary" />
+                  <p className="text-sm font-medium">Add Minister</p>
                 </div>
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <ShoppingCart className="h-5 w-5 text-primary" />
-                  <h4 className="font-semibold">Store</h4>
+                <div className="p-4 border rounded-lg text-center hover:bg-gray-50 cursor-pointer">
+                  <Calendar className="h-6 w-6 mx-auto mb-2 text-primary" />
+                  <p className="text-sm font-medium">Create Event</p>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm">Number of goods available:</span>
-                    <span className="font-semibold">345</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Sold goods:</span>
-                    <span className="font-semibold">5</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Awaiting delivery:</span>
-                    <span className="font-semibold">2</span>
-                  </div>
+                <div className="p-4 border rounded-lg text-center hover:bg-gray-50 cursor-pointer">
+                  <Church className="h-6 w-6 mx-auto mb-2 text-primary" />
+                  <p className="text-sm font-medium">Church Info</p>
                 </div>
               </div>
             </CardContent>

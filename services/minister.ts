@@ -15,9 +15,41 @@ export const createOrUpdateMinister = async (
   payload: CreateOrUpdateMinisterRequest
 ): Promise<CreateOrUpdateMinisterResponse> => {
   // Note: API endpoint has a typo - "CreateOrUpdateMinster" instead of "CreateOrUpdateMinister"
+  
+  // Create FormData for multipart/form-data as the API expects file upload
+  const formData = new FormData();
+  
+  // Add all the form fields as individual form data entries
+  if (payload.id !== null && payload.id !== undefined) {
+    formData.append('id', payload.id.toString());
+  }
+  
+  formData.append('email', payload.email || '');
+  
+  if (payload.branchId !== null && payload.branchId !== undefined) {
+    formData.append('branchId', payload.branchId.toString());
+  }
+  
+  formData.append('lastName', payload.lastName || '');
+  formData.append('biography', payload.biography || '');
+  formData.append('firstName', payload.firstName || '');
+  formData.append('phoneNumber', payload.phoneNumber || '');
+  formData.append('middleName', payload.middleName || '');
+  formData.append('ministerRoleId', payload.ministerRoleId);
+  
+  // Add the image file if provided
+  if (payload.imageFile) {
+    formData.append('imageFile', payload.imageFile);
+  }
+
   const response = await api.post<CreateOrUpdateMinisterResponse>(
     `${BASE_URL}/CreateOrUpdateMinster`,
-    payload
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
   );
   return response.data;
 };
