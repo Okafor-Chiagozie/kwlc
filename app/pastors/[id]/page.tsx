@@ -148,8 +148,7 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
 
   // Get branch information
   const getBranchInfo = () => {
-    if (!pastor.location && !pastor.address) return "Kingdom Ways Living Church"
-    return pastor.location || pastor.address || "Kingdom Ways Living Church"
+    return pastor.branchName || "Kingdom Ways Living Church"
   }
 
   // Get sample education (since not in API)
@@ -163,15 +162,11 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
   const getSampleAchievements = () => {
     const achievements = []
     
-    if (pastor.attendanceCount > 0) {
-      achievements.push(`Ministered to ${pastor.attendanceCount}+ people`)
-    }
-    
     achievements.push("Dedicated servant of God's kingdom")
     achievements.push("Active in church leadership and ministry")
     
-    if (pastor.eventType) {
-      achievements.push(`Specialized in ${pastor.eventType} ministry`)
+    if (pastor.ministerRole) {
+      achievements.push(`Specialized in ${pastor.ministerRole} ministry`)
     }
     
     return achievements
@@ -187,26 +182,17 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
 
   // Get sample schedule
   const getSampleSchedule = () => {
-    const schedule = []
-    
-    if (pastor.startTime && pastor.closeTime) {
-      schedule.push({
-        day: "Sunday",
-        time: `${formatTime(pastor.startTime)} - ${formatTime(pastor.closeTime)}`,
-        activity: pastor.eventType || "Church Service"
-      })
-    }
-    
-    schedule.push(
+    const schedule = [
+      { day: "Sunday", time: "8:30 AM - 10:30 AM", activity: "Sunday Service" },
       { day: "Wednesday", time: "6:00 PM - 8:00 PM", activity: "Bible Study" },
       { day: "Friday", time: "2:00 PM - 4:00 PM", activity: "Pastoral Counseling" },
       { day: "Saturday", time: "10:00 AM - 12:00 PM", activity: "Leadership Meeting" }
-    )
+    ]
     
     return schedule
   }
 
-  const specializations = getSpecializations(pastor.description)
+  const specializations = getSpecializations(pastor.biography || "")
   const branchInfo = getBranchInfo()
   const education = getSampleEducation()
   const achievements = getSampleAchievements()
@@ -236,7 +222,7 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
               <div className="relative h-96 lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl">
                 <Image 
                   src={pastor.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"} 
-                  alt={pastor.name || "Pastor"} 
+                  alt={`${pastor.firstName} ${pastor.lastName}` || "Pastor"} 
                   fill 
                   className="object-cover" 
                 />
@@ -248,13 +234,13 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
               <div className="space-y-6">
                 <div>
                   <Badge className="bg-primary/10 text-primary mb-4">
-                    {pastor.eventType || "Pastor"}
+                    {pastor.ministerRole || "Pastor"}
                   </Badge>
                   <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                    {pastor.name || "Pastor"}
+                    {`${pastor.firstName} ${pastor.lastName}` || "Pastor"}
                   </h1>
                   <p className="text-xl text-gray-600 mb-6">
-                    {pastor.description || "A dedicated servant of God, committed to leading His people with wisdom, compassion, and biblical truth. Passionate about ministry and helping others grow in their faith journey."}
+                    {pastor.biography || "A dedicated servant of God, committed to leading His people with wisdom, compassion, and biblical truth. Passionate about ministry and helping others grow in their faith journey."}
                   </p>
                 </div>
 
@@ -272,19 +258,11 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
                       <Users className="h-5 w-5 text-primary" />
                       <div>
                         <p className="font-medium text-gray-900">Ministry Role</p>
-                        <p className="text-gray-600">{pastor.eventType || "Pastor"}</p>
+                        <p className="text-gray-600">{pastor.ministerRole || "Pastor"}</p>
                       </div>
                     </div>
 
-                    {pastor.location && (
-                      <div className="flex items-center gap-3">
-                        <MapPin className="h-5 w-5 text-primary" />
-                        <div>
-                          <p className="font-medium text-gray-900">Location</p>
-                          <p className="text-gray-600">{pastor.location}</p>
-                        </div>
-                      </div>
-                    )}
+
                   </div>
 
                   <div className="space-y-4">
@@ -292,7 +270,7 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
                       <Phone className="h-5 w-5 text-primary" />
                       <div>
                         <p className="font-medium text-gray-900">Phone</p>
-                        <p className="text-gray-600">+234 70 433 2832</p>
+                        <p className="text-gray-600">{pastor.phoneNumber || "+234 70 433 2832"}</p>
                       </div>
                     </div>
 
@@ -300,19 +278,9 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
                       <Mail className="h-5 w-5 text-primary" />
                       <div>
                         <p className="font-medium text-gray-900">Email</p>
-                        <p className="text-gray-600">pastor@kwlc.org</p>
+                        <p className="text-gray-600">{pastor.email || "pastor@kwlc.org"}</p>
                       </div>
                     </div>
-
-                    {pastor.attendanceCount > 0 && (
-                      <div className="flex items-center gap-3">
-                        <Users className="h-5 w-5 text-primary" />
-                        <div>
-                          <p className="font-medium text-gray-900">Ministry Reach</p>
-                          <p className="text-gray-600">{pastor.attendanceCount}+ people</p>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -431,14 +399,18 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
               Feel free to reach out for pastoral counseling, prayer requests, or spiritual guidance.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-primary hover:bg-primary/90">
-                <Phone className="h-4 w-4 mr-2" />
-                Call Pastor
-              </Button>
-              <Button variant="outline" className="border-primary text-primary hover:bg-primary/5">
-                <Mail className="h-4 w-4 mr-2" />
-                Send Email
-              </Button>
+              <a href={`tel:${pastor.phoneNumber || "+234704332832"}`}>
+                <Button className="bg-primary hover:bg-primary/90">
+                  <Phone className="h-4 w-4 mr-2" />
+                  Call Pastor
+                </Button>
+              </a>
+              <a href={`mailto:${pastor.email || "pastor@kwlc.org"}`}>
+                <Button variant="outline" className="border-primary text-primary hover:bg-primary/5">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Send Email
+                </Button>
+              </a>
             </div>
           </div>
         </div>
