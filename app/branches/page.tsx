@@ -144,13 +144,13 @@ export default function BranchesPage() {
                   >
                     <div className="relative h-48">
                       <Image
-                        src={branch.imageUrl || "/placeholder.svg?height=300&width=400&text=Branch+Image"}
+                        src={branch.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
                         alt={branch.name}
                         fill
                         className="object-cover"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement
-                          target.src = "/placeholder.svg?height=300&width=400&text=Branch+Image"
+                          target.src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
                         }}
                       />
                       <div className="absolute top-4 left-4">
@@ -229,13 +229,13 @@ export default function BranchesPage() {
             <ScrollArea className="max-h-[90vh] overflow-y-auto">
               <div className="relative h-64 w-full">
                 <Image
-                  src={selectedBranch.imageUrl || "/placeholder.svg?height=300&width=400&text=Branch+Image"}
+                  src={selectedBranch.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
                   alt={selectedBranch.name}
                   fill
                   className="object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement
-                    target.src = "/placeholder.svg?height=300&width=400&text=Branch+Image"
+                    target.src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
                   }}
                 />
                 <Button
@@ -263,7 +263,6 @@ export default function BranchesPage() {
                     </h3>
                     <div className="space-y-2">
                       <p className="text-gray-700">{selectedBranch.address}</p>
-                      <p className="text-gray-700">{selectedBranch.location}</p>
                       <p className="text-gray-700">
                         <span className="font-medium">{selectedBranch.lga}, {selectedBranch.state}</span>
                       </p>
@@ -316,7 +315,16 @@ export default function BranchesPage() {
                 )}
 
                 <div className="mt-8 flex gap-4">
-                  <Button className="flex-1">Visit Branch</Button>
+                  <Button className="flex-1" asChild>
+                    <a
+                      href={selectedBranch.location?.replace('/embed', '') || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedBranch.address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2"
+                    >
+                      Visit Branch <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </Button>
                   <Button variant="outline" className="flex-1" asChild>
                     <a href={`tel:${selectedBranch.phoneNumber}`}>Contact Branch</a>
                   </Button>

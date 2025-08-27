@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import MainLayout from "@/components/main-layout"
 import { useApi } from "@/hooks/useApi"
 import { getEvent, getUpcomingEvents } from "@/services/event"
-import { DetailedEvent, Event } from "@/types/event"
+import { Event } from "@/types/event"
 
 const isNoRecordsError = (error: string | null) => {
   return error && error.toLowerCase().includes("no record found")
@@ -125,7 +125,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   ].filter(Boolean)
 
   // Use the first available image as default if selectedImage is not set
-  const displayImage = selectedImage || galleryImages[0] || "/placeholder.svg"
+  const displayImage = selectedImage || galleryImages[0] || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
 
   // Format date and time
   const formatDate = (dateString: string) => {
@@ -556,7 +556,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                   >
                     <div className="relative h-48">
                       <Image
-                        src={relatedEvent.imageUrl || "/placeholder.svg"}
+                        src={relatedEvent.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
                         alt={relatedEvent.name}
                         fill
                         className="object-cover"

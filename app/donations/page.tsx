@@ -420,10 +420,10 @@ export default function DonationsPage() {
                     </button>
                   </div>
                 ) : (
-                  <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                    Your generous contribution helps us continue our work in the community and spread God's love to those
-                    who need it most.
-                  </p>
+                <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                  Your generous contribution helps us continue our work in the community and spread God's love to those
+                  who need it most.
+                </p>
                 )}
               </div>
 

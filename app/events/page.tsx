@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import MainLayout from "@/components/main-layout"
 import { useApi } from "@/hooks/useApi"
-import { searchEvents, getFeaturedEvents } from "@/services/event"
+import { searchEvent, getFeaturedEvent } from "@/services/event"
 import { getAllBranches } from "@/services/branch"
 import { Event } from "@/types/event"
 import { Branch } from "@/types/branch"
@@ -29,7 +29,7 @@ export default function EventsPage() {
     loading: eventsLoading,
     error: eventsError,
     refetch: refetchEvents
-  } = useApi(() => searchEvents({
+  } = useApi(() => searchEvent({
     pageSize: 10,
     pageNumber: 1,
     searchParams: searchQuery ? { search: searchQuery } : undefined
@@ -51,12 +51,12 @@ export default function EventsPage() {
     loading: featuredEventsLoading,
     error: featuredEventsError,
     refetch: refetchFeaturedEvents
-  } = useApi(() => getFeaturedEvents(), [])
+  } = useApi(() => getFeaturedEvent(), [])
 
   // Extract data from API responses
   const events = eventsResponse?.data || []
   const branches = branchesResponse?.data || []
-  const featuredEvents = Array.isArray(featuredEventsResponse) ? featuredEventsResponse : []
+  const featuredEvents = featuredEventsResponse || []
 
   // Create a map of branch ID to branch name for easy lookup
   const branchMap = branches.reduce((acc: Record<number, string>, branch: Branch) => {
@@ -243,7 +243,7 @@ export default function EventsPage() {
                       <div className="relative h-64 md:h-auto overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
                         <Image
-                          src={event.imageUrl || "/placeholder.svg"}
+                          src={event.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
                           alt={event.name}
                           fill
                           className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -392,7 +392,7 @@ export default function EventsPage() {
                   <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-primary/10 rounded-full mix-blend-multiply"></div>
                   <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                     <Image
-                      src={featuredEvent.imageUrl || "/placeholder.svg"}
+                      src={featuredEvent.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
                       alt={featuredEvent.name}
                       width={600}
                       height={400}
