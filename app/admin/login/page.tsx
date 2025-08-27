@@ -1,11 +1,10 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { Eye, EyeOff, User, Lock, AlertCircle } from "lucide-react"
+import Link from "next/link"
+import { Eye, EyeOff, User, Lock, AlertCircle, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,6 +13,7 @@ import { toast } from "sonner"
 import { Toaster } from "@/components/ui/sonner"
 import { login } from "@/services/user"
 import { LoginRequest } from "@/types/user"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function AdminLogin() {
   const [formData, setFormData] = useState({
@@ -25,6 +25,14 @@ export default function AdminLogin() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [apiError, setApiError] = useState<string | null>(null)
   const router = useRouter()
+  const { login: authLogin, isAuthenticated } = useAuth()
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/admin/dashboard")
+    }
+  }, [isAuthenticated, router])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -61,9 +69,8 @@ export default function AdminLogin() {
       const response = await login(loginData)
 
       if (response.isSuccessful) {
-        // Store auth info in localStorage (you might want to use a more secure method)
-        localStorage.setItem("adminAuth", "true")
-        localStorage.setItem("userId", response.data.toString())
+        // Use the auth hook to handle login
+        authLogin(response.data.toString())
         
         toast.success("Login successful! Redirecting to dashboard...")
         setTimeout(() => {
@@ -194,9 +201,12 @@ export default function AdminLogin() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <button type="button" className="text-sm text-primary hover:text-primary/80">
+                    <Link 
+                      href="/admin/forgot-password"
+                      className="text-sm text-primary hover:text-primary/80"
+                    >
                       Forgotten Password?
-                    </button>
+                    </Link>
                   </div>
 
                   <Button
@@ -210,7 +220,23 @@ export default function AdminLogin() {
               </CardContent>
             </Card>
 
-            <div className="text-center text-sm text-gray-500">© Kingdom Ways 2024</div>
+            {/* Footer Links */}
+            <div className="text-center space-y-4">
+              <p className="text-sm text-gray-600">
+                Don't have an account?{" "}
+                <Link href="/admin/register" className="text-primary hover:text-primary/80 font-medium">
+                  Create an account
+                </Link>
+              </p>
+              <Link
+                href="/"
+                className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Back to website
+              </Link>
+              <div className="text-center text-sm text-gray-500">© Kingdom Ways 2024</div>
+            </div>
           </div>
         </div>
       </div>

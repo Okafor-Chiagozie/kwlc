@@ -118,7 +118,7 @@ export const createChurchImage = async (
   });
 
   const response = await api.post<CreateChurchImageResponse>(
-    `${BASE_URL}/CreateChurchImage?ImageCategoryId=${payload.ImageCategoryId}`,
+    `${BASE_URL}/CreateChurchImage?ImageCategoryId=${Number(payload.ImageCategoryId)}`,
     formData,
     {
       headers: {

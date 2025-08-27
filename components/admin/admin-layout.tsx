@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   ChevronDown,
+  Lock,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -31,8 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
-import { getUserById } from "@/services/user"
-import { UserViewModel } from "@/types/user"
+import { useAuth } from "@/hooks/useAuth"
 
 const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -52,49 +52,19 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [currentUser, setCurrentUser] = useState<UserViewModel | null>(null)
-  const [isLoadingUser, setIsLoadingUser] = useState(true)
+  const { isAuthenticated, isLoading: isLoadingUser, user: currentUser, logout } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
+  // Redirect to login if not authenticated
   useEffect(() => {
-    const auth = localStorage.getItem("adminAuth")
-    const userIdFromStorage = localStorage.getItem("userId")
-
-    // Uncomment this for actual authentication check
-    // if (!auth) {
-    //   router.push("/admin/login")
-    //   return
-    // }
-
-    // Fetch user details if userId exists
-    const fetchUserDetails = async () => {
-      if (userIdFromStorage && !isNaN(Number(userIdFromStorage))) {
-        try {
-          setIsLoadingUser(true)
-          const response = await getUserById(Number(userIdFromStorage))
-          if (response.isSuccessful && response.data) {
-            setCurrentUser(response.data)
-          }
-        } catch (error) {
-          console.error("Failed to fetch user details:", error)
-          // If user fetch fails, we can still show basic info
-        } finally {
-          setIsLoadingUser(false)
-        }
-      } else {
-        setIsLoadingUser(false)
-      }
+    if (!isLoadingUser && !isAuthenticated) {
+      router.push("/admin/login")
     }
-
-    fetchUserDetails()
-  }, [router])
+  }, [isAuthenticated, isLoadingUser, router])
 
   const handleLogout = () => {
-    localStorage.removeItem("adminAuth")
-    localStorage.removeItem("userId")
-    setCurrentUser(null)
-    router.push("/admin/login")
+    logout()
   }
 
   const getDisplayName = () => {
@@ -280,6 +250,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <DropdownMenuItem>
                   <Settings className="h-4 w-4 mr-2" />
                   Account Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link href="/admin/change-password" className="flex items-center w-full">
+                    <Lock className="h-4 w-4 mr-2" />
+                    Change Password
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600">

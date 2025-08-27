@@ -24,14 +24,14 @@ export enum DayOfWeek {
 }
 
 export enum ChurchImageCategory {
-  CarouselImage = "CarouselImage",
-  FellowshipImage = "FellowshipImage",
-  BibleStudyImage = "BibleStudyImage",
-  CommunityImage = "CommunityImage",
-  ChurchEventImage = "ChurchEventImage",
-  ChurchServiceImage = "ChurchServiceImage",
-  ChurchWeddingImage = "ChurchWeddingImage",
-  ChurchLiveStreamImage = "ChurchLiveStreamImage"
+  CarouselImage = 1,
+  FellowshipImage = 2,
+  BibleStudyImage = 3,
+  CommunityImage = 4,
+  ChurchEventImage = 5,
+  ChurchServiceImage = 6,
+  ChurchWeddingImage = 7,
+  ChurchLiveStreamImage = 8
 }
 
 // Time interface from API
