@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Phone, X, Menu } from "lucide-react"
+import { Phone, X, Menu, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useCart } from "@/hooks/useCart"
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [sideNavOpen, setSideNavOpen] = useState(false)
+  const { getItemCount } = useCart()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -68,7 +70,7 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4">          
           <Button
             variant="outline"
             size="sm"
@@ -82,7 +84,27 @@ export default function Navbar() {
             <span>+234 70 433 2832</span>
           </Button>
 
-          <div className="flex items-center gap-2">
+          <Link href="/checkout" className="relative">
+            <Button
+              variant="outline"
+              size="sm"
+              className={`flex gap-2 bg-transparent transition-colors ${
+                scrolled
+                  ? "border-gray-200 text-gray-900 hover:bg-gray-50"
+                  : "border-white/20 text-white hover:bg-white/10"
+              }`}
+            >
+              <ShoppingCart className="h-4 w-4" />
+              <span className="hidden sm:inline">Cart</span>
+              {getItemCount() > 0 && (
+                <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {getItemCount()}
+                </span>
+              )}
+            </Button>
+          </Link>
+
+          {/* <div className="flex items-center gap-2">
             <button
               className={`p-2 rounded-full transition-colors ${
                 scrolled ? "text-gray-900 hover:bg-gray-100" : "text-white hover:bg-white/10"
@@ -129,7 +151,7 @@ export default function Navbar() {
                 0
               </span>
             </button>
-          </div>
+          </div> */}
 
           <Button className="bg-primary hover:bg-primary/90 text-white">
             <Link href={'/donations'}>Donate</Link>

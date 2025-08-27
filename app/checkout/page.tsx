@@ -1,12 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ShoppingCart, Minus, Plus, X } from "lucide-react"
 import MainLayout from "@/components/main-layout"
+import { useCart } from "@/hooks/useCart"
 
 export default function CheckoutPage() {
   const [formData, setFormData] = useState({
@@ -22,18 +25,20 @@ export default function CheckoutPage() {
     orderNote: "",
   })
 
-  const orderItems = [
-    {
-      id: 1,
-      name: "Listen Belive",
-      price: 500,
-      quantity: 1,
-    },
-  ]
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false)
 
-  const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const shippingCost = 500
+  const { cartItems, updateQuantity, removeFromCart, getSubtotal, getItemCount } = useCart()
+
+  const subtotal = getSubtotal()
+  const shippingCost = subtotal > 0 ? (subtotal >= 5000 ? 0 : 1000) : 0 // Free shipping over ₦5,000
   const total = subtotal + shippingCost
+
+  // Redirect to shop if cart is empty
+  useEffect(() => {
+    if (cartItems.length === 0) {
+      // Could add a toast here saying "Cart is empty"
+    }
+  }, [cartItems])
 
   const formatCurrency = (amount: number) => {
     return `₦ ${amount.toLocaleString()}`
@@ -46,10 +51,43 @@ export default function CheckoutPage() {
     }))
   }
 
-  const handlePlaceOrder = () => {
-    // Handle order placement logic here
-    console.log("Order placed:", { formData, orderItems, total })
-    alert("Order placed successfully!")
+  const handlePlaceOrder = async () => {
+    if (cartItems.length === 0) {
+      alert("Your cart is empty")
+      return
+    }
+
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
+      alert("Please fill in all required fields")
+      return
+    }
+
+    setIsPlacingOrder(true)
+    
+    try {
+      // Here you would integrate with the book purchase API
+      // For now, we'll just simulate the order
+      console.log("Order placed:", { 
+        customer: formData, 
+        items: cartItems, 
+        total,
+        itemCount: getItemCount()
+      })
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      alert("Order placed successfully! You will receive a confirmation email shortly.")
+      
+      // In a real app, you'd redirect to a success page or order confirmation
+      // and clear the cart after successful payment processing
+      
+    } catch (error) {
+      console.error("Order placement error:", error)
+      alert("There was an error placing your order. Please try again.")
+    } finally {
+      setIsPlacingOrder(false)
+    }
   }
 
   return (
@@ -200,13 +238,75 @@ export default function CheckoutPage() {
                     <span className="font-bold text-gray-900">PRODUCT</span>
                   </div>
 
-                  {/* Order Items */}
-                  {orderItems.map((item) => (
-                    <div key={item.id} className="flex justify-between items-center py-2">
-                      <span className="text-gray-700">{item.name}</span>
-                      <span className="text-gray-900">{formatCurrency(item.price)}</span>
+                  {/* Cart Items */}
+                  {cartItems.length === 0 ? (
+                    <div className="text-center py-8">
+                      <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500 mb-4">Your cart is empty</p>
+                      <Link href="/shop">
+                        <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
+                          Continue Shopping
+                        </Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {cartItems.map((item) => (
+                        <div key={item.id} className="flex gap-4 py-4 border-b border-gray-100">
+                          <div className="relative w-16 h-20 flex-shrink-0 rounded-md overflow-hidden">
+                            <Image
+                              src={item.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
+                              alt={item.title}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900 mb-1">{item.title}</h4>
+                            <p className="text-sm text-gray-600 mb-2">by {item.author}</p>
+                            <p className="text-sm font-semibold text-primary">
+                              {item.priceDisplay || `₦${item.price.toLocaleString()}`}
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              className="w-8 h-8 p-0"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="w-8 text-center text-sm">{item.quantity}</span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              className="w-8 h-8 p-0"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFromCart(item.id)}
+                              className="w-8 h-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          
+                          <div className="text-right">
+                            <p className="font-semibold text-gray-900">
+                              {formatCurrency(item.price * item.quantity)}
+                            </p>
+                          </div>
                     </div>
                   ))}
+                    </div>
+                  )}
 
                   {/* Subtotal */}
                   <div className="flex justify-between items-center py-2 border-t border-gray-200">
@@ -217,8 +317,21 @@ export default function CheckoutPage() {
                   {/* Shipping */}
                   <div className="flex justify-between items-center py-2">
                     <span className="font-bold text-gray-900">SHIPPING</span>
-                    <span className="text-gray-700">Flat Rate: {formatCurrency(shippingCost)}</span>
+                    <span className="text-gray-700">
+                      {shippingCost === 0 ? (
+                        <span className="text-green-600">Free shipping</span>
+                      ) : (
+                        `Flat Rate: ${formatCurrency(shippingCost)}`
+                      )}
+                    </span>
                   </div>
+                  
+                  {/* Free shipping message */}
+                  {subtotal > 0 && subtotal < 5000 && (
+                    <div className="text-sm text-primary bg-primary/5 p-2 rounded">
+                      Add {formatCurrency(5000 - subtotal)} more for free shipping!
+                    </div>
+                  )}
 
                   {/* Total */}
                   <div className="flex justify-between items-center py-4 border-t border-gray-200">
@@ -227,8 +340,12 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <Button onClick={handlePlaceOrder} className="w-full bg-black hover:bg-gray-800 text-white h-12 mt-6">
-                  Place Order
+                <Button 
+                  onClick={handlePlaceOrder} 
+                  disabled={cartItems.length === 0 || isPlacingOrder}
+                  className="w-full bg-black hover:bg-gray-800 text-white h-12 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isPlacingOrder ? "Processing..." : `Place Order (${getItemCount()} ${getItemCount() === 1 ? 'item' : 'items'})`}
                 </Button>
               </div>
             </div>
