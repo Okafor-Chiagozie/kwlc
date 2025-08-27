@@ -7,14 +7,19 @@ import {
   GetUpcomingStreamsResponse,
   GetAllAvailableStreamsRequest,
   GetAllAvailableStreamsResponse,
+  GetStreamDetailsByURLRequest,
   GetStreamDetailsByURLResponse,
+  GetStreamDetailsByIdRequest,
   GetStreamDetailsByIdResponse,
+  DeleteStreamRequest,
   DeleteStreamResponse
 } from '@/types/livestream';
 
 const BASE_URL = '/api/v1/Livestream';
 
-// Livestream operations
+// Livestream operations matching API documentation exactly
+// Note: All endpoints return TicketViewModelListResult due to API design issue
+
 export const getLivestreamUrl = async (): Promise<GetLivestreamUrlResponse> => {
   const response = await api.get<GetLivestreamUrlResponse>(
     `${BASE_URL}/GetLivestreamUrl`
@@ -53,7 +58,7 @@ export const getAllAvailableStreams = async (
 };
 
 export const getStreamDetailsByURL = async (
-  url: string
+  url: GetStreamDetailsByURLRequest
 ): Promise<GetStreamDetailsByURLResponse> => {
   const response = await api.get<GetStreamDetailsByURLResponse>(
     `${BASE_URL}/GetStreamDetailsByURL?url=${encodeURIComponent(url)}`
@@ -62,7 +67,7 @@ export const getStreamDetailsByURL = async (
 };
 
 export const getStreamDetailsById = async (
-  videoId: string
+  videoId: GetStreamDetailsByIdRequest
 ): Promise<GetStreamDetailsByIdResponse> => {
   const response = await api.get<GetStreamDetailsByIdResponse>(
     `${BASE_URL}/GetStreamDetailsById?videoId=${encodeURIComponent(videoId)}`
@@ -71,7 +76,7 @@ export const getStreamDetailsById = async (
 };
 
 export const deleteStream = async (
-  id: number
+  id: DeleteStreamRequest
 ): Promise<DeleteStreamResponse> => {
   const response = await api.delete<DeleteStreamResponse>(
     `${BASE_URL}/DeleteStream?id=${id}`

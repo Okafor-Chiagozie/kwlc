@@ -47,40 +47,11 @@ export interface TimeOnly {
 
 // Request/Response schemas exactly as defined in API documentation
 
-// Ticket from API (used in homepage responses)
-export interface Ticket {
-  id: number;
-  dateCreated: string;
-  lastModified: string;
-  eventId: number;
-  email: string;
-  price: number;
-  seatNumber?: number | null;
-  lastName: string;
-  eventName: string;
-  firstName: string;
-  reference: string;
-  imageUrl: string;
-  phoneNumber: string;
-  paymentStatus: boolean;
-  ticketNumber: string;
-}
-
-// TicketViewModel from API
-export interface TicketViewModel {
-  id?: number | null;
-  eventId: number;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  email: string;
-  file?: File | null;
-  ticketNumber: string;
-  seatNumber?: number | null;
-  price: number;
-  paymentStatus: boolean;
-  imageUrl: string;
-  eventName: string;
+// HomePage Response ViewModel (main homepage data)
+export interface HomePageResponseViewModel {
+  // Define based on actual API schema - this needs to be verified
+  // For now using a generic structure
+  data: any;
 }
 
 // AddChurchViewModel from API
@@ -103,6 +74,21 @@ export interface AddServiceScheduleViewModel {
 
 // AddChurchdayViewModel from API
 export interface AddChurchdayViewModel {
+  id?: number | null;
+  day: DayOfWeek;
+  startTime: TimeOnly;
+  closeTime: TimeOnly;
+}
+
+// ServiceScheduleViewModel from API (for responses)
+export interface ServiceScheduleViewModel {
+  id?: number | null;
+  name: string;
+  churchDays: ChurchdayViewModel[];
+}
+
+// ChurchdayViewModel from API (for responses)
+export interface ChurchdayViewModel {
   id?: number | null;
   day: DayOfWeek;
   startTime: TimeOnly;
@@ -141,25 +127,27 @@ export type UpdateChurchImageRequest = {
   file: File;
 };
 
-// Response types based on API documentation
-export interface TicketListResult extends StandardApiResponse<Ticket[]> {}
-export interface TicketViewModelListResult extends StandardApiResponse<TicketViewModel[]> {}
+// Response types based on exact API documentation
+export interface HomePageResponseViewModelResult extends StandardApiResponse<HomePageResponseViewModel> {}
+export interface Int32ListResult extends StandardApiResponse<number[]> {}
 export interface Int32Result extends StandardApiResponse<number> {}
+export interface ServiceScheduleViewModelListResult extends StandardApiResponse<ServiceScheduleViewModel[]> {}
+export interface ChurchDayViewModelListResult extends StandardApiResponse<ChurchdayViewModel[]> {}
 export interface ChurchImageViewModelResult extends StandardApiResponse<ChurchImageViewModel> {}
 export interface ChurchImageResponseViewModelListResult extends StandardApiResponse<ChurchImageResponseViewModel[]> {}
 
 // Response interfaces matching API exactly
-export interface GetHomePageResponse extends TicketListResult {}
-export interface CreateOrUpdateChurchDetailsResponse extends TicketListResult {}
-export interface CreateOrUpdateServiceScheduleDetailsResponse extends TicketViewModelListResult {}
-export interface GetAllServiceSchedulesResponse extends TicketViewModelListResult {}
-export interface GetServiceScheduleResponse extends TicketViewModelListResult {}
-export interface DeleteServiceScheduleResponse extends TicketViewModelListResult {}
-export interface CreateOrUpdateChurchdayDetailsResponse extends TicketViewModelListResult {}
-export interface GetAllChurchdaysResponse extends TicketViewModelListResult {}
-export interface DeleteChurchDayResponse extends TicketViewModelListResult {}
+export interface GetHomePageResponse extends HomePageResponseViewModelResult {}
+export interface CreateOrUpdateChurchDetailsResponse extends Int32ListResult {}
+export interface CreateOrUpdateServiceScheduleDetailsResponse extends Int32ListResult {}
+export interface GetAllServiceSchedulesResponse extends ServiceScheduleViewModelListResult {}
+export interface GetServiceScheduleResponse extends ServiceScheduleViewModelListResult {}
+export interface DeleteServiceScheduleResponse extends Int32Result {}
+export interface CreateOrUpdateChurchdayDetailsResponse extends Int32Result {}
+export interface GetAllChurchdaysResponse extends ChurchDayViewModelListResult {}
+export interface DeleteChurchDayResponse extends Int32Result {}
 export interface CreateChurchImageResponse extends Int32Result {}
 export interface UpdateChurchImageResponse extends ChurchImageViewModelResult {}
 export interface GetChurchImagesResponse extends ChurchImageResponseViewModelListResult {}
 export interface GetChurchImageResponse extends ChurchImageViewModelResult {}
-export interface DeleteChurchImageResponse extends TicketViewModelListResult {}
+export interface DeleteChurchImageResponse extends Int32ListResult {}

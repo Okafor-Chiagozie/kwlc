@@ -61,38 +61,16 @@ export interface TicketViewModel {
   eventName: string;
 }
 
-// BranchViewModel from API (used in delete response)
-export interface BranchViewModel {
-  id: number;
-  name: string;
-  lgaId: number;
-  lga: string;
-  stateId: number;
-  state: string;
-  email: string;
-  countryId: number;
-  country: string;
-  address: string;
-  location: string;
-  isDeleted: boolean;
-  phoneNumber: string;
-  dateCreated: string;
-  imageUrl: string;
-  welcomeAddress: string;
-  dateDeleted?: string;
-}
-
 // Request types
 export type CreateOrUpdateTicketRequest = AddTicketViewModel;
 
 // Response types based on API documentation
 export interface TicketListResult extends StandardApiResponse<Ticket[]> {}
 export interface TicketViewModelListResult extends StandardApiResponse<TicketViewModel[]> {}
-export interface BranchViewModelListResult extends StandardApiResponse<BranchViewModel[]> {}
 
 // Response interfaces matching API exactly
-export interface CreateOrUpdateTicketResponse extends TicketListResult {}
+export interface CreateOrUpdateTicketResponse extends TicketViewModelListResult {}
 export interface GetTicketResponse extends TicketViewModelListResult {}
 export interface GetTicketByIdResponse extends TicketViewModelListResult {}
 export interface VerifyTicketPaymentResponse extends TicketViewModelListResult {}
-export interface DeleteTicketResponse extends BranchViewModelListResult {}
+export interface DeleteTicketResponse extends StandardApiResponse<number> {} // Fixed: Simple success response

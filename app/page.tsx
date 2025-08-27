@@ -1,5 +1,7 @@
+"use client"
+
 import Image from "next/image"
-import { MapPin, Phone, Mail, Heart } from "lucide-react"
+import { MapPin, Phone, Mail, Heart, Loader2, AlertCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,8 +13,36 @@ import LocationsSection from "@/components/locations-section"
 import LocationPin from "@/components/location-pin"
 import MainLayout from "@/components/main-layout"
 import Link from "next/link"
+import { useApi } from "@/hooks/useApi"
+import { getUpcomingEvents } from "@/services/event"
 
 export default function Home() {
+  // Fetch upcoming events
+  const { data: upcomingEvents, loading: eventsLoading, error: eventsError } = useApi(
+    () => getUpcomingEvents(),
+    []
+  )
+
+  // Format date for display
+  const formatEventDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    const day = date.getDate().toString().padStart(2, '0')
+    const month = date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
+    return { day, month }
+  }
+
+  // Format time for display
+  const formatEventTime = (startTime: string, closeTime: string) => {
+    const formatTime = (timeStr: string) => {
+      const time = new Date(`2000-01-01T${timeStr}`)
+      return time.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      }).toLowerCase()
+    }
+    return `${formatTime(startTime)} - ${formatTime(closeTime)}`
+  }
   return (
     <MainLayout>
       <main className="flex-1 scroll-smooth">
@@ -550,41 +580,38 @@ export default function Home() {
                 </div>
 
                 <div className="space-y-6">
-                  <div className="group flex gap-4 p-3 transition-colors">
-                    <div className="flex-shrink-0 w-14 h-14 bg-primary/10 rounded-lg flex flex-col items-center justify-center text-primary">
-                      <span className="text-lg font-bold">07</span>
-                      <span className="text-xs font-medium">JUL</span>
+                  {eventsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+                      <span className="text-gray-600">Loading events...</span>
                     </div>
-                    <div>
-                      <h4 className="font-bold group-hover:text-primary transition-colors">Sunday Service</h4>
-                      <p className="text-gray-600 text-sm">8:00 am - 10:30 am</p>
-                      <p className="text-gray-500 text-sm mt-1">Main Auditorium</p>
+                  ) : eventsError ? (
+                    <div className="flex items-center justify-center py-8 text-gray-500">
+                      <AlertCircle className="h-5 w-5 mr-2" />
+                      <span>Unable to load events</span>
                     </div>
-                  </div>
-
-                  <div className="group flex gap-4 p-3 transition-colors">
-                    <div className="flex-shrink-0 w-14 h-14 bg-primary/10 rounded-lg flex flex-col items-center justify-center text-primary">
-                      <span className="text-lg font-bold">15</span>
-                      <span className="text-xs font-medium">JUL</span>
+                  ) : upcomingEvents && upcomingEvents.length > 0 ? (
+                    upcomingEvents.slice(0, 3).map((event) => {
+                      const { day, month } = formatEventDate(event.date)
+                      return (
+                        <div key={event.id} className="group flex gap-4 p-3 transition-colors">
+                          <div className="flex-shrink-0 w-14 h-14 bg-primary/10 rounded-lg flex flex-col items-center justify-center text-primary">
+                            <span className="text-lg font-bold">{day}</span>
+                            <span className="text-xs font-medium">{month}</span>
+                          </div>
+                          <div>
+                            <h4 className="font-bold group-hover:text-primary transition-colors">{event.name}</h4>
+                            <p className="text-gray-600 text-sm">{formatEventTime(event.startTime, event.closeTime)}</p>
+                            <p className="text-gray-500 text-sm mt-1">{event.venue || event.location}</p>
+                          </div>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No upcoming events scheduled</p>
                     </div>
-                    <div>
-                      <h4 className="font-bold group-hover:text-primary transition-colors">Bible Study</h4>
-                      <p className="text-gray-600 text-sm">6:00 pm - 8:00 pm</p>
-                      <p className="text-gray-500 text-sm mt-1">Fellowship Hall</p>
-                    </div>
-                  </div>
-
-                  <div className="group flex gap-4 p-3 transition-colors">
-                    <div className="flex-shrink-0 w-14 h-14 bg-primary/10 rounded-lg flex flex-col items-center justify-center text-primary">
-                      <span className="text-lg font-bold">22</span>
-                      <span className="text-xs font-medium">JUL</span>
-                    </div>
-                    <div>
-                      <h4 className="font-bold group-hover:text-primary transition-colors">Youth Conference</h4>
-                      <p className="text-gray-600 text-sm">10:00 am - 4:00 pm</p>
-                      <p className="text-gray-500 text-sm mt-1">Youth Center</p>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="mt-6 pt-4">

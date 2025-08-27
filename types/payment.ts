@@ -51,7 +51,7 @@ export interface PaymentRequest {
   phoneNumber: string;
   reference: string;
   purpose: PurposeCode;
-  paymenMethod: PaymentMethod; // Note: API has typo - "paymenMethod" not "paymentMethod"
+  paymentMethod: PaymentMethod; // Fixed: Correct spelling (was "paymenMethod")
   callbackUrl: string;
 }
 

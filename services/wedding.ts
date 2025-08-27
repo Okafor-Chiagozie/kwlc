@@ -12,7 +12,11 @@ import {
   UpdateWeddingImageResponse,
   GetWeddingImagesResponse,
   GetWeddingImageResponse,
-  DeleteWeddingImageResponse
+  DeleteWeddingImageResponse,
+  GetBranchWeddingsRequest,
+  GetBranchWeddingsResponse,
+  GetUpcomingWeddingsRequest,
+  GetUpcomingWeddingsResponse
 } from '@/types/wedding';
 
 const BASE_URL = '/api/v1/Wedding';
@@ -56,6 +60,27 @@ export const deleteWedding = async (
   return response.data;
 };
 
+// Additional wedding query operations
+export const getBranchWeddings = async (
+  payload: GetBranchWeddingsRequest
+): Promise<GetBranchWeddingsResponse> => {
+  const response = await api.post<GetBranchWeddingsResponse>(
+    `${BASE_URL}/GetBranchWeddings?branchId=${payload.branchId}`,
+    payload
+  );
+  return response.data;
+};
+
+export const getUpcomingWeddings = async (
+  payload: GetUpcomingWeddingsRequest
+): Promise<GetUpcomingWeddingsResponse> => {
+  const response = await api.post<GetUpcomingWeddingsResponse>(
+    `${BASE_URL}/GetUpcomingWeddings`,
+    payload
+  );
+  return response.data;
+};
+
 // Wedding Image operations
 export const createWeddingImage = async (
   payload: CreateWeddingImageRequest
@@ -69,7 +94,7 @@ export const createWeddingImage = async (
   });
 
   const response = await api.post<CreateWeddingImageResponse>(
-    `${BASE_URL}/CreateWeddingImage?WeddingId=${payload.WeddingId}&ImageCategoryId=${payload.ImageCategoryId}`,
+    `${BASE_URL}/CreateWeddingImage?weddingId=${payload.weddingId}&imageCategoryId=${payload.imageCategoryId}`,
     formData,
     {
       headers: {
@@ -88,7 +113,7 @@ export const updateWeddingImage = async (
   formData.append('file', payload.file);
 
   const response = await api.put<UpdateWeddingImageResponse>(
-    `${BASE_URL}/UpdateWeddingImage?Id=${payload.Id}`,
+    `${BASE_URL}/UpdateWeddingImage?id=${payload.id}`,
     formData,
     {
       headers: {

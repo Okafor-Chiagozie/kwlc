@@ -34,6 +34,61 @@ export enum MinisterRole {
   Worship = "Worship"
 }
 
+// Minister-specific data models
+export interface MinisterViewModel {
+  id: number;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  biography?: string;
+  ministerRoleId: MinisterRole;
+  ministerRole?: string; // Display name for the role
+  branchId?: number;
+  branchName?: string;
+  imageUrl?: string;
+  imageName?: string;
+  dateCreated: string; // DateTime
+  dateUpdated?: string; // DateTime
+  isActive: boolean;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
+export interface MinisterDetailsViewModel {
+  id: number;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  fullName?: string; // Computed property
+  email: string;
+  phoneNumber: string;
+  biography?: string;
+  ministerRoleId: MinisterRole;
+  ministerRole?: string;
+  branchId?: number;
+  branchName?: string;
+  imageUrl?: string;
+  imageName?: string;
+  dateCreated: string;
+  dateUpdated?: string;
+  isActive: boolean;
+  createdBy?: string;
+  updatedBy?: string;
+  // Additional details
+  socialMediaLinks?: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    linkedIn?: string;
+  };
+  qualifications?: string[];
+  specializations?: string[];
+  yearsOfService?: number;
+  achievements?: string[];
+}
+
 // Request/Response schemas exactly as defined in API documentation
 
 // AddMinisterViewModel from API
@@ -42,50 +97,12 @@ export interface AddMinisterViewModel {
   email: string;
   branchId?: number | null;
   lastName: string;
-  biography: string;
+  biography?: string; // Made optional
   firstName: string;
   phoneNumber: string;
-  middleName: string;
+  middleName?: string; // Made optional
   imageFile?: File | null;
   ministerRoleId: MinisterRole;
-}
-
-// EventViewModel from API (used in minister responses)
-export interface EventViewModel {
-  id: number;
-  name: string;
-  date: string;
-  startTime: string;
-  closeTime: string;
-  branchId?: number | null;
-  eventTypeId: number;
-  fee?: number | null;
-  maxAttendance?: number | null;
-  description: string;
-  location: string;
-  address: string;
-  venue: string;
-  isDeleted: boolean;
-  eventType: string;
-  imageUrl: string;
-  price: string;
-  attendanceCount: number;
-  attendees: string;
-  dateDeleted?: string;
-}
-
-// UserViewModel from API (used in some minister responses)
-export interface UserViewModel {
-  id: number;
-  dateCreated: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  middleName: string;
-  isBanned: boolean;
-  phoneNumber: string;
-  userTypeId: string;
-  loginFailedCount: number;
 }
 
 // Request types
@@ -93,12 +110,13 @@ export type CreateOrUpdateMinisterRequest = AddMinisterViewModel;
 export type SearchMinistersRequest = SearchFilter;
 
 // Response types based on API documentation
-export interface EventViewModelListPaginationResult extends PaginatedApiResponse<EventViewModel[]> {}
-export interface EventViewModelListResult extends StandardApiResponse<EventViewModel[]> {}
-export interface UserViewModelListResult extends StandardApiResponse<UserViewModel[]> {}
+export interface MinisterViewModelListResult extends StandardApiResponse<MinisterViewModel[]> {}
+export interface MinisterViewModelPaginationResult extends PaginatedApiResponse<MinisterViewModel[]> {}
+export interface MinisterDetailsResult extends StandardApiResponse<MinisterDetailsViewModel> {}
+export interface Int32Result extends StandardApiResponse<number> {}
 
 // Response interfaces matching API exactly
-export interface CreateOrUpdateMinisterResponse extends EventViewModel {}
-export interface SearchMinistersResponse extends EventViewModelListPaginationResult {}
-export interface GetAllMinistersResponse extends EventViewModelListResult {}
-export interface DeleteMinisterResponse extends EventViewModelListResult {}
+export interface CreateOrUpdateMinisterResponse extends MinisterDetailsResult {}
+export interface SearchMinistersResponse extends MinisterViewModelPaginationResult {}
+export interface GetAllMinistersResponse extends MinisterViewModelListResult {}
+export interface DeleteMinisterResponse extends Int32Result {}

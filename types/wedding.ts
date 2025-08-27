@@ -79,30 +79,6 @@ export interface AddWeddingViewModel {
   closeTime: TimeOnly;
 }
 
-// EventViewModel from API (used in wedding responses)
-export interface EventViewModel {
-  id: number;
-  name: string;
-  date: string;
-  startTime: string;
-  closeTime: string;
-  branchId?: number | null;
-  eventTypeId: number;
-  fee?: number | null;
-  maxAttendance?: number | null;
-  description: string;
-  location: string;
-  address: string;
-  venue: string;
-  isDeleted: boolean;
-  eventType: string;
-  imageUrl: string;
-  price: string;
-  attendanceCount: number;
-  attendees: string;
-  dateDeleted?: string;
-}
-
 // WeddingResponseViewModel from API
 export interface WeddingResponseViewModel {
   id?: number | null;
@@ -131,43 +107,41 @@ export interface WeddingImageViewModel {
   imageCategoryId: ImageCategory;
 }
 
-// EventImageViewModel from API (used in some wedding image responses)
-export interface EventImageViewModel {
-  eventId: number;
-  file: File[];
-  imageCategoryId: ImageCategory;
-  imageUrl: string;
-  imageName: string;
-}
-
 // Request types
 export type CreateOrUpdateWeddingRequest = AddWeddingViewModel;
 export type GetAllWeddingsRequest = SearchFilter;
 export type CreateWeddingImageRequest = {
-  WeddingId: number;
-  ImageCategoryId: ImageCategory;
+  weddingId: number; // Fixed: consistent camelCase
+  imageCategoryId: ImageCategory;
   File: File[];
 };
 export type UpdateWeddingImageRequest = {
-  Id: number;
+  id: number; // Fixed: consistent camelCase
   file: File;
 };
 
 // Response types based on API documentation
 export interface Int32Result extends StandardApiResponse<number> {}
-export interface EventViewModelListPaginationResult extends PaginatedApiResponse<EventViewModel[]> {}
 export interface WeddingResponseViewModelListResult extends StandardApiResponse<WeddingResponseViewModel[]> {}
+export interface WeddingResponseViewModelPaginationResult extends PaginatedApiResponse<WeddingResponseViewModel[]> {}
 export interface WeddingImageViewModelResult extends StandardApiResponse<WeddingImageViewModel> {}
-export interface EventImageViewModelListResult extends StandardApiResponse<EventImageViewModel[]> {}
-export interface EventImageViewModelResult extends StandardApiResponse<EventImageViewModel> {}
+export interface WeddingImageViewModelListResult extends StandardApiResponse<WeddingImageViewModel[]> {}
 
 // Response interfaces matching API exactly
-export interface CreateOrUpdateWeddingResponse extends EventViewModel {}
-export interface GetAllWeddingsResponse extends EventViewModelListPaginationResult {}
+export interface CreateOrUpdateWeddingResponse extends WeddingResponseViewModelListResult {}
+export interface GetAllWeddingsResponse extends WeddingResponseViewModelPaginationResult {}
 export interface GetWeddingResponse extends WeddingResponseViewModelListResult {}
 export interface DeleteWeddingResponse extends Int32Result {}
 export interface CreateWeddingImageResponse extends WeddingImageViewModelResult {}
-export interface UpdateWeddingImageResponse extends EventImageViewModelResult {}
-export interface GetWeddingImagesResponse extends EventImageViewModelListResult {}
-export interface GetWeddingImageResponse extends EventImageViewModelResult {}
+export interface UpdateWeddingImageResponse extends WeddingImageViewModelResult {}
+export interface GetWeddingImagesResponse extends WeddingImageViewModelListResult {}
+export interface GetWeddingImageResponse extends WeddingImageViewModelResult {}
 export interface DeleteWeddingImageResponse extends Int32Result {}
+
+// Additional response types for missing endpoints
+export interface GetBranchWeddingsRequest extends SearchFilter {
+  branchId: number;
+}
+export interface GetBranchWeddingsResponse extends WeddingResponseViewModelPaginationResult {}
+export interface GetUpcomingWeddingsRequest extends SearchFilter {}
+export interface GetUpcomingWeddingsResponse extends WeddingResponseViewModelPaginationResult {}

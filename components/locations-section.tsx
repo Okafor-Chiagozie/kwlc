@@ -9,13 +9,17 @@ import { Branch } from "@/types/branch"
 
 
 
+// Fallback image for branches when no image is provided
+const branchFallbackImage = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
+
 // Transform API branch data to UI format
 const transformBranchToLocation = (branch: Branch) => ({
   id: branch.id,
   name: branch.name,
-  image: branch.imageUrl || "/placeholder.svg",
+  image: branch.imageUrl || branchFallbackImage,
   times: "8:30am • 10:00am • 11:45am", // Default times since not in API
-  address: `${branch.address}, ${branch.location}`,
+  address: branch.address, // Clean address display
+  mapLink: branch.location, // Google Maps link for directions
   description: branch.welcomeAddress || `Join us in ${branch.name} for spiritual growth`,
   state: branch.state,
   lga: branch.lga,
@@ -34,6 +38,10 @@ export default function LocationsSection() {
     }),
     []
   )
+
+
+
+
 
   // Transform API data to location format
   const locations = branchesResponse?.isSuccessful && branchesResponse.data
@@ -103,22 +111,22 @@ export default function LocationsSection() {
                   className="group relative bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 animate-fade-in"
                   style={{ animationDelay: `${800 + index * 200}ms` }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-black/10 to-black/5 opacity-60 group-hover:opacity-70 transition-opacity z-10"></div>
                   <div className="relative h-64 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-black/10 to-black/5 opacity-60 group-hover:opacity-70 transition-opacity z-10"></div>
                     <Image
                       src={location.image}
                       alt={`${location.name} Branch`}
                       fill
                       className="object-cover transition-transform duration-700 group-hover:scale-110"
                       onError={(e) => {
-                        e.currentTarget.src = "/placeholder.svg"
+                        e.currentTarget.src = branchFallbackImage
                       }}
                     />
                     <div className="absolute inset-0 flex flex-col items-center justify-center z-20 text-white">
                       <span className="text-xs uppercase tracking-wider bg-primary/80 px-3 py-1 rounded-full mb-3">
                         Branch
                       </span>
-                      <h3 className="text-4xl font-bold tracking-tight drop-shadow-md mb-2">{location.name}</h3>
+                      <h3 className="text-4xl font-bold tracking-tight drop-shadow-md mb-2 px-4 text-center">{location.name}</h3>
                       <p className="text-sm text-white/90 max-w-xs text-center px-4">{location.description}</p>
                     </div>
                   </div>
@@ -167,7 +175,12 @@ export default function LocationsSection() {
                           </a>
                         </div>
                       )}
-                      <Button className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all group-hover:shadow-md">
+                      <a 
+                        href={location.mapLink?.replace('/embed', '') || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.address)}`}
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all group-hover:shadow-md inline-flex items-center justify-center px-4 py-2 rounded-md text-white font-medium"
+                      >
                         <span>Get Directions</span>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -184,7 +197,7 @@ export default function LocationsSection() {
                           <path d="M5 12h14"></path>
                           <path d="m12 5 7 7-7 7"></path>
                         </svg>
-                      </Button>
+                      </a>
                     </div>
                   </div>
                 </div>

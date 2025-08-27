@@ -14,11 +14,40 @@ const BASE_URL = '/api/v1/Ticket';
 export const createOrUpdateTicket = async (
   payload: CreateOrUpdateTicketRequest
 ): Promise<CreateOrUpdateTicketResponse> => {
-  const response = await api.post<CreateOrUpdateTicketResponse>(
-    `${BASE_URL}/CreateOrUpdateTicket`,
-    payload
-  );
-  return response.data;
+  // Check if file upload is needed
+  if (payload.file) {
+    // Create FormData for multipart/form-data
+    const formData = new FormData();
+    
+    // Add all form fields
+    if (payload.id !== null && payload.id !== undefined) {
+      formData.append('id', payload.id.toString());
+    }
+    formData.append('eventId', payload.eventId.toString());
+    formData.append('firstName', payload.firstName);
+    formData.append('lastName', payload.lastName);
+    formData.append('phoneNumber', payload.phoneNumber);
+    formData.append('email', payload.email);
+    formData.append('file', payload.file);
+    
+    const response = await api.post<CreateOrUpdateTicketResponse>(
+      `${BASE_URL}/CreateOrUpdateTicket`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  } else {
+    // Regular JSON request
+    const response = await api.post<CreateOrUpdateTicketResponse>(
+      `${BASE_URL}/CreateOrUpdateTicket`,
+      payload
+    );
+    return response.data;
+  }
 };
 
 export const getTicket = async (
@@ -40,10 +69,10 @@ export const getTicketById = async (
 };
 
 export const verifyTicketPayment = async (
-  ticketNumber: string
+  ticketId: number
 ): Promise<VerifyTicketPaymentResponse> => {
   const response = await api.get<VerifyTicketPaymentResponse>(
-    `${BASE_URL}/VerifyTicketPayment?ticketNumber=${encodeURIComponent(ticketNumber)}`
+    `${BASE_URL}/VerifyTicketPayment?ticketId=${ticketId}`
   );
   return response.data;
 };

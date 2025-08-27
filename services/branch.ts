@@ -45,9 +45,17 @@ export const createOrUpdateBranch = async (
 export const getAllBranches = async (
   payload: GetAllBranchesRequest
 ): Promise<GetAllBranchesResponse> => {
+  // Ensure pageSize is never 0 (which returns empty data)
+  const cleanPayload = {
+    pageSize: payload.pageSize > 0 ? payload.pageSize : 50,
+    pageNumber: payload.pageNumber > 0 ? payload.pageNumber : 1,
+    searchParams: payload.searchParams || {}
+  };
+  
+  
   const response = await api.post<GetAllBranchesResponse>(
     '/api/v1/Branch/GetAllBranches',
-    payload
+    cleanPayload
   );
   return response.data;
 };

@@ -2,43 +2,77 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, Clock, Calendar } from "lucide-react"
+import { ChevronLeft, ChevronRight, Clock, Calendar, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useApi } from "@/hooks/useApi"
+import { getChurchImages } from "@/services/homepage"
 
-const slides = [
-  {
-    id: 1,
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg",
-    title: "Join the prayer today",
-    subtitle:
-      "Visit Your local church and become a part of our flock by contributing to the community in anyway you possibly can",
-    label: "Living church",
-  },
-  {
-    id: 2,
-    image: "/placeholder.svg?height=1080&width=1920",
-    title: "Grow in faith together",
-    subtitle: "Experience the joy of worship and fellowship in a community that cares",
-    label: "Community church",
-  },
-  {
-    id: 3,
-    image: "/placeholder.svg?height=1080&width=1920",
-    title: "Discover God's purpose",
-    subtitle: "Join us on a journey of spiritual growth and discovery through Christ",
-    label: "Spiritual growth",
-  },
-]
+// No more dummy data - using real API data only
+
+interface Slide {
+  id: number;
+  image: string;
+  title: string;
+  subtitle: string;
+  label: string;
+}
 
 export default function HeroSlider() {
+  // Fetch church images from API
+  const { data: churchImagesResponse, loading: imagesLoading, error: imagesError } = useApi(
+    () => getChurchImages(),
+    []
+  )
+
+  // Slide content - API only provides images, text content is static
+  const slideContent = [
+    {
+      title: "Join the prayer today",
+      subtitle: "Visit Your local church and become a part of our flock by contributing to the community in anyway you possibly can",
+      label: "Living church",
+    },
+    {
+      title: "Grow in faith together", 
+      subtitle: "Experience the joy of worship and fellowship in a community that cares",
+      label: "Community church",
+    },
+    {
+      title: "Discover God's purpose",
+      subtitle: "Join us on a journey of spiritual growth and discovery through Christ", 
+      label: "Spiritual growth",
+    }
+  ]
+
+  // Fallback image when API doesn't return carousel images
+  const fallbackImage = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
+
+  // Transform API data to slides format - combine API images with static text
+  const apiSlides = churchImagesResponse?.isSuccessful && churchImagesResponse.data?.[0]?.carouselImages?.length > 0
+    ? churchImagesResponse.data[0].carouselImages.map((image, index) => ({
+        id: image.id || index + 1,
+        image: image.imageUrl || fallbackImage,
+        title: slideContent[index]?.title || "Join the prayer today",
+        subtitle: slideContent[index]?.subtitle || "Visit Your local church and become a part of our flock by contributing to the community in anyway you possibly can",
+        label: slideContent[index]?.label || "Living church",
+      }))
+    : slideContent.map((content, index) => ({
+        id: index + 1,
+        image: fallbackImage,
+        title: content.title,
+        subtitle: content.subtitle,
+        label: content.label,
+      }))
+
+  // Use API slides only - no dummy data fallback
+  const slides = apiSlides
   const [currentSlide, setCurrentSlide] = useState(0)
-  const [prevSlideIndex, setPrevSlideIndex] = useState(null)
-  const [slideDirection, setSlideDirection] = useState("next")
-  const autoPlayRef = useRef(null)
+  const [prevSlideIndex, setPrevSlideIndex] = useState<number | null>(null)
+  const [slideDirection, setSlideDirection] = useState<"next" | "prev">("next")
+  const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
 
   const goToSlide = useCallback(
-    (index, direction = "next") => {
+    (index: number, direction: "next" | "prev" = "next") => {
       setPrevSlideIndex(currentSlide)
       setSlideDirection(direction)
       setCurrentSlide(index)
@@ -74,10 +108,20 @@ export default function HeroSlider() {
   }, [nextSlide])
 
   // Animation for text elements
-  const AnimatedText = ({ text, className, wordDelay = 100, baseDelay = 0 }) => {
+  const AnimatedText = ({ 
+    text, 
+    className, 
+    wordDelay = 100, 
+    baseDelay = 0 
+  }: {
+    text: string;
+    className: string;
+    wordDelay?: number;
+    baseDelay?: number;
+  }) => {
     return (
       <div className={className}>
-        {text.split(" ").map((word, i) => (
+        {text.split(" ").map((word: string, i: number) => (
           <span key={i} className="inline-block" style={{ margin: "0 0.2rem" }}>
             <span
               className="inline-block animate-word-slide-up opacity-0"
@@ -94,10 +138,22 @@ export default function HeroSlider() {
     )
   }
 
+  // Show loading state while fetching images
+  if (imagesLoading) {
+    return (
+      <div className="relative h-full w-full overflow-hidden bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-white mx-auto mb-4" />
+          <p className="text-white/80">Loading slides...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="relative h-full w-full overflow-hidden">
       {/* Slides */}
-      {slides.map((slide, index) => {
+      {slides.map((slide: Slide, index: number) => {
         const isCurrent = index === currentSlide
         const isPrev = index === prevSlideIndex
 
@@ -119,7 +175,7 @@ export default function HeroSlider() {
               )}
             >
               <Image
-                src={slide.image || "/placeholder.svg"}
+                src={slide.image || fallbackImage}
                 alt={slide.title}
                 fill
                 className="object-cover object-center brightness-[0.7]"

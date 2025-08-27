@@ -56,11 +56,11 @@ export enum PaymentMethod {
 export interface AddDonationViewModel {
   email: string;
   amount: number;
-  message: string;
+  message?: string; // Made optional and nullable to match API
   currencyId: Currency;
-  donorName: string;
+  donorName?: string; // Made optional and nullable to match API
   isAnnonymous: boolean;
-  phoneNumber: string;
+  phoneNumber?: string; // Made optional and nullable to match API
   churchProjectId?: number | null;
   purposeCode: PurposeCode;
   donationTypeId: DonationType;

@@ -11,7 +11,7 @@ import MainLayout from "@/components/main-layout"
 import { useApi } from "@/hooks/useApi"
 import { getAllMinisters } from "@/services/minister"
 import { getAllBranches } from "@/services/branch"
-import { Minister } from "@/types/minister"
+import { MinisterViewModel } from "@/types/minister"
 import { Branch } from "@/types/branch"
 
 export default function MinistersPage() {
@@ -24,7 +24,7 @@ export default function MinistersPage() {
     loading: ministersLoading,
     error: ministersError,
     refetch: refetchMinisters,
-  } = useApi(() => getAllMinisters(), [])
+  } = useApi(() => getAllMinisters({ pageSize: 100, pageNumber: 1, searchParams: {} }), [])
 
   // Fetch branches
   const {
@@ -48,7 +48,7 @@ export default function MinistersPage() {
   // Filter ministers by selected branch
   const filteredMinisters = selectedBranch === "All Branches" 
     ? ministers 
-    : ministers.filter((minister: Minister) => {
+    : ministers.filter((minister: MinisterViewModel) => {
         const ministerBranch = branches.find(branch => branch.id === minister.branchId)
         return ministerBranch?.name === selectedBranch
       })
@@ -79,7 +79,7 @@ export default function MinistersPage() {
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('/placeholder.svg?height=600&width=1200')",
+            backgroundImage: "url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg')",
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-blue-600/90" />
@@ -156,7 +156,7 @@ export default function MinistersPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredMinisters.map((minister: Minister, index: number) => (
+              {filteredMinisters.map((minister: MinisterViewModel, index: number) => (
                 <Card
                   key={minister.id}
                   className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 bg-white border-0 shadow-lg overflow-hidden"
@@ -164,40 +164,35 @@ export default function MinistersPage() {
                 >
                   <div className="relative h-64 overflow-hidden">
                     <Image
-                      src={minister.imageUrl || "/placeholder.svg"}
-                      alt={minister.name}
+                      src={minister.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
+                      alt={`${minister.firstName} ${minister.lastName}`}
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                     <div className="absolute bottom-4 left-4 right-4">
                       <Badge className="bg-primary/90 text-white mb-2">
-                        {minister.eventType || "Minister"}
+                        {minister.ministerRole || "Minister"}
                       </Badge>
                     </div>
                   </div>
 
                   <CardContent className="p-6">
                     <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary transition-colors">
-                      {minister.name}
+                      {`${minister.firstName} ${minister.lastName}`}
                     </h3>
 
                     <div className="flex items-center gap-2 text-gray-600 mb-3">
                       <MapPin className="h-4 w-4 text-primary" />
-                      <span className="text-sm">{getBranchName(minister.branchId)}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-gray-600 mb-3">
-                      <Users className="h-4 w-4 text-primary" />
-                      <span className="text-sm">{minister.location || "Ministry Location"}</span>
+                      <span className="text-sm">{minister.branchId ? getBranchName(minister.branchId) : minister.branchName || "Unknown Branch"}</span>
                     </div>
 
                     <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                      {minister.description || "Dedicated to serving God and His people with passion and commitment."}
+                      {minister.biography || "Dedicated to serving God and His people with passion and commitment."}
                     </p>
 
                     <div className="flex items-center justify-end">
-                      <Link href={`/ministers/${minister.id}`}>
+                      <Link href={`/pastors/${minister.id}`}>
                         <Button size="sm" className="bg-primary hover:bg-primary/90 text-white group-hover:bg-primary/80">
                           Learn More
                           <ChevronRight className="h-4 w-4 ml-1" />

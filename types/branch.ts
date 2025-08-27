@@ -12,6 +12,11 @@ export interface StandardApiResponse<T = any> {
   responseCode: string;
 }
 
+export interface PaginatedApiResponse<T = any> extends StandardApiResponse<T> {
+  totalCount: number;
+  totalPages: number;
+}
+
 export interface SearchFilter {
   pageSize: number;
   pageNumber: number;
@@ -240,7 +245,7 @@ export type GetBranchReportsRequest = SearchFilter;
 // Response types based on API documentation
 export interface Int32ListResult extends StandardApiResponse<number[]> {}
 export interface Int32Result extends StandardApiResponse<number> {}
-export interface BranchViewModelListResult extends StandardApiResponse<BranchViewModel[]> {}
+export interface BranchViewModelListResult extends PaginatedApiResponse<BranchViewModel[]> {}
 export interface BranchImageViewModelListResult extends StandardApiResponse<BranchImageViewModel[]> {}
 export interface WeeklyActivityViewModelListResult extends StandardApiResponse<WeeklyActivityViewModel[]> {}
 export interface BranchReportViewModelListResult extends StandardApiResponse<BranchReportViewModel[]> {}
@@ -269,3 +274,6 @@ export interface UpdateBranchReportResponse extends Int32ListResult {}
 export interface GetBranchReportsResponse extends BranchReportViewModelListResult {}
 export interface GetBranchReportResponse extends BranchReportViewModelListResult {}
 export interface DeleteBranchReportResponse extends Int32ListResult {}
+
+// Type alias for convenience
+export type Branch = BranchViewModel

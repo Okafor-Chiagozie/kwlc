@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import MainLayout from "@/components/main-layout"
 import { useApi } from "@/hooks/useApi"
 import { getAllMinisters } from "@/services/minister"
-import { Minister } from "@/types/minister"
+import { MinisterViewModel } from "@/types/minister"
 
 const isNoRecordsError = (error: string | null) => {
   return error && error.toLowerCase().includes("no record found")
@@ -60,10 +60,10 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
     loading: ministersLoading, 
     error: ministersError, 
     refetch: refetchMinisters 
-  } = useApi(() => getAllMinisters(), [])
+  } = useApi(() => getAllMinisters({ pageSize: 100, pageNumber: 1, searchParams: {} }), [])
 
   const ministers = Array.isArray(ministersResponse?.data) ? ministersResponse.data : []
-  const pastor = ministers.find((minister: Minister) => minister.id === pastorId)
+  const pastor = ministers.find((minister: MinisterViewModel) => minister.id === pastorId)
 
   // Handle loading state
   if (ministersLoading) {
@@ -235,7 +235,7 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
             <div className="lg:col-span-1">
               <div className="relative h-96 lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl">
                 <Image 
-                  src={pastor.imageUrl || "/placeholder.svg?height=600&width=600"} 
+                  src={pastor.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"} 
                   alt={pastor.name || "Pastor"} 
                   fill 
                   className="object-cover" 

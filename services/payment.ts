@@ -5,7 +5,8 @@ import {
   VerifyPaymentRequest,
   VerifyPaymentResponse,
   ProcessPaymentWebHookRequest,
-  ProcessPaymentWebHookResponse
+  ProcessPaymentWebHookResponse,
+  PaymentDetailsResponse
 } from '@/types/payment';
 
 const BASE_URL = '/api/v1/Payment';
@@ -48,6 +49,16 @@ export const processPaymentWebHook = async (
       },
       data: payload // Request body
     }
+  );
+  return response.data;
+};
+
+// Ticket payment verification (part of Payment API)
+export const verifyTicketPayment = async (
+  ticketId: number
+): Promise<PaymentDetailsResponse> => {
+  const response = await api.get<PaymentDetailsResponse>(
+    `/api/v1/Ticket/VerifyTicketPayment?ticketId=${ticketId}`
   );
   return response.data;
 };

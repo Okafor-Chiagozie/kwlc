@@ -108,10 +108,10 @@ export const updateProjectImages = async (
 };
 
 export const getProjectImages = async (
-  branchId: number
+  projectId: number
 ): Promise<GetProjectImagesResponse> => {
   const response = await api.get<GetProjectImagesResponse>(
-    `${BASE_URL}/GetProjectImages?branchId=${branchId}`
+    `${BASE_URL}/GetProjectImages?projectId=${projectId}`
   );
   return response.data;
 };
@@ -127,11 +127,11 @@ export const getProjectImage = async (
 };
 
 export const deleteProjectImage = async (
-  branchId: number,
+  projectId: number,
   imageId: number
 ): Promise<DeleteProjectImageResponse> => {
   const response = await api.delete<DeleteProjectImageResponse>(
-    `${BASE_URL}/DeleteProjectImage?branchId=${branchId}&imageId=${imageId}`
+    `${BASE_URL}/DeleteProjectImage?projectId=${projectId}&imageId=${imageId}`
   );
   return response.data;
 };

@@ -18,9 +18,8 @@ export interface SearchFilter {
   searchParams?: Record<string, string>;
 }
 
-// Request/Response schemas exactly as defined in API documentation
-
-// TicketViewModel from API (used in livestream responses)
+// Import TicketViewModel from ticket types since API returns TicketViewModelListResult
+// Note: This appears to be an API design issue where Livestream endpoints incorrectly return Ticket types
 export interface TicketViewModel {
   id?: number | null;
   eventId: number;
@@ -28,7 +27,7 @@ export interface TicketViewModel {
   lastName: string;
   phoneNumber: string;
   email: string;
-  file: string;
+  file?: File | null;
   ticketNumber: string;
   seatNumber?: number | null;
   price: number;
@@ -37,12 +36,18 @@ export interface TicketViewModel {
   eventName: string;
 }
 
-// Request types
+// Request types based on API documentation
+export type GetLivestreamUrlRequest = void; // No parameters
 export type GetCompletedStreamsRequest = SearchFilter;
 export type GetUpcomingStreamsRequest = SearchFilter;
 export type GetAllAvailableStreamsRequest = SearchFilter;
+export type GetStreamDetailsByURLRequest = string; // URL string
+export type GetStreamDetailsByIdRequest = string; // Video ID string
+export type DeleteStreamRequest = number; // ID number
 
-// Response types based on API documentation
+// Response types based on actual API documentation
+// NOTE: API incorrectly returns TicketViewModelListResult for all Livestream endpoints
+// This appears to be a backend API design issue
 export interface TicketViewModelListResult extends StandardApiResponse<TicketViewModel[]> {}
 
 // Response interfaces matching API exactly
@@ -53,3 +58,32 @@ export interface GetAllAvailableStreamsResponse extends TicketViewModelListResul
 export interface GetStreamDetailsByURLResponse extends TicketViewModelListResult {}
 export interface GetStreamDetailsByIdResponse extends TicketViewModelListResult {}
 export interface DeleteStreamResponse extends TicketViewModelListResult {}
+
+// TODO: These custom types should be used once backend fixes the response types
+// Currently commented out because API returns TicketViewModelListResult instead
+/*
+export interface LivestreamViewModel {
+  id: string;
+  title: string;
+  description?: string;
+  streamUrl: string;
+  thumbnailUrl?: string;
+  status: LivestreamStatus;
+  startTime: string; // DateTime
+  endTime?: string; // DateTime
+  duration?: number; // in minutes
+  viewerCount?: number;
+  isLive: boolean;
+  tags?: string[];
+  createdAt: string; // DateTime
+  updatedAt?: string; // DateTime
+}
+
+export enum LivestreamStatus {
+  Scheduled = "Scheduled",
+  Live = "Live",
+  Ended = "Ended",
+  Cancelled = "Cancelled",
+  OnDemand = "OnDemand"
+}
+*/

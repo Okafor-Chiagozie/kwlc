@@ -65,7 +65,7 @@ export const getDonation = async (
   donationId: number
 ): Promise<GetDonationResponse> => {
   const response = await api.get<GetDonationResponse>(
-    `${BASE_URL}/GetDonation?donation=${donationId}`
+    `${BASE_URL}/GetDonation?donationId=${donationId}`
   );
   return response.data;
 };
@@ -74,7 +74,7 @@ export const deleteDonation = async (
   donationId: number
 ): Promise<DeleteDonationResponse> => {
   const response = await api.delete<DeleteDonationResponse>(
-    `${BASE_URL}/DeleteDonation?donation=${donationId}`
+    `${BASE_URL}/DeleteDonation?donationId=${donationId}`
   );
   return response.data;
 };
