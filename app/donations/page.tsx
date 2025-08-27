@@ -10,7 +10,9 @@ import { Progress } from "@/components/ui/progress"
 import MainLayout from "@/components/main-layout"
 import { useApi } from "@/hooks/useApi"
 import { getProjects } from "@/services/churchProject"
-import { ChurchProject } from "@/types/churchProject"
+import { initiateDonation } from "@/services/donation"
+import { ChurchProjectPageViewModel } from "@/types/churchProject"
+import { Currency, PurposeCode, DonationType, PaymentMethod } from "@/types/donation"
 
 const isNoRecordsError = (error: string | null) => {
   return error && error.toLowerCase().includes("no record found")
@@ -45,8 +47,17 @@ const EmptyState = () => (
 )
 
 export default function DonationsPage() {
-  const [selectedAmount, setSelectedAmount] = useState("")
-  const [customAmount, setCustomAmount] = useState("")
+  const [selectedAmount, setSelectedAmount] = useState<string>("")
+  const [customAmount, setCustomAmount] = useState<string>("")
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    phoneNumber: "",
+    message: "",
+    isAnonymous: false
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<ChurchProjectPageViewModel | null>(null)
 
   // Fetch projects from API
   const { 
@@ -75,28 +86,89 @@ export default function DonationsPage() {
     return (raised / target) * 100
   }
 
-  const getProjectImage = (project: ChurchProject) => {
-    if (project.previewImages?.[0]) return project.previewImages[0]
+  const getProjectImage = (project: ChurchProjectPageViewModel) => {
     if (project.carouselImages?.[0]) return project.carouselImages[0]
-    if (project.galleryImages?.[0]) return project.galleryImages[0]
     if (project.imageUrl) return project.imageUrl
-    return "/placeholder.svg?height=500&width=600&text=Church+Project"
+    return "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
   }
 
-  const getProjectGallery = (project: ChurchProject) => {
+  const getProjectGallery = (project: ChurchProjectPageViewModel) => {
     const allImages = [
-      ...(project.previewImages || []),
-      ...(project.carouselImages || []),
-      ...(project.galleryImages || [])
+      ...(project.carouselImages || [])
     ].filter(Boolean)
     
+    const churchImage = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
+    
     return allImages.length > 0 ? allImages.slice(0, 5) : [
-      "/placeholder.svg?height=200&width=300&text=Project+Image+1",
-      "/placeholder.svg?height=200&width=300&text=Project+Image+2",
-      "/placeholder.svg?height=200&width=300&text=Project+Image+3",
-      "/placeholder.svg?height=200&width=300&text=Project+Image+4",
-      "/placeholder.svg?height=200&width=300&text=Project+Image+5",
+      churchImage,
+      churchImage,
+      churchImage,
+      churchImage,
+      churchImage,
     ]
+  }
+
+  const handleDonationSubmit = async () => {
+    if (isSubmitting) return
+    
+    const donationAmount = customAmount.trim() || selectedAmount
+    if (!donationAmount || !formData.email.trim() || !formData.fullName.trim()) {
+      alert("Please fill in all required fields: amount, email, and full name")
+      return
+    }
+    
+    const amount = parseFloat(donationAmount)
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid donation amount")
+      return
+    }
+    
+    setIsSubmitting(true)
+    
+    try {
+      const donationData = {
+        email: formData.email.trim(),
+        amount: parseFloat(donationAmount),
+        message: formData.message.trim() || undefined,
+        currencyId: Currency.NGN,
+        donorName: formData.isAnonymous ? undefined : formData.fullName.trim(),
+        isAnnonymous: formData.isAnonymous,
+        phoneNumber: formData.phoneNumber.trim() || undefined,
+        churchProjectId: selectedProject?.id || null,
+        purposeCode: selectedProject ? PurposeCode.DON : PurposeCode.CDON,
+        donationTypeId: selectedProject ? DonationType.Project : DonationType.Community,
+        paymenMethodId: PaymentMethod.Card
+      }
+      
+      console.log('Donation request:', donationData)
+      
+      const response = await initiateDonation(donationData)
+      
+      if (response.isSuccessful && response.data?.checkoutUrl) {
+        // Redirect to payment page
+        window.location.href = response.data.checkoutUrl
+      } else {
+        alert("Unable to process donation. Please try again.")
+      }
+    } catch (error: any) {
+      console.error("Donation error:", error)
+      
+      let errorMessage = "An error occurred while processing your donation. Please try again."
+      
+      if (error?.response?.data?.responseMessage) {
+        errorMessage = error.response.data.responseMessage
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error?.response?.data?.errors && Array.isArray(error.response.data.errors)) {
+        errorMessage = error.response.data.errors.map((e: any) => e.description || e.message).join(', ')
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
+      alert(errorMessage)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -191,7 +263,16 @@ export default function DonationsPage() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4">
-                      <Button className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2">
+                      <Button 
+                        className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2"
+                        onClick={() => {
+                          setSelectedProject(latestProject)
+                          document.getElementById('donation-form')?.scrollIntoView({ 
+                            behavior: 'smooth',
+                            block: 'start'
+                          })
+                        }}
+                      >
                         <Heart className="h-4 w-4" />
                         Donate Now
                       </Button>
@@ -220,7 +301,7 @@ export default function DonationsPage() {
                       className="relative aspect-[4/3] rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
                     >
                       <Image
-                        src={image || "/placeholder.svg"}
+                        src={image || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
                         alt={`Project image ${index + 1}`}
                         fill
                         className="object-cover hover:scale-105 transition-transform duration-300"
@@ -296,7 +377,18 @@ export default function DonationsPage() {
                           </div>
                         </div>
 
-                        <Button className="w-full bg-primary hover:bg-primary/90 text-white">Donate to Project</Button>
+                        <Button 
+                          className="w-full bg-primary hover:bg-primary/90 text-white"
+                          onClick={() => {
+                            setSelectedProject(project)
+                            document.getElementById('donation-form')?.scrollIntoView({ 
+                              behavior: 'smooth',
+                              block: 'start'
+                            })
+                          }}
+                        >
+                          Donate to Project
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -307,7 +399,7 @@ export default function DonationsPage() {
         </section>
 
         {/* Donation Form Section */}
-        <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
+        <section id="donation-form" className="py-16 bg-gradient-to-b from-gray-50 to-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
@@ -316,10 +408,23 @@ export default function DonationsPage() {
                   <span>Make a Donation</span>
                 </div>
                 <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">Support Our Mission</h2>
-                <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                  Your generous contribution helps us continue our work in the community and spread God's love to those
-                  who need it most.
-                </p>
+                {selectedProject ? (
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6 max-w-2xl mx-auto">
+                    <p className="text-primary font-medium mb-2">✨ Donating to: {selectedProject.name}</p>
+                    <p className="text-gray-600 text-sm">{selectedProject.description}</p>
+                    <button 
+                      onClick={() => setSelectedProject(null)}
+                      className="text-primary text-sm hover:underline mt-2"
+                    >
+                      Change to general donation
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                    Your generous contribution helps us continue our work in the community and spread God's love to those
+                    who need it most.
+                  </p>
+                )}
               </div>
 
               <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
@@ -379,36 +484,67 @@ export default function DonationsPage() {
 
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                        <Input placeholder="Enter your full name" />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                        <Input 
+                          placeholder="Enter your full name" 
+                          value={formData.fullName}
+                          onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                          required
+                        />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                        <Input type="email" placeholder="Enter your email" />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                        <Input 
+                          type="email" 
+                          placeholder="Enter your email" 
+                          value={formData.email}
+                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                          required
+                        />
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                        <Input type="tel" placeholder="Enter your phone number" />
+                        <Input 
+                          type="tel" 
+                          placeholder="Enter your phone number" 
+                          value={formData.phoneNumber}
+                          onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})}
+                        />
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Message (Optional)</label>
-                        <Textarea placeholder="Leave a message or prayer request" className="min-h-[100px]" />
+                        <Textarea 
+                          placeholder="Leave a message or prayer request" 
+                          className="min-h-[100px]"
+                          value={formData.message}
+                          onChange={(e) => setFormData({...formData, message: e.target.value})}
+                        />
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <input type="checkbox" id="anonymous" className="rounded" />
+                        <input 
+                          type="checkbox" 
+                          id="anonymous" 
+                          className="rounded"
+                          checked={formData.isAnonymous}
+                          onChange={(e) => setFormData({...formData, isAnonymous: e.target.checked})}
+                        />
                         <label htmlFor="anonymous" className="text-sm text-gray-600">
                           Make this donation anonymous
                         </label>
                       </div>
                     </div>
 
-                    <Button className="w-full mt-6 bg-primary hover:bg-primary/90 text-white py-3">
+                    <Button 
+                      className="w-full mt-6 bg-primary hover:bg-primary/90 text-white py-3"
+                      onClick={() => handleDonationSubmit()}
+                      disabled={isSubmitting}
+                    >
                       <Heart className="h-4 w-4 mr-2" />
-                      Complete Donation
+                      {isSubmitting ? "Processing..." : "Complete Donation"}
                     </Button>
 
                     <p className="text-xs text-gray-500 text-center mt-4">

@@ -28,19 +28,19 @@ export default function HeroSlider() {
   // Slide content - API only provides images, text content is static
   const slideContent = [
     {
-      title: "Join the prayer today",
+    title: "Join the prayer today",
       subtitle: "Visit Your local church and become a part of our flock by contributing to the community in anyway you possibly can",
-      label: "Living church",
-    },
-    {
-      title: "Grow in faith together", 
-      subtitle: "Experience the joy of worship and fellowship in a community that cares",
-      label: "Community church",
-    },
-    {
-      title: "Discover God's purpose",
-      subtitle: "Join us on a journey of spiritual growth and discovery through Christ", 
-      label: "Spiritual growth",
+    label: "Living church",
+  },
+  {
+    title: "Grow in faith together",
+    subtitle: "Experience the joy of worship and fellowship in a community that cares",
+    label: "Community church",
+  },
+  {
+    title: "Discover God's purpose",
+    subtitle: "Join us on a journey of spiritual growth and discovery through Christ",
+    label: "Spiritual growth",
     }
   ]
 
