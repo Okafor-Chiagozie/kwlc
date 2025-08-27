@@ -18,22 +18,20 @@ export interface SearchFilter {
   searchParams?: Record<string, string>;
 }
 
-// Import TicketViewModel from ticket types since API returns TicketViewModelListResult
-// Note: This appears to be an API design issue where Livestream endpoints incorrectly return Ticket types
-export interface TicketViewModel {
-  id?: number | null;
-  eventId: number;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  email: string;
-  file?: File | null;
-  ticketNumber: string;
-  seatNumber?: number | null;
-  price: number;
-  paymentStatus: boolean;
-  imageUrl: string;
-  eventName: string;
+// Actual Livestream response structure based on API testing
+export interface LivestreamViewModel {
+  isLive: boolean;
+  title: string;
+  streamId: string;
+  entTime: string;
+  viewCount: number;
+  streamUrl: string;
+  startTime: string;
+  streamDate: string;
+  duration: string;
+  description: string;
+  thumbnailUrl: string;
+  currentViewers: number | null;
 }
 
 // Request types based on API documentation
@@ -45,19 +43,17 @@ export type GetStreamDetailsByURLRequest = string; // URL string
 export type GetStreamDetailsByIdRequest = string; // Video ID string
 export type DeleteStreamRequest = number; // ID number
 
-// Response types based on actual API documentation
-// NOTE: API incorrectly returns TicketViewModelListResult for all Livestream endpoints
-// This appears to be a backend API design issue
-export interface TicketViewModelListResult extends StandardApiResponse<TicketViewModel[]> {}
+// Response types based on actual API testing
+export interface LivestreamViewModelListResult extends StandardApiResponse<LivestreamViewModel[]> {}
 
-// Response interfaces matching API exactly
-export interface GetLivestreamUrlResponse extends TicketViewModelListResult {}
-export interface GetCompletedStreamsResponse extends TicketViewModelListResult {}
-export interface GetUpcomingStreamsResponse extends TicketViewModelListResult {}
-export interface GetAllAvailableStreamsResponse extends TicketViewModelListResult {}
-export interface GetStreamDetailsByURLResponse extends TicketViewModelListResult {}
-export interface GetStreamDetailsByIdResponse extends TicketViewModelListResult {}
-export interface DeleteStreamResponse extends TicketViewModelListResult {}
+// Response interfaces matching actual API structure
+export interface GetLivestreamUrlResponse extends LivestreamViewModelListResult {}
+export interface GetCompletedStreamsResponse extends LivestreamViewModelListResult {}
+export interface GetUpcomingStreamsResponse extends LivestreamViewModelListResult {}
+export interface GetAllAvailableStreamsResponse extends LivestreamViewModelListResult {}
+export interface GetStreamDetailsByURLResponse extends LivestreamViewModelListResult {}
+export interface GetStreamDetailsByIdResponse extends LivestreamViewModelListResult {}
+export interface DeleteStreamResponse extends LivestreamViewModelListResult {}
 
 // TODO: These custom types should be used once backend fixes the response types
 // Currently commented out because API returns TicketViewModelListResult instead
