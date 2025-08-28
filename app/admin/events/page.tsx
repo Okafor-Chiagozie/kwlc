@@ -54,6 +54,7 @@ import {
 export default function EventsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Events State
@@ -180,7 +181,7 @@ export default function EventsPage() {
 
   const handleSearchEvents = async () => {
     try {
-      setIsLoading(true)
+      setIsSearching(true)
       const response = await searchEvent(searchParams)
 
       if (response.isSuccessful) {
@@ -194,7 +195,7 @@ export default function EventsPage() {
       console.error('Error searching events:', err)
       toast.error('Failed to search events')
     } finally {
-      setIsLoading(false)
+      setIsSearching(false)
     }
   }
 
@@ -522,10 +523,10 @@ export default function EventsPage() {
                     <div className="flex items-end">
                       <Button 
                         type="submit"
-                        disabled={isLoading}
+                        disabled={isSearching}
                         className="w-full"
                       >
-                        {isLoading ? (
+                        {isSearching ? (
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         ) : (
                           'Search Events'
