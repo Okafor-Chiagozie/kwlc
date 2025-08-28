@@ -79,11 +79,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const getInitials = () => {
     if (currentUser) {
+      // Return just the first letter of the first name
       const firstInitial = currentUser.firstName?.charAt(0)?.toUpperCase() || ""
-      const lastInitial = currentUser.lastName?.charAt(0)?.toUpperCase() || ""
-      return firstInitial + lastInitial || currentUser.email?.charAt(0)?.toUpperCase() || "AU"
+      return firstInitial || currentUser.email?.charAt(0)?.toUpperCase() || "A"
     }
-    return "AU"
+    return "A"
   }
 
   const getUserRole = () => {
@@ -200,7 +200,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="/placeholder.svg?height=32&width=32" />
                     <AvatarFallback className="bg-primary/10 text-primary font-medium">
                       {getInitials()}
                     </AvatarFallback>
@@ -247,16 +246,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   )}
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Account Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/admin/change-password" className="flex items-center w-full">
-                    <Lock className="h-4 w-4 mr-2" />
-                    Change Password
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/account-settings" className="flex items-center w-full">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Account Settings
                   </Link>
                 </DropdownMenuItem>
+
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                   <LogOut className="h-4 w-4 mr-2" />
