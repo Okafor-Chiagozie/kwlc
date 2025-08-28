@@ -377,13 +377,31 @@ export default function ChurchInfoPage() {
     try {
       setIsUploadingImage(true)
       
-      // Ensure category is a valid number
-      const categoryId = Number(category)
-      console.log('Uploading image:', file.name, 'Category:', category, 'CategoryId:', categoryId)
+      // Debug the category value before conversion
+      console.log('Raw category value:', category)
+      console.log('Category type:', typeof category)
+      console.log('Category === undefined:', category === undefined)
+      console.log('Category === null:', category === null)
       
-      if (categoryId < 1 || categoryId > 8) {
-        throw new Error(`Invalid category ID: ${categoryId}. Must be between 1-8.`)
+      // Ensure category is a valid number - with better fallback
+      let categoryId: number
+      
+      if (category === undefined || category === null) {
+        console.warn('Category is undefined/null, defaulting to CarouselImage (1)')
+        categoryId = 1 // Default to CarouselImage
+      } else {
+        categoryId = Number(category)
+        console.log('Converted categoryId:', categoryId)
       }
+      
+      // Additional validation
+      if (isNaN(categoryId) || categoryId < 1 || categoryId > 8) {
+        console.error('Invalid category ID after conversion:', categoryId, 'Original category:', category)
+        categoryId = 1 // Default to CarouselImage if invalid
+        console.log('Using fallback categoryId:', categoryId)
+      }
+      
+      console.log('Final categoryId being sent:', categoryId)
 
       const response = await createChurchImage({
         File: [file],
@@ -400,7 +418,18 @@ export default function ChurchInfoPage() {
       }
     } catch (err: any) {
       console.error('Error uploading image:', err)
-      toast.error(err.message || 'Failed to upload image')
+      console.error('Full error object:', err)
+      console.error('Error response data:', err.response?.data)
+      console.error('Error status:', err.response?.status)
+      
+      // Try to extract validation errors if they exist
+      if (err.response?.data?.validationErrors || err.response?.data?.errors) {
+        const validationErrors = err.response.data.validationErrors || err.response.data.errors
+        console.error('Validation errors:', validationErrors)
+        toast.error(`Validation error: ${JSON.stringify(validationErrors)}`)
+      } else {
+        toast.error(err.message || 'Failed to upload image')
+      }
     } finally {
       setIsUploadingImage(false)
     }
@@ -463,9 +492,9 @@ export default function ChurchInfoPage() {
       <AdminLayout>
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Church Information</h1>
+          <div className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Church Information</h1>
               <p className="text-gray-600 mt-1">Manage your church details, schedules, and settings</p>
             </div>
             <Button 
@@ -480,7 +509,7 @@ export default function ChurchInfoPage() {
                   }
                 }}
                 disabled={isSaving}
-                className="bg-primary hover:bg-primary/90"
+                className="bg-primary hover:bg-primary/90 w-full sm:w-auto flex-shrink-0"
               >
                 {isSaving ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -976,8 +1005,15 @@ export default function ChurchInfoPage() {
                         onChange={(e) => {
                           const files = e.target.files
                           if (files && files.length > 0) {
-                            // For now, upload the first file with carousel category
-                            handleImageUpload(files[0], ChurchImageCategory.CarouselImage)
+                            // Debug the category value
+                            console.log('ChurchImageCategory enum:', ChurchImageCategory)
+                            console.log('CarouselImage value:', ChurchImageCategory.CarouselImage)
+                            console.log('typeof CarouselImage:', typeof ChurchImageCategory.CarouselImage)
+                            
+                            // Explicitly pass numeric value for carousel category (1)
+                            const categoryValue = ChurchImageCategory.CarouselImage || 1
+                            console.log('Using category value:', categoryValue)
+                            handleImageUpload(files[0], categoryValue)
                           }
                         }}
                       />
@@ -1089,8 +1125,33 @@ export default function ChurchInfoPage() {
                   <CardContent>
                     <div className="text-2xl font-bold text-orange-600">
                       {(() => {
-                        console.log('Rendering church images count:', churchImages, 'Length:', churchImages?.length)
-                        return churchImages?.length || 0
+                        console.log('Rendering church images count:', churchImages)
+                        
+                        if (!churchImages) return 0
+                        
+                        // Calculate total images from all categories
+                        let totalCount = 0
+                        
+                        // Count carousel images (array)
+                        if (churchImages.carouselImages && Array.isArray(churchImages.carouselImages)) {
+                          totalCount += churchImages.carouselImages.length
+                        }
+                        
+                        // Count individual images (non-null values)
+                        const singleImageFields = [
+                          'bibleStudyImage', 'communityImage', 'fellowshipImage', 
+                          'weddingImage', 'churchEventImage', 'churchServiceImage', 
+                          'churchLiveStreamImage'
+                        ]
+                        
+                        singleImageFields.forEach(field => {
+                          if (churchImages[field]) {
+                            totalCount += 1
+                          }
+                        })
+                        
+                        console.log('Total image count calculated:', totalCount)
+                        return totalCount
                       })()}
                     </div>
                     <p className="text-xs text-muted-foreground">Images uploaded</p>

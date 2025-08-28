@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MapPin, Plus, Edit, Trash2, Users, Phone, Calendar, Building, Loader2 } from "lucide-react"
 import AdminLayout from "@/components/admin/admin-layout"
+import ProtectedRoute from "@/components/admin/protected-route"
 import { toast } from "sonner"
 import {
   createOrUpdateBranch,
@@ -21,6 +22,12 @@ import {
   getWeeklyActivities,
   deleteWeeklyActivity
 } from "@/services/branch"
+
+import {
+  getCountries,
+  getStatesByCountry,
+  getLGAsByState
+} from "@/services/countryStateLGA"
 import {
   CreateOrUpdateBranchRequest,
   GetAllBranchesRequest,
@@ -31,6 +38,11 @@ import {
   TimeOnly,
   WeeklyActivityTypes
 } from "@/types/branch"
+import {
+  Country,
+  State,
+  LGA
+} from "@/types/countryStateLGA"
 
 export default function BranchesPage() {
   const [isLoading, setIsLoading] = useState(true)
@@ -40,13 +52,18 @@ export default function BranchesPage() {
   // Branches State
   const [branches, setBranches] = useState<BranchViewModel[]>([])
   
+  // Geographic Data State
+  const [countries, setCountries] = useState<Country[]>([])
+  const [states, setStates] = useState<State[]>([])
+  const [lgas, setLgas] = useState<LGA[]>([])
+  
   // New Branch Form State
   const [newBranch, setNewBranch] = useState<CreateOrUpdateBranchRequest>({
     id: null,
     name: "",
-    stateId: 1,
-    lgaId: 1,
-    countryId: 1,
+    countryId: 0,
+    stateId: 0,
+    lgaId: 0,
     phoneNumber: "",
     email: "",
     address: "",
@@ -70,11 +87,92 @@ export default function BranchesPage() {
   // Edit States
   const [editingBranch, setEditingBranch] = useState<CreateOrUpdateBranchRequest | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  
+  // Delete States
+  const [deleteBranchDialogOpen, setDeleteBranchDialogOpen] = useState(false)
+  const [branchToDelete, setBranchToDelete] = useState<number | null>(null)
+  const [deleteActivityDialogOpen, setDeleteActivityDialogOpen] = useState(false)
+  const [activityToDelete, setActivityToDelete] = useState<number | null>(null)
 
   // Load initial data
   useEffect(() => {
     loadBranchesData()
+    loadCountries()
   }, [])
+
+  // Load countries on component mount
+  const loadCountries = async () => {
+    try {
+      const response = await getCountries()
+      if (response.isSuccessful) {
+        setCountries(response.data || [])
+      }
+    } catch (error) {
+      console.error('Error loading countries:', error)
+      toast.error('Failed to load countries')
+    }
+  }
+
+  // Load states when country changes
+  const loadStates = async (countryId: number) => {
+    try {
+      setStates([])
+      setLgas([])
+      if (countryId) {
+        const response = await getStatesByCountry(countryId)
+        if (response.isSuccessful) {
+          setStates(response.data || [])
+        }
+      }
+    } catch (error) {
+      console.error('Error loading states:', error)
+      toast.error('Failed to load states')
+    }
+  }
+
+  // Load LGAs when state changes
+  const loadLGAs = async (countryId: number, stateId: number) => {
+    try {
+      setLgas([])
+      if (countryId && stateId) {
+        const response = await getLGAsByState({ countryId, stateId })
+        if (response.isSuccessful) {
+          setLgas(response.data || [])
+        }
+      }
+    } catch (error) {
+      console.error('Error loading LGAs:', error)
+      toast.error('Failed to load LGAs')
+    }
+  }
+
+  // Handle country change
+  const handleCountryChange = (countryId: number) => {
+    setNewBranch({ 
+      ...newBranch, 
+      countryId, 
+      stateId: 0, 
+      lgaId: 0 
+    })
+    loadStates(countryId)
+  }
+
+  // Handle state change
+  const handleStateChange = (stateId: number) => {
+    setNewBranch({ 
+      ...newBranch, 
+      stateId, 
+      lgaId: 0 
+    })
+    loadLGAs(newBranch.countryId, stateId)
+  }
+
+  // Handle LGA change
+  const handleLGAChange = (lgaId: number) => {
+    setNewBranch({ ...newBranch, lgaId })
+  }
+
+
 
   const loadBranchesData = async () => {
     try {
@@ -111,7 +209,7 @@ export default function BranchesPage() {
       const response = await getWeeklyActivities(branchId)
       
       if (response.isSuccessful && response.data) {
-        setWeeklyActivities(response.data)
+        setWeeklyActivities(Array.isArray(response.data) ? response.data as WeeklyActivityViewModel[] : [])
         console.log('Weekly activities loaded for branch:', branchId, response.data)
       } else {
         console.error('Failed to load weekly activities:', response)
@@ -139,9 +237,9 @@ export default function BranchesPage() {
         setNewBranch({
           id: null,
           name: "",
-          stateId: 1,
-          lgaId: 1,
-          countryId: 1,
+          countryId: 0,
+          stateId: 0,
+          lgaId: 0,
           phoneNumber: "",
           email: "",
           address: "",
@@ -189,12 +287,14 @@ export default function BranchesPage() {
 
   const handleDeleteBranch = async (branchId: number) => {
     try {
-      if (!confirm('Are you sure you want to delete this branch?')) return
+
 
       const response = await deleteBranch(branchId)
 
       if (response.isSuccessful) {
         toast.success('Branch deleted successfully!')
+        setDeleteBranchDialogOpen(false)
+        setBranchToDelete(null)
         loadBranchesData()
       } else {
         const errorMessage = response.errors?.map(e => e.description).join(', ') || response.responseMessage
@@ -204,6 +304,11 @@ export default function BranchesPage() {
       console.error('Error deleting branch:', err)
       toast.error(err.message || 'Failed to delete branch')
     }
+  }
+
+  const openDeleteBranchDialog = (branchId: number) => {
+    setBranchToDelete(branchId)
+    setDeleteBranchDialogOpen(true)
   }
 
   const handleCreateWeeklyActivity = async () => {
@@ -250,7 +355,7 @@ export default function BranchesPage() {
 
   const handleDeleteWeeklyActivity = async (branchId: number, activityId: number) => {
     try {
-      if (!confirm('Are you sure you want to delete this activity?')) return
+
 
       // Note: API uses "imageId" parameter for activityId due to API quirk
       const response = await deleteWeeklyActivity(branchId, activityId)
@@ -313,7 +418,8 @@ export default function BranchesPage() {
 
   if (isLoading) {
     return (
-      <AdminLayout>
+      <ProtectedRoute>
+        <AdminLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="flex items-center gap-2">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -321,14 +427,29 @@ export default function BranchesPage() {
           </div>
         </div>
       </AdminLayout>
+      </ProtectedRoute>
     )
   }
 
   return (
-    <AdminLayout>
+    <ProtectedRoute>
+      <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Branches Management</h1>
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <h1 className="text-xl sm:text-2xl font-bold">Branches Management</h1>
+          <Button 
+            onClick={loadBranchesData} 
+            disabled={isLoading}
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Building className="h-4 w-4 mr-2" />
+            )}
+            Refresh Data
+          </Button>
         </div>
 
         {error && (
@@ -389,10 +510,10 @@ export default function BranchesPage() {
         </div>
 
         <Tabs defaultValue="all-branches" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="all-branches">All Branches</TabsTrigger>
-            <TabsTrigger value="add-branch">Add Branch</TabsTrigger>
-            <TabsTrigger value="activities">Weekly Activities</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto">
+            <TabsTrigger value="all-branches" className="text-xs sm:text-sm">All Branches</TabsTrigger>
+            <TabsTrigger value="add-branch" className="text-xs sm:text-sm">Add Branch</TabsTrigger>
+            <TabsTrigger value="activities" className="text-xs sm:text-sm">Weekly Activities</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all-branches" className="space-y-6">
@@ -400,43 +521,45 @@ export default function BranchesPage() {
               {branches.map((branch) => (
                 <Card key={branch.id}>
                   <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-xl font-semibold">{branch.name}</h3>
-                          <Badge variant={branch.isDeleted ? "secondary" : "default"}>
-                            {branch.isDeleted ? "Inactive" : "Active"}
-                          </Badge>
-                          {branch.dateCreated && (
-                            <Badge variant="outline">
-                              Est. {new Date(branch.dateCreated).getFullYear()}
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 space-y-4 sm:space-y-0">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
+                          <h3 className="text-xl font-semibold truncate">{branch.name}</h3>
+                          <div className="flex gap-2 flex-wrap">
+                            <Badge variant={branch.isDeleted ? "secondary" : "default"}>
+                              {branch.isDeleted ? "Inactive" : "Active"}
                             </Badge>
-                          )}
+                            {branch.dateCreated && (
+                              <Badge variant="outline">
+                                Est. {new Date(branch.dateCreated).getFullYear()}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                           <div className="space-y-2">
                             <div className="flex items-start gap-2">
                               <MapPin className="h-4 w-4 mt-1 text-muted-foreground flex-shrink-0" />
-                              <span className="text-sm text-muted-foreground">{branch.address}</span>
+                              <span className="text-sm text-muted-foreground truncate">{branch.address}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <Phone className="h-4 w-4 text-muted-foreground" />
                               <span className="text-sm text-muted-foreground">{branch.phoneNumber}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">📧 {branch.email}</span>
+                              <span className="text-sm text-muted-foreground truncate">📧 {branch.email}</span>
                             </div>
                           </div>
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
                               <MapPin className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm text-muted-foreground">
+                              <span className="text-sm text-muted-foreground truncate">
                                 {branch.lga}, {branch.state}, {branch.country}
                               </span>
                             </div>
                             {branch.location && (
                               <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground">📍 {branch.location}</span>
+                                <span className="text-sm text-muted-foreground truncate">📍 {branch.location}</span>
                               </div>
                             )}
                           </div>
@@ -451,11 +574,12 @@ export default function BranchesPage() {
                           </div>
                         )}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
                         <Button 
                           variant="outline" 
                           size="sm"
                           onClick={() => startEditBranch(branch)}
+                          className="w-full sm:w-auto"
                         >
                           <Edit className="h-3 w-3 mr-1" />
                           Edit
@@ -463,19 +587,20 @@ export default function BranchesPage() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-red-600 hover:text-red-700"
-                          onClick={() => handleDeleteBranch(branch.id)}
+                          className="text-red-600 hover:text-red-700 w-full sm:w-auto"
+                          onClick={() => openDeleteBranchDialog(branch.id)}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button 
                         variant="outline" 
                         size="sm"
                         onClick={() => loadWeeklyActivities(branch.id)}
+                        className="w-full sm:w-auto"
                       >
                         View Activities
                       </Button>
@@ -555,34 +680,60 @@ export default function BranchesPage() {
 
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="state-id">State ID</Label>
-                      <Input 
-                        id="state-id" 
-                        type="number"
-                        placeholder="Enter state ID"
-                        value={newBranch.stateId}
-                        onChange={(e) => setNewBranch({ ...newBranch, stateId: Number(e.target.value) || 1 })}
-                      />
+                      <Label htmlFor="country">Country *</Label>
+                      <Select 
+                        value={newBranch.countryId ? newBranch.countryId.toString() : ""} 
+                        onValueChange={(value) => handleCountryChange(Number(value))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {countries.map(country => (
+                            <SelectItem key={country.id} value={country.id.toString()}>
+                              {country.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
-                      <Label htmlFor="lga-id">LGA ID</Label>
-                      <Input 
-                        id="lga-id" 
-                        type="number"
-                        placeholder="Enter LGA ID"
-                        value={newBranch.lgaId}
-                        onChange={(e) => setNewBranch({ ...newBranch, lgaId: Number(e.target.value) || 1 })}
-                      />
+                      <Label htmlFor="state">State *</Label>
+                      <Select 
+                        value={newBranch.stateId ? newBranch.stateId.toString() : ""} 
+                        onValueChange={(value) => handleStateChange(Number(value))}
+                        disabled={!newBranch.countryId || states.length === 0}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={states.length === 0 ? "Select country first" : "Select state"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {states.map(state => (
+                            <SelectItem key={state.id} value={state.id.toString()}>
+                              {state.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
-                      <Label htmlFor="country-id">Country ID</Label>
-                      <Input 
-                        id="country-id" 
-                        type="number"
-                        placeholder="Enter country ID"
-                        value={newBranch.countryId}
-                        onChange={(e) => setNewBranch({ ...newBranch, countryId: Number(e.target.value) || 1 })}
-                      />
+                      <Label htmlFor="lga">Local Government Area *</Label>
+                      <Select 
+                        value={newBranch.lgaId ? newBranch.lgaId.toString() : ""} 
+                        onValueChange={(value) => handleLGAChange(Number(value))}
+                        disabled={!newBranch.stateId || lgas.length === 0}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={lgas.length === 0 ? "Select state first" : "Select LGA"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {lgas.map(lga => (
+                            <SelectItem key={lga.id} value={lga.id.toString()}>
+                              {lga.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label htmlFor="welcome-address">Welcome Message</Label>
@@ -770,8 +921,8 @@ export default function BranchesPage() {
 
         {/* Edit Branch Dialog */}
         {isEditDialogOpen && editingBranch && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 !mt-0">
+            <Card className="w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto">
               <CardHeader>
                 <CardTitle>Edit Branch</CardTitle>
               </CardHeader>
@@ -873,7 +1024,83 @@ export default function BranchesPage() {
             </Card>
           </div>
         )}
+
+        {/* Delete Branch Confirmation Modal */}
+        {deleteBranchDialogOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 !mt-0">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle className="text-red-600">Delete Branch</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">
+                  Are you sure you want to delete this branch? This action cannot be undone.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setDeleteBranchDialogOpen(false)
+                      setBranchToDelete(null)
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      if (branchToDelete) {
+                        handleDeleteBranch(branchToDelete)
+                      }
+                    }}
+                  >
+                    Delete Branch
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Delete Activity Confirmation Modal */}
+        {deleteActivityDialogOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 !mt-0">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle className="text-red-600">Delete Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">
+                  Are you sure you want to delete this weekly activity? This action cannot be undone.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setDeleteActivityDialogOpen(false)
+                      setActivityToDelete(null)
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      if (activityToDelete) {
+                        setDeleteActivityDialogOpen(false)
+                        setActivityToDelete(null)
+                      }
+                    }}
+                  >
+                    Delete Activity
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </AdminLayout>
+    </ProtectedRoute>
   )
 }

@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Download, FileText, DollarSign, TrendingUp, Calendar, Eye, Loader2, Save, Plus } from "lucide-react"
 import AdminLayout from "@/components/admin/admin-layout"
+import ProtectedRoute from "@/components/admin/protected-route"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import {
@@ -30,6 +31,12 @@ import {
   PaymentChannel,
   PaymentType
 } from "@/types/branch"
+import {
+  getChurchProjectDonations,
+  getCommunityDonations,
+  getDonation,
+  deleteDonation
+} from "@/services/donation"
 
 export default function FinancePage() {
   const [isLoading, setIsLoading] = useState(true)
@@ -39,6 +46,7 @@ export default function FinancePage() {
   // Data States
   const [branches, setBranches] = useState<any[]>([])
   const [reports, setReports] = useState<any[]>([])
+  const [donations, setDonations] = useState<any[]>([])
   const [selectedBranch, setSelectedBranch] = useState<number | null>(null)
 
   // Report Form State
@@ -121,12 +129,34 @@ export default function FinancePage() {
         toast.error('Failed to load branches data')
       }
 
+      // Load community donations
+      await loadDonations()
+
     } catch (err: any) {
       console.error('Error loading finance data:', err)
       setError('Failed to load finance information')
       toast.error('Failed to load finance information')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const loadDonations = async () => {
+    try {
+      const donationsData = await getCommunityDonations({
+        pageSize: 100,
+        pageNumber: 1,
+        searchParams: {}
+      })
+
+      if (donationsData.isSuccessful) {
+        setDonations(donationsData.data || [])
+        console.log('Donations loaded:', donationsData.data)
+      } else {
+        console.error('Failed to load donations:', donationsData)
+      }
+    } catch (err: any) {
+      console.error('Error loading donations:', err)
     }
   }
 
@@ -322,6 +352,7 @@ export default function FinancePage() {
 
   if (isLoading) {
     return (
+    <ProtectedRoute>
       <AdminLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="flex items-center gap-2">
@@ -330,17 +361,19 @@ export default function FinancePage() {
           </div>
         </div>
       </AdminLayout>
+      </ProtectedRoute>
     )
   }
 
   return (
+    <ProtectedRoute>
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Finance Management</h1>
-          <div className="flex gap-2">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <h1 className="text-xl sm:text-2xl font-bold">Finance Management</h1>
+          <div className="flex flex-col space-y-2 sm:flex-row sm:gap-2 sm:space-y-0">
             <Select value={selectedBranch?.toString() || undefined} onValueChange={(value) => setSelectedBranch(Number(value))}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Select Branch" />
               </SelectTrigger>
               <SelectContent>
@@ -351,9 +384,9 @@ export default function FinancePage() {
                 ))}
               </SelectContent>
             </Select>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Download className="h-4 w-4 mr-2" />
-              Export Reports
+              <span className="sm:inline">Export Reports</span>
             </Button>
           </div>
         </div>
@@ -412,10 +445,11 @@ export default function FinancePage() {
         </div>
 
         <Tabs defaultValue="reports" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="reports">Financial Reports</TabsTrigger>
-            <TabsTrigger value="upload">Create Report</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 h-auto">
+            <TabsTrigger value="reports" className="text-xs sm:text-sm">Financial Reports</TabsTrigger>
+            <TabsTrigger value="upload" className="text-xs sm:text-sm">Create Report</TabsTrigger>
+            <TabsTrigger value="donations" className="text-xs sm:text-sm">Donations</TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
           </TabsList>
 
           <TabsContent value="reports" className="space-y-6">
@@ -724,6 +758,125 @@ export default function FinancePage() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="donations" className="space-y-6">
+            {/* Donations Management Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Donations Overview Cards */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Donations</CardTitle>
+                  <DollarSign className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">
+                    {formatCurrency(donations.reduce((total, donation) => total + (donation.amount || 0), 0))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {donations.length} donation{donations.length !== 1 ? 's' : ''}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">This Month</CardTitle>
+                  <Calendar className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {(() => {
+                      const thisMonth = new Date()
+                      const monthlyDonations = donations.filter(donation => {
+                        const donationDate = new Date(donation.dateCreated || donation.createdAt)
+                        return donationDate.getMonth() === thisMonth.getMonth() && 
+                               donationDate.getFullYear() === thisMonth.getFullYear()
+                      })
+                      return formatCurrency(monthlyDonations.reduce((total, donation) => total + (donation.amount || 0), 0))
+                    })()}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Current month</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Avg Donation</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {donations.length > 0 
+                      ? formatCurrency(donations.reduce((total, donation) => total + (donation.amount || 0), 0) / donations.length)
+                      : formatCurrency(0)
+                    }
+                  </div>
+                  <p className="text-xs text-muted-foreground">Average amount</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
+                  <FileText className="h-4 w-4 text-orange-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {(() => {
+                      const uniqueProjects = new Set(donations.map(d => d.churchProjectId).filter(Boolean))
+                      return uniqueProjects.size
+                    })()}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Projects with donations</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Donations List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Donations</CardTitle>
+                <p className="text-sm text-muted-foreground">Latest community donations</p>
+              </CardHeader>
+              <CardContent>
+                {donations.length > 0 ? (
+                  <div className="space-y-4">
+                    {donations.slice(0, 10).map((donation, index) => (
+                      <div key={donation.id || index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg hover:bg-gray-50 space-y-2 sm:space-y-0">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-4">
+                            <div>
+                              <h4 className="font-semibold truncate">{donation.donorName || 'Anonymous'}</h4>
+                              <p className="text-sm text-muted-foreground truncate">
+                                {donation.churchProjectName || `Project ID: ${donation.churchProjectId}`}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(donation.dateCreated || donation.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-left sm:text-right flex-shrink-0">
+                          <div className="font-semibold text-green-600">
+                            {formatCurrency(donation.amount || 0)}
+                          </div>
+                          <Badge variant={donation.status === 'Completed' ? 'default' : 'secondary'} className="mt-1">
+                            {donation.status || 'Completed'}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <DollarSign className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p>No donations found</p>
+                    <p className="text-sm">Donations will appear here once they are made</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="analytics" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
@@ -796,14 +949,14 @@ export default function FinancePage() {
                     }, 0)
                     
                     return (
-                      <div key={branch.id} className="flex justify-between items-center p-3 border rounded-lg">
-                        <div>
-                          <h4 className="font-semibold">{branch.name}</h4>
+                      <div key={branch.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 border rounded-lg space-y-2 sm:space-y-0">
+                        <div className="min-w-0">
+                          <h4 className="font-semibold truncate">{branch.name}</h4>
                           <p className="text-sm text-muted-foreground">
                             {branchReports.length} report{branchReports.length !== 1 ? 's' : ''}
                           </p>
                         </div>
-                        <div className="text-right">
+                        <div className="text-left sm:text-right flex-shrink-0">
                           <div className="font-semibold">{formatCurrency(branchTotal)}</div>
                           <p className="text-sm text-muted-foreground">
                             Avg: {branchReports.length > 0 ? formatCurrency(branchTotal / branchReports.length) : formatCurrency(0)}
@@ -819,5 +972,6 @@ export default function FinancePage() {
         </Tabs>
       </div>
     </AdminLayout>
+    </ProtectedRoute>
   )
 }

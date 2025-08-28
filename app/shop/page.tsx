@@ -246,11 +246,11 @@ export default function ShopPage() {
 
               {/* Products Grid */}
               {!booksLoading && !shouldShowError && paginatedProducts.length > 0 && (
-                <div
-                  className={`grid gap-6 ${
-                    viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
-                  }`}
-                >
+              <div
+                className={`grid gap-6 ${
+                  viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
+                }`}
+              >
                 {paginatedProducts.map((book: BookViewModel) => (
                   <Link
                     key={book.id}
@@ -290,9 +290,9 @@ export default function ShopPage() {
                         }`}
                         size="sm"
                       >
-                        <ShoppingCart className="h-4 w-4 mr-2" />
+                          <ShoppingCart className="h-4 w-4 mr-2" />
                         {isInCart(book.id) ? "Add More" : "Add to Cart"}
-                      </Button>
+                        </Button>
                     </div>
 
                     <div className={`p-4 ${viewMode === "list" ? "flex-1 flex flex-col justify-center" : ""}`}>
@@ -312,7 +312,7 @@ export default function ShopPage() {
                     </div>
                   </Link>
                 ))}
-                </div>
+              </div>
               )}
 
               {/* Pagination */}
@@ -336,16 +336,16 @@ export default function ShopPage() {
                       }
                       
                       return (
-                        <Button
-                          key={page}
-                          variant={currentPage === page ? "default" : "outline"}
-                          onClick={() => setCurrentPage(page)}
-                          className={`w-10 h-10 ${
-                            currentPage === page ? "bg-primary text-white" : "border-gray-300 hover:bg-gray-50"
-                          }`}
-                        >
-                          {page}
-                        </Button>
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-10 h-10 ${
+                          currentPage === page ? "bg-primary text-white" : "border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        {page}
+                      </Button>
                       )
                     })}
                   </div>
@@ -405,13 +405,13 @@ export default function ShopPage() {
                   <div className="space-y-4">
                     {books.slice(0, 3).map((book: BookViewModel) => (
                                               <div key={book.id} className="flex gap-3 group">
-                          <div className="relative w-16 h-20 flex-shrink-0 rounded-md overflow-hidden">
-                            <Image
+                        <div className="relative w-16 h-20 flex-shrink-0 rounded-md overflow-hidden">
+                          <Image
                               src={book.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
                               alt={book.title}
-                              fill
-                              className="object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
                             
                             {/* Small In Cart Badge for Sidebar */}
                             {isInCart(book.id) && (
@@ -419,18 +419,18 @@ export default function ShopPage() {
                                 {getCartItem(book.id)?.quantity}
                               </div>
                             )}
-                          </div>
+                        </div>
 
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-gray-900 group-hover:text-primary transition-colors cursor-pointer">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-900 group-hover:text-primary transition-colors cursor-pointer">
                               {book.title}
-                            </h4>
+                          </h4>
                             <p className="text-sm text-gray-600 mb-1">by {book.author}</p>
                             <p className="text-sm font-semibold text-primary">
                               {book.priceDisplay || `₦${book.price.toLocaleString()}`}
-                            </p>
+                          </p>
                           </div>
-                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -438,7 +438,7 @@ export default function ShopPage() {
                 {/* Categories Filter */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                   <h3 className="font-bold text-gray-900 mb-4 uppercase tracking-wide">Categories</h3>
-                  
+
                   <div className="space-y-2">
                     {categories.map((category) => (
                       <div
@@ -455,9 +455,9 @@ export default function ShopPage() {
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-gray-700 hover:text-primary transition-colors">
-                            {category.name}
+                          {category.name}
                           </span>
-                          <span className="text-sm text-gray-500">({category.count})</span>
+                        <span className="text-sm text-gray-500">({category.count})</span>
                         </div>
                       </div>
                     ))}

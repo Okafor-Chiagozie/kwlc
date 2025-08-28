@@ -50,9 +50,16 @@ export const getUpcomingStreams = async (
 export const getAllAvailableStreams = async (
   payload: GetAllAvailableStreamsRequest
 ): Promise<GetAllAvailableStreamsResponse> => {
+  // Use POST with exact same structure as GetCompletedStreams (which works)
+  const requestPayload = {
+    pageSize: payload.pageSize,
+    pageNumber: payload.pageNumber,
+    searchParams: payload.searchParams || {}
+  };
+  
   const response = await api.post<GetAllAvailableStreamsResponse>(
     `${BASE_URL}/GetAllAvailableStreams`,
-    payload
+    requestPayload
   );
   return response.data;
 };

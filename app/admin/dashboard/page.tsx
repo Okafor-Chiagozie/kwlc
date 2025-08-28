@@ -302,22 +302,22 @@ export default function AdminDashboard() {
   if (isLoading) {
     return (
       <ProtectedRoute>
-        <AdminLayout>
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <span>Loading dashboard...</span>
-            </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Loading dashboard...</span>
           </div>
-        </AdminLayout>
+        </div>
+      </AdminLayout>
       </ProtectedRoute>
     )
   }
 
   return (
     <ProtectedRoute>
-      <AdminLayout>
-        <div className="space-y-6">
+    <AdminLayout>
+      <div className="space-y-6">
           {/* Header with Refresh Button */}
           <div className="flex justify-between items-center">
             <div>
@@ -330,24 +330,24 @@ export default function AdminDashboard() {
             </Button>
           </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-700">{error}</p>
-            </div>
-          )}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-700">{error}</p>
+          </div>
+        )}
 
           {/* Enhanced Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="relative overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Total Branches</CardTitle>
-                <Building className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Total Branches</CardTitle>
+              <Building className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
                 <div className="text-2xl font-bold">{statistics.totalBranches}</div>
                 <div className="flex items-center justify-between mt-2">
-                  <div className="flex items-center gap-1">
-                    <Building className="h-4 w-4 text-green-600" />
+                <div className="flex items-center gap-1">
+                  <Building className="h-4 w-4 text-green-600" />
                     <span className="text-sm text-green-600">{statistics.activeBranches} Active</span>
                   </div>
                   <div className="flex items-center gap-1">
@@ -359,17 +359,17 @@ export default function AdminDashboard() {
                     <span className={`text-sm ${statistics.growth.branches >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {Math.abs(statistics.growth.branches)}%
                     </span>
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
             <Card className="relative overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Ministers</CardTitle>
-                <Users className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Ministers</CardTitle>
+              <Users className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
                 <div className="text-2xl font-bold">{statistics.totalMinisters}</div>
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center gap-1">
@@ -385,46 +385,46 @@ export default function AdminDashboard() {
                     <span className={`text-sm ${statistics.growth.ministers >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {Math.abs(statistics.growth.ministers)}%
                     </span>
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
             <Card className="relative overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">Events</CardTitle>
-                <Calendar className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
+              <Calendar className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
                 <div className="text-2xl font-bold">{statistics.totalEvents}</div>
                 <div className="flex items-center justify-between mt-2">
                   <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Upcoming:</span>
+                <div className="flex justify-between text-sm">
+                  <span>Upcoming:</span>
                       <span className="font-semibold text-green-600">{statistics.upcomingEvents}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Featured:</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Featured:</span>
                       <span className="font-semibold text-blue-600">{statistics.featuredEvents}</span>
                     </div>
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
             <Card className="relative overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Church Info</CardTitle>
-                <Church className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Church Info</CardTitle>
+              <Church className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
                 <div className="space-y-2">
-                  <div className="text-lg font-bold">
+                <div className="text-lg font-bold">
                     {dashboardData.churchInfo ? 'Configured' : 'Not Set'}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
+                </div>
+                <div className="text-sm text-muted-foreground">
                     {dashboardData.churchInfo ? 'Church details available' : 'Setup required'}
-                  </div>
+                </div>
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -434,104 +434,104 @@ export default function AdminDashboard() {
                     <Eye className="h-4 w-4 mr-2" />
                     {dashboardData.churchInfo ? 'View' : 'Setup'}
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Church Attendance Chart */}
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Church Attendance Chart */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
                   Church Attendance Overview
-                  <Badge variant="outline">Monthly</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer
-                  config={{
-                    attendance: {
-                      label: "Attendance",
-                      color: "hsl(var(--chart-1))",
-                    },
-                  }}
-                  className="h-64"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={attendanceData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Area
-                        type="monotone"
-                        dataKey="attendance"
-                        stroke="var(--color-attendance)"
-                        fill="var(--color-attendance)"
-                        fillOpacity={0.3}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
+                <Badge variant="outline">Monthly</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer
+                config={{
+                  attendance: {
+                    label: "Attendance",
+                    color: "hsl(var(--chart-1))",
+                  },
+                }}
+                className="h-64"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={attendanceData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Area
+                      type="monotone"
+                      dataKey="attendance"
+                      stroke="var(--color-attendance)"
+                      fill="var(--color-attendance)"
+                      fillOpacity={0.3}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
 
             {/* Recent Activities */}
-            <Card>
-              <CardHeader>
+          <Card>
+            <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />
                   Recent Activities
                 </CardTitle>
                 <p className="text-sm text-gray-600">Latest system updates</p>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            </CardHeader>
+            <CardContent className="space-y-4">
                 {recentActivities.map((activity) => (
                   <div key={activity.id} className="flex items-start space-x-3">
                     <div className={`p-2 rounded-full bg-gray-100`}>
                       <activity.icon className={`h-4 w-4 ${activity.color}`} />
-                    </div>
+                </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900">{activity.description}</p>
                       <p className="text-xs text-gray-500">{activity.time}</p>
-                    </div>
-                  </div>
+                </div>
+              </div>
                 ))}
                 <Button variant="outline" className="w-full mt-4">
                   <ArrowRight className="h-4 w-4 mr-2" />
                   View All Activities
                 </Button>
-              </CardContent>
-            </Card>
-          </div>
+            </CardContent>
+          </Card>
+        </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Branch Distribution */}
-            <Card>
-              <CardHeader>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Branch Distribution */}
+          <Card>
+            <CardHeader>
                 <CardTitle>Branch Management</CardTitle>
                 <p className="text-sm text-gray-600">Manage church branches</p>
-              </CardHeader>
-              <CardContent>
-                {dashboardData.branches.length > 0 ? (
-                  <div className="space-y-3">
-                    {dashboardData.branches.slice(0, 5).map((branch, index) => (
+            </CardHeader>
+            <CardContent>
+              {dashboardData.branches.length > 0 ? (
+                <div className="space-y-3">
+                  {dashboardData.branches.slice(0, 5).map((branch, index) => (
                       <div key={branch.id || index} className="flex justify-between items-center p-3 border rounded-lg hover:bg-gray-50">
-                        <div>
-                          <span className="font-medium">{branch.name}</span>
-                          <p className="text-sm text-muted-foreground">{branch.state}, {branch.country}</p>
-                        </div>
-                        <Badge variant={branch.isDeleted ? "secondary" : "default"}>
-                          {branch.isDeleted ? "Inactive" : "Active"}
-                        </Badge>
+                      <div>
+                        <span className="font-medium">{branch.name}</span>
+                        <p className="text-sm text-muted-foreground">{branch.state}, {branch.country}</p>
                       </div>
-                    ))}
-                    {dashboardData.branches.length > 5 && (
-                      <p className="text-sm text-muted-foreground text-center pt-2">
-                        +{dashboardData.branches.length - 5} more branches
-                      </p>
-                    )}
+                      <Badge variant={branch.isDeleted ? "secondary" : "default"}>
+                        {branch.isDeleted ? "Inactive" : "Active"}
+                      </Badge>
+                    </div>
+                  ))}
+                  {dashboardData.branches.length > 5 && (
+                    <p className="text-sm text-muted-foreground text-center pt-2">
+                      +{dashboardData.branches.length - 5} more branches
+                    </p>
+                  )}
                     <Button 
                       variant="outline" 
                       className="w-full"
@@ -540,11 +540,11 @@ export default function AdminDashboard() {
                       <ArrowRight className="h-4 w-4 mr-2" />
                       Manage All Branches
                     </Button>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Building className="h-8 w-8 mx-auto mb-2" />
-                    <p>No branches found</p>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Building className="h-8 w-8 mx-auto mb-2" />
+                  <p>No branches found</p>
                     <Button 
                       variant="outline" 
                       className="mt-4"
@@ -553,40 +553,40 @@ export default function AdminDashboard() {
                       <Plus className="h-4 w-4 mr-2" />
                       Add First Branch
                     </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-            {/* Ministry Leadership */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Ministry Leadership</CardTitle>
+          {/* Ministry Leadership */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Ministry Leadership</CardTitle>
                 <p className="text-sm text-gray-600">Manage church ministers</p>
-              </CardHeader>
-              <CardContent>
-                {dashboardData.ministers.length > 0 ? (
-                  <div className="space-y-3">
-                    {dashboardData.ministers.slice(0, 5).map((minister, index) => (
+            </CardHeader>
+            <CardContent>
+              {dashboardData.ministers.length > 0 ? (
+                <div className="space-y-3">
+                  {dashboardData.ministers.slice(0, 5).map((minister, index) => (
                       <div key={minister.id || index} className="flex justify-between items-center p-3 border rounded-lg hover:bg-gray-50">
-                        <div>
-                          <span className="font-medium">
-                            {minister.firstName} {minister.lastName}
-                          </span>
-                          <p className="text-sm text-muted-foreground">
+                      <div>
+                        <span className="font-medium">
+                          {minister.firstName} {minister.lastName}
+                        </span>
+                        <p className="text-sm text-muted-foreground">
                             {minister.ministerRole || 'Minister'}
-                          </p>
-                        </div>
-                        <Badge variant="outline">
-                          {minister.branchName || 'Unassigned'}
-                        </Badge>
+                        </p>
                       </div>
-                    ))}
-                    {dashboardData.ministers.length > 5 && (
-                      <p className="text-sm text-muted-foreground text-center pt-2">
-                        +{dashboardData.ministers.length - 5} more ministers
-                      </p>
-                    )}
+                      <Badge variant="outline">
+                          {minister.branchName || 'Unassigned'}
+                      </Badge>
+                    </div>
+                  ))}
+                  {dashboardData.ministers.length > 5 && (
+                    <p className="text-sm text-muted-foreground text-center pt-2">
+                      +{dashboardData.ministers.length - 5} more ministers
+                    </p>
+                  )}
                     <Button 
                       variant="outline" 
                       className="w-full"
@@ -595,11 +595,11 @@ export default function AdminDashboard() {
                       <ArrowRight className="h-4 w-4 mr-2" />
                       Manage All Ministers
                     </Button>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Users className="h-8 w-8 mx-auto mb-2" />
-                    <p>No ministers found</p>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-8 w-8 mx-auto mb-2" />
+                  <p>No ministers found</p>
                     <Button 
                       variant="outline" 
                       className="mt-4"
@@ -608,10 +608,10 @@ export default function AdminDashboard() {
                       <Plus className="h-4 w-4 mr-2" />
                       Add First Minister
                     </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                </div>
+              )}
+            </CardContent>
+          </Card>
           </div>
 
           {/* Enhanced Quick Actions */}
@@ -657,8 +657,8 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </AdminLayout>
+      </div>
+    </AdminLayout>
     </ProtectedRoute>
   )
 }

@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar, Plus, Edit, Trash2, Users, MapPin, Clock, DollarSign, Loader2, Image } from "lucide-react"
 import AdminLayout from "@/components/admin/admin-layout"
+import ProtectedRoute from "@/components/admin/protected-route"
 import { toast } from "sonner"
 import {
   searchEvent,
@@ -122,7 +123,7 @@ export default function EventsPage() {
         getUpcomingEvents(),
         getFeaturedEvent(),
         getEventTypes(),
-        getAllBranches({ pageSize: 100, pageNumber: 1 })
+        getAllBranches({ pageSize: 100, pageNumber: 1, searchParams: {} })
       ])
 
       // Handle events data
@@ -135,10 +136,12 @@ export default function EventsPage() {
 
       // Handle upcoming events
       if (upcomingData.status === 'fulfilled') {
-        setUpcomingEvents(upcomingData.value || [])
-        console.log('Upcoming events loaded:', upcomingData.value)
+        const upcomingEventsArray = Array.isArray(upcomingData.value) ? upcomingData.value : []
+        setUpcomingEvents(upcomingEventsArray)
+        console.log('Upcoming events loaded:', upcomingEventsArray)
       } else {
         console.error('Failed to load upcoming events:', upcomingData)
+        setUpcomingEvents([])
       }
 
       // Handle featured events
@@ -151,10 +154,11 @@ export default function EventsPage() {
 
       // Handle event types
       if (eventTypesData.status === 'fulfilled' && eventTypesData.value.isSuccessful) {
-        setEventTypes([eventTypesData.value.data] || [])
+        setEventTypes(Array.isArray(eventTypesData.value.data) ? eventTypesData.value.data : [])
         console.log('Event types loaded:', eventTypesData.value.data)
       } else {
         console.error('Failed to load event types:', eventTypesData)
+        setEventTypes([])
       }
 
       // Handle branches data
@@ -382,7 +386,8 @@ export default function EventsPage() {
 
   if (isLoading) {
     return (
-      <AdminLayout>
+      <ProtectedRoute>
+        <AdminLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="flex items-center gap-2">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -390,14 +395,29 @@ export default function EventsPage() {
           </div>
         </div>
       </AdminLayout>
+      </ProtectedRoute>
     )
   }
 
   return (
-    <AdminLayout>
+    <ProtectedRoute>
+      <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Events Management</h1>
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <h1 className="text-xl sm:text-2xl font-bold">Events Management</h1>
+          <Button 
+            onClick={loadEventsData} 
+            disabled={isLoading}
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Calendar className="h-4 w-4 mr-2" />
+            )}
+            Refresh Data
+          </Button>
         </div>
 
         {error && (
@@ -436,8 +456,8 @@ export default function EventsPage() {
               <Calendar className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{upcomingEvents.length}</div>
-              <p className="text-xs text-muted-foreground">Coming soon</p>
+              <div className="text-2xl font-bold text-blue-600">{upcomingEvents?.length || 0}</div>
+              <p className="text-xs text-muted-foreground">Scheduled events</p>
             </CardContent>
           </Card>
 
@@ -454,12 +474,12 @@ export default function EventsPage() {
         </div>
 
         <Tabs defaultValue="all-events" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="all-events">All Events</TabsTrigger>
-            <TabsTrigger value="create-event">Create Event</TabsTrigger>
-            <TabsTrigger value="upcoming">Upcoming Events</TabsTrigger>
-            <TabsTrigger value="featured">Featured Events</TabsTrigger>
-            <TabsTrigger value="event-types">Event Types</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto">
+            <TabsTrigger value="all-events" className="text-xs sm:text-sm">All Events</TabsTrigger>
+            <TabsTrigger value="create-event" className="text-xs sm:text-sm">Create Event</TabsTrigger>
+            <TabsTrigger value="upcoming" className="text-xs sm:text-sm">Upcoming</TabsTrigger>
+            <TabsTrigger value="featured" className="text-xs sm:text-sm">Featured</TabsTrigger>
+            <TabsTrigger value="event-types" className="text-xs sm:text-sm">Event Types</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all-events" className="space-y-6">
@@ -469,46 +489,51 @@ export default function EventsPage() {
                 <CardTitle>Search Events</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label>Page Size</Label>
-                    <Input
-                      type="number"
-                      value={searchParams.pageSize}
-                      onChange={(e) => setSearchParams({ 
-                        ...searchParams, 
-                        pageSize: Number(e.target.value) || 20 
-                      })}
-                      min="1"
-                      max="100"
-                    />
+                <form onSubmit={(e) => {
+                  e.preventDefault()
+                  handleSearchEvents()
+                }}>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label>Page Size</Label>
+                      <Input
+                        type="number"
+                        value={searchParams.pageSize}
+                        onChange={(e) => setSearchParams({ 
+                          ...searchParams, 
+                          pageSize: Number(e.target.value) || 20 
+                        })}
+                        min="1"
+                        max="100"
+                      />
+                    </div>
+                    <div>
+                      <Label>Page Number</Label>
+                      <Input
+                        type="number"
+                        value={searchParams.pageNumber}
+                        onChange={(e) => setSearchParams({ 
+                          ...searchParams, 
+                          pageNumber: Number(e.target.value) || 1 
+                        })}
+                        min="1"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button 
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full"
+                      >
+                        {isLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          'Search Events'
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                  <div>
-                    <Label>Page Number</Label>
-                    <Input
-                      type="number"
-                      value={searchParams.pageNumber}
-                      onChange={(e) => setSearchParams({ 
-                        ...searchParams, 
-                        pageNumber: Number(e.target.value) || 1 
-                      })}
-                      min="1"
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <Button 
-                      onClick={handleSearchEvents}
-                      disabled={isLoading}
-                      className="w-full"
-                    >
-                      {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : (
-                        'Search Events'
-                      )}
-                    </Button>
-                  </div>
-                </div>
+                </form>
               </CardContent>
             </Card>
 
@@ -638,44 +663,27 @@ export default function EventsPage() {
                         onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
                       />
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label>Year</Label>
-                        <Input
-                          type="number"
-                          value={newEvent.date.year}
-                          onChange={(e) => setNewEvent({
+                    <div>
+                      <Label htmlFor="event-date">Event Date *</Label>
+                      <Input
+                        id="event-date"
+                        type="date"
+                        value={`${newEvent.date.year}-${String(newEvent.date.month).padStart(2, '0')}-${String(newEvent.date.day).padStart(2, '0')}`}
+                        onChange={(e) => {
+                          const selectedDate = new Date(e.target.value)
+                          setNewEvent({
                             ...newEvent,
-                            date: { ...newEvent.date, year: Number(e.target.value) }
-                          })}
-                        />
-                      </div>
-                      <div>
-                        <Label>Month</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="12"
-                          value={newEvent.date.month}
-                          onChange={(e) => setNewEvent({
-                            ...newEvent,
-                            date: { ...newEvent.date, month: Number(e.target.value) }
-                          })}
-                        />
-                      </div>
-                      <div>
-                        <Label>Day</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="31"
-                          value={newEvent.date.day}
-                          onChange={(e) => setNewEvent({
-                            ...newEvent,
-                            date: { ...newEvent.date, day: Number(e.target.value) }
-                          })}
-                        />
-                      </div>
+                            date: {
+                              year: selectedDate.getFullYear(),
+                              month: selectedDate.getMonth() + 1,
+                              day: selectedDate.getDate(),
+                              dayOfWeek: Object.values(DayOfWeek)[selectedDate.getDay()],
+                              dayOfYear: Math.floor((selectedDate.getTime() - new Date(selectedDate.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24)),
+                              dayNumber: selectedDate.getDate()
+                            }
+                          })
+                        }}
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -726,15 +734,28 @@ export default function EventsPage() {
                       </Select>
                     </div>
                     <div>
-                      <Label>Event Type ID</Label>
-                      <Input
-                        type="number"
-                        value={newEvent.eventTypeId}
-                        onChange={(e) => setNewEvent({ 
+                      <Label>Event Type</Label>
+                      <Select 
+                        value={newEvent.eventTypeId?.toString() || "1"} 
+                        onValueChange={(value) => setNewEvent({ 
                           ...newEvent, 
-                          eventTypeId: Number(e.target.value) || 1 
+                          eventTypeId: Number(value) || 1 
                         })}
-                      />
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select event type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {eventTypes.map((eventType) => (
+                            <SelectItem key={eventType.id} value={eventType.id?.toString() || "1"}>
+                              {eventType.name || `Event Type ${eventType.id}`}
+                            </SelectItem>
+                          ))}
+                          {eventTypes.length === 0 && (
+                            <SelectItem value="1">Default Event Type</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -1099,5 +1120,6 @@ export default function EventsPage() {
         )}
       </div>
     </AdminLayout>
+    </ProtectedRoute>
   )
 }

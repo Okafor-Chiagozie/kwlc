@@ -197,17 +197,17 @@ export default function LivestreamPage() {
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
-            ) : (
-              <>
-                <Image
+        ) : (
+          <>
+            <Image
                   src={livestreamData.thumbnailUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
-                  alt="Live Stream"
-                  fill
-                  className="object-cover"
-                  priority
-                />
-                <div className="absolute inset-0 flex items-center justify-center z-20">
-                  <button
+              alt="Live Stream"
+              fill
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <button
                     className="group relative"
                     onClick={() => window.open(livestreamData.streamUrl, '_blank')}
                   >
@@ -217,8 +217,8 @@ export default function LivestreamPage() {
                     <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                       Watch Live
                     </div>
-                  </button>
-                </div>
+              </button>
+            </div>
               </>
             )}
           </>
@@ -299,7 +299,7 @@ export default function LivestreamPage() {
               </div>
             </div>
           </div>
-        )}
+          )}
       </div>
 
       {/* Previous Sundays Section */}
@@ -312,13 +312,13 @@ export default function LivestreamPage() {
           <div className="mt-4 md:mt-0 md:w-80">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
+            <Input
                 type="text"
                 placeholder="Search previous streams..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
-              />
+            />
             </div>
           </div>
         </div>
@@ -337,8 +337,8 @@ export default function LivestreamPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredStreams.map((stream, index) => (
               <Card key={stream.streamId || index} className="bg-gray-800 border-gray-700 overflow-hidden group hover:bg-gray-750 transition-colors">
-                <div className="relative aspect-video">
-                  <Image
+                  <div className="relative aspect-video">
+                    <Image
                     src={stream.thumbnailUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
                     alt={stream.title}
                     fill
@@ -362,7 +362,7 @@ export default function LivestreamPage() {
                 <CardContent className="p-4">
                   <h3 className="font-semibold text-white mb-2 line-clamp-2">
                     {stream.title}
-                  </h3>
+                    </h3>
                   <p className="text-sm text-gray-400 mb-2 line-clamp-2">
                     {stream.description || "No description available"}
                   </p>
@@ -374,8 +374,8 @@ export default function LivestreamPage() {
               </Card>
             ))}
           </div>
-        )}
-      </div>
+                      )}
+                    </div>
 
       {/* Upcoming Streams Section */}
       <div className="container mx-auto px-6 py-16 border-t border-gray-800">
@@ -425,8 +425,8 @@ export default function LivestreamPage() {
                   </button>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
         )}
       </div>
 
@@ -456,7 +456,7 @@ export default function LivestreamPage() {
                 </svg>
               </button>
             </div>
-            
+
             <div className="aspect-video">
               {getEmbeddableUrl(selectedVideo.streamUrl) ? (
                 <iframe
@@ -478,11 +478,11 @@ export default function LivestreamPage() {
                     >
                       Watch on YouTube
                     </button>
-                  </div>
-                </div>
+              </div>
+              </div>
               )}
             </div>
-            
+
             <div className="p-4 space-y-3">
               <div className="flex items-center justify-between text-sm text-gray-400">
                 <span>{formatDate(selectedVideo.streamDate)}</span>
@@ -493,7 +493,7 @@ export default function LivestreamPage() {
                 <div>
                   <h4 className="text-sm font-medium text-white mb-1">Description</h4>
                   <p className="text-sm text-gray-300 leading-relaxed">{selectedVideo.description}</p>
-                </div>
+              </div>
               )}
             </div>
           </div>

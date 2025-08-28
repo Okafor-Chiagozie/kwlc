@@ -163,15 +163,15 @@ export default function LivestreamPage() {
 
   return (
     <ProtectedRoute>
-      <AdminLayout>
-        <div className="space-y-6">
+    <AdminLayout>
+      <div className="space-y-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Livestream Management</h1>
               <p className="text-gray-600 mt-1">Manage your church livestreams and broadcasting</p>
             </div>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
               <Badge variant={liveStreams > 0 ? "default" : "secondary"} className="flex items-center gap-1">
                 <div className={`w-2 h-2 rounded-full ${liveStreams > 0 ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}`} />
                 {liveStreams > 0 ? `${liveStreams} LIVE` : "OFFLINE"}
@@ -179,10 +179,10 @@ export default function LivestreamPage() {
               <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
                   <Button onClick={() => resetForm()}>
-                    <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 mr-2" />
                     <span className="hidden sm:inline">Schedule Stream</span>
                     <span className="sm:hidden">Add</span>
-                  </Button>
+            </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
@@ -207,9 +207,9 @@ export default function LivestreamPage() {
                           onChange={(e) => setStreamForm({...streamForm, streamUrl: e.target.value})}
                           placeholder="https://youtube.com/watch?v=..."
                         />
-                      </div>
-                    </div>
-                    
+          </div>
+        </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="streamDate">Stream Date</Label>
@@ -219,8 +219,8 @@ export default function LivestreamPage() {
                           value={streamForm.streamDate}
                           onChange={(e) => setStreamForm({...streamForm, streamDate: e.target.value})}
                         />
-                      </div>
-                      <div className="space-y-2">
+                </div>
+                <div className="space-y-2">
                         <Label htmlFor="startTime">Start Time</Label>
                         <Input
                           id="startTime"
@@ -228,19 +228,19 @@ export default function LivestreamPage() {
                           value={streamForm.startTime}
                           onChange={(e) => setStreamForm({...streamForm, startTime: e.target.value})}
                         />
-                      </div>
-                    </div>
+                </div>
+              </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="description">Description</Label>
-                      <Textarea
+                  <Textarea
                         id="description"
                         value={streamForm.description}
                         onChange={(e) => setStreamForm({...streamForm, description: e.target.value})}
                         placeholder="Stream description..."
-                        rows={3}
-                      />
-                    </div>
+                    rows={3}
+                  />
+                </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="thumbnailUrl">Thumbnail URL (Optional)</Label>
@@ -321,8 +321,8 @@ export default function LivestreamPage() {
                   <CardContent>
                     <div className="text-2xl font-bold text-green-600">{totalViews.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">All streams</p>
-                  </CardContent>
-                </Card>
+          </CardContent>
+        </Card>
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -337,13 +337,13 @@ export default function LivestreamPage() {
               </div>
 
               {/* Recent Streams */}
-              <Card>
-                <CardHeader>
+            <Card>
+              <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="h-5 w-5" />
                     Recent Streams
                   </CardTitle>
-                </CardHeader>
+              </CardHeader>
                 <CardContent>
                   {loadingCompleted ? (
                     <div className="flex items-center justify-center py-8">
@@ -370,8 +370,8 @@ export default function LivestreamPage() {
                                   <Video className="h-4 w-4 text-gray-500" />
                                 </div>
                               )}
-                            </div>
-                            <div>
+                    </div>
+                    <div>
                               <h3 className="font-medium text-sm sm:text-base truncate max-w-[200px] sm:max-w-none">
                                 {stream.title || 'Untitled Stream'}
                               </h3>
@@ -379,21 +379,21 @@ export default function LivestreamPage() {
                                 <span>{stream.viewCount || 0} views</span>
                                 <span>•</span>
                                 <span>{stream.duration || 'N/A'}</span>
-                              </div>
-                            </div>
+                    </div>
+                  </div>
                           </div>
                           <Badge variant={stream.isLive ? "default" : "secondary"}>
                             {stream.isLive ? "Live" : "Ended"}
                           </Badge>
                         </div>
                       ))}
-                    </div>
-                  ) : (
+                          </div>
+                        ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <Video className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                       <p>No recent streams found</p>
-                    </div>
-                  )}
+                          </div>
+                        )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -410,7 +410,7 @@ export default function LivestreamPage() {
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin" />
                       <span className="ml-2">Loading streams...</span>
-                    </div>
+                      </div>
                   ) : allStreams?.data && allStreams.data.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
@@ -470,52 +470,52 @@ export default function LivestreamPage() {
                     <div className="text-center py-8 text-muted-foreground">
                       <Video className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                       <p>No streams found. Add a new one!</p>
-                    </div>
+                  </div>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
             {/* Upcoming Streams Tab */}
-            <TabsContent value="schedule" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Upcoming Streams</CardTitle>
-                  <p className="text-sm text-muted-foreground">Manage scheduled livestreams</p>
-                </CardHeader>
-                <CardContent>
+          <TabsContent value="schedule" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Upcoming Streams</CardTitle>
+                <p className="text-sm text-muted-foreground">Manage scheduled livestreams</p>
+              </CardHeader>
+              <CardContent>
                   {loadingUpcoming ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin" />
                       <span className="ml-2">Loading upcoming streams...</span>
                     </div>
                   ) : upcomingStreams?.data && upcomingStreams.data.length > 0 ? (
-                    <div className="space-y-4">
+                <div className="space-y-4">
                       {upcomingStreams.data.map((stream) => (
                         <div key={stream.streamId} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="flex items-center gap-4">
-                            <div className="p-2 bg-primary/10 rounded-lg">
-                              <Calendar className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold">{stream.title}</h3>
-                              <p className="text-sm text-muted-foreground">
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Calendar className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">{stream.title}</h3>
+                          <p className="text-sm text-muted-foreground">
                                 {stream.streamDate ? new Date(stream.streamDate).toLocaleDateString() : 'N/A'} at {stream.startTime || 'N/A'}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
                             <Badge variant="outline">{stream.isLive ? "Live" : "Scheduled"}</Badge>
                             <Button variant="outline" size="sm" onClick={() => openEditDialog(stream)}>
                               <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
+                          Edit
+                        </Button>
                             <Button variant="outline" size="sm" onClick={() => handleDeleteStream(stream.streamId || '')} className="ml-2">
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                          </div>
-                        </div>
-                      ))}
+                      </div>
+                    </div>
+                  ))}
                     </div>
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
@@ -523,21 +523,21 @@ export default function LivestreamPage() {
                       <p>No upcoming streams scheduled. Add one!</p>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
             {/* Analytics Tab */}
-            <TabsContent value="analytics" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Eye className="h-5 w-5" />
-                      Total Views
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+          <TabsContent value="analytics" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Eye className="h-5 w-5" />
+                    Total Views
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
                     <div className="text-2xl font-bold">
                       {loadingAllStreams ? (
                         <Loader2 className="h-6 w-6 animate-spin" />
@@ -545,18 +545,18 @@ export default function LivestreamPage() {
                         totalViews.toLocaleString()
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">This month</p>
-                  </CardContent>
-                </Card>
+                  <p className="text-sm text-muted-foreground">This month</p>
+                </CardContent>
+              </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      Peak Viewers
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Peak Viewers
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
                     <div className="text-2xl font-bold">
                       {loadingAllStreams ? (
                         <Loader2 className="h-6 w-6 animate-spin" />
@@ -564,18 +564,18 @@ export default function LivestreamPage() {
                         allStreams?.data?.reduce((max, stream) => Math.max(max, stream.peakViewers || 0), 0) || 0
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">Last Sunday</p>
-                  </CardContent>
-                </Card>
+                  <p className="text-sm text-muted-foreground">Last Sunday</p>
+                </CardContent>
+              </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Video className="h-5 w-5" />
-                      Stream Hours
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Video className="h-5 w-5" />
+                    Stream Hours
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
                     <div className="text-2xl font-bold">
                       {loadingAllStreams ? (
                         <Loader2 className="h-6 w-6 animate-spin" />
@@ -583,27 +583,27 @@ export default function LivestreamPage() {
                         allStreams?.data?.reduce((sum, stream) => sum + (stream.duration || 0), 0) || 0
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">This month</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Viewer Analytics</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-64 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
-                    <div className="text-center text-gray-600">
-                      <Eye className="h-8 w-8 mx-auto mb-2" />
-                      <p>Viewer Analytics Chart</p>
-                      <p className="text-sm">Peak times and engagement</p>
-                    </div>
-                  </div>
+                  <p className="text-sm text-muted-foreground">This month</p>
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Viewer Analytics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
+                  <div className="text-center text-gray-600">
+                    <Eye className="h-8 w-8 mx-auto mb-2" />
+                    <p>Viewer Analytics Chart</p>
+                    <p className="text-sm">Peak times and engagement</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
           {/* Edit Dialog */}
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -687,8 +687,8 @@ export default function LivestreamPage() {
               </div>
             </DialogContent>
           </Dialog>
-        </div>
-      </AdminLayout>
+      </div>
+    </AdminLayout>
     </ProtectedRoute>
   )
 }

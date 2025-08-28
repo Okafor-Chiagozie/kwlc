@@ -235,7 +235,7 @@ export default function AdminLogin() {
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Back to website
               </Link>
-              <div className="text-center text-sm text-gray-500">© Kingdom Ways 2024</div>
+            <div className="text-center text-sm text-gray-500">© Kingdom Ways 2024</div>
             </div>
           </div>
         </div>

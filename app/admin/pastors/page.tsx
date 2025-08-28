@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Users, Plus, Edit, Trash2, Mail, Phone, MapPin, Calendar, Loader2, Upload } from "lucide-react"
 import AdminLayout from "@/components/admin/admin-layout"
+import ProtectedRoute from "@/components/admin/protected-route"
 import { toast } from "sonner"
 import {
   createOrUpdateMinister,
@@ -63,6 +64,10 @@ export default function PastorsPage() {
   // Edit Minister State
   const [editingMinister, setEditingMinister] = useState<CreateOrUpdateMinisterRequest | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  
+  // Delete Minister State
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [ministerToDelete, setMinisterToDelete] = useState<number | null>(null)
 
   // Load initial data
   useEffect(() => {
@@ -76,17 +81,24 @@ export default function PastorsPage() {
 
       // Load ministers and branches data
       const [ministersData, branchesData] = await Promise.allSettled([
-        getAllMinisters(),
-        getAllBranches({ pageSize: 100, pageNumber: 1 })
+        getAllMinisters({ pageSize: 100, pageNumber: 1, searchParams: {} }),
+        getAllBranches({ pageSize: 100, pageNumber: 1, searchParams: {} })
       ])
 
       // Handle ministers data
       if (ministersData.status === 'fulfilled' && ministersData.value.isSuccessful) {
-        setMinisters(ministersData.value.data || [])
-        console.log('Ministers loaded:', ministersData.value.data)
+        const ministersArray = Array.isArray(ministersData.value.data) ? ministersData.value.data : []
+        setMinisters(ministersArray)
+        console.log('Ministers loaded:', ministersArray)
+        console.log('Sample minister data structure:', ministersArray[0])
+        if (ministersArray.length === 0) {
+          console.warn('No ministers found in response')
+        }
       } else {
         console.error('Failed to load ministers:', ministersData)
         toast.error('Failed to load ministers data')
+        setMinisters([])
+        setMinisters([])
       }
 
       // Handle branches data
@@ -192,7 +204,7 @@ export default function PastorsPage() {
 
   const handleDeleteMinister = async (id: number) => {
     try {
-      if (!confirm('Are you sure you want to delete this minister?')) return
+
 
       const response = await deleteMinister(id)
 
@@ -220,23 +232,47 @@ export default function PastorsPage() {
     }
   }
 
-  const getMinisterRoleDisplay = (role: MinisterRole): string => {
-    const roleMap = {
-      [MinisterRole.GeneralOverseer]: 'General Overseer',
-      [MinisterRole.Lead]: 'Lead Pastor',
-      [MinisterRole.Youth]: 'Youth Pastor',
-      [MinisterRole.Associate]: 'Associate Pastor',
-      [MinisterRole.Children]: 'Children Pastor',
-      [MinisterRole.Missions]: 'Missions Pastor',
-      [MinisterRole.Worship]: 'Worship Pastor'
+  const getMinisterRoleDisplay = (role: MinisterRole | string | number): string => {
+    // Handle different data types that might come from API
+    const roleKey = typeof role === 'string' ? role : String(role)
+    
+    const roleMap: Record<string, string> = {
+      'GeneralOverseer': 'General Overseer',
+      'Lead': 'Lead Pastor',
+      'Youth': 'Youth Pastor',
+      'Associate': 'Associate Pastor',
+      'Children': 'Children Pastor',
+      'Missions': 'Missions Pastor',
+      'Worship': 'Worship Pastor',
+      // Also handle potential numeric IDs
+      '1': 'General Overseer',
+      '2': 'Lead Pastor', 
+      '3': 'Youth Pastor',
+      '4': 'Associate Pastor',
+      '5': 'Children Pastor',
+      '6': 'Missions Pastor',
+      '7': 'Worship Pastor'
     }
-    return roleMap[role] || role
+    
+    console.log('Role mapping debug:', { 
+      originalRole: role, 
+      roleType: typeof role, 
+      roleKey, 
+      mappedValue: roleMap[roleKey] 
+    })
+    
+    return roleMap[roleKey] || roleKey || 'Unknown Role'
   }
 
   const getBranchName = (branchId: number | null): string => {
     if (!branchId) return 'No Branch Assigned'
     const branch = branches.find(b => b.id === branchId)
     return branch ? branch.name : `Branch ID: ${branchId}`
+  }
+
+  const openDeleteMinisterDialog = (ministerId: number) => {
+    setMinisterToDelete(ministerId)
+    setDeleteDialogOpen(true)
   }
 
   const startEditMinister = (minister: any) => {
@@ -256,15 +292,33 @@ export default function PastorsPage() {
   }
 
   // Calculate statistics
-  const activeMinistersCount = ministers.filter(m => !m.isDeleted).length
+  const activeMinistersCount = ministers.filter(m => m.isActive !== false).length
   const roleStats = ministers.reduce((acc, minister) => {
-    const role = minister.ministerRoleId || MinisterRole.Associate
-    acc[role] = (acc[role] || 0) + 1
+    // Normalize the role to match MinisterRole enum
+    let role = minister.ministerRoleId || MinisterRole.Associate
+    
+    // Convert numeric IDs to string values if needed
+    const roleMapping: Record<string, MinisterRole> = {
+      '1': MinisterRole.GeneralOverseer,
+      '2': MinisterRole.Lead,
+      '3': MinisterRole.Youth,
+      '4': MinisterRole.Associate,
+      '5': MinisterRole.Children,
+      '6': MinisterRole.Missions,
+      '7': MinisterRole.Worship
+    }
+    
+    if (typeof role === 'number' || !Object.values(MinisterRole).includes(role as MinisterRole)) {
+      role = roleMapping[String(role)] || MinisterRole.Associate
+    }
+    
+    acc[role as MinisterRole] = (acc[role as MinisterRole] || 0) + 1
     return acc
   }, {} as Record<MinisterRole, number>)
 
   if (isLoading) {
     return (
+      <ProtectedRoute>
       <AdminLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="flex items-center gap-2">
@@ -273,14 +327,29 @@ export default function PastorsPage() {
           </div>
         </div>
       </AdminLayout>
+      </ProtectedRoute>
     )
   }
 
   return (
+    <ProtectedRoute>
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Pastors Management</h1>
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <h1 className="text-xl sm:text-2xl font-bold">Pastors Management</h1>
+          <Button 
+            onClick={loadMinistersData} 
+            disabled={isLoading}
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Users className="h-4 w-4 mr-2" />
+            )}
+            Refresh Data
+          </Button>
         </div>
 
         {error && (
@@ -343,10 +412,10 @@ export default function PastorsPage() {
         </div>
 
         <Tabs defaultValue="all-pastors" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="all-pastors">All Pastors</TabsTrigger>
-            <TabsTrigger value="add-pastor">Add Pastor</TabsTrigger>
-            <TabsTrigger value="search">Search Pastors</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto">
+            <TabsTrigger value="all-pastors" className="text-xs sm:text-sm">All Pastors</TabsTrigger>
+            <TabsTrigger value="add-pastor" className="text-xs sm:text-sm">Add Pastor</TabsTrigger>
+            <TabsTrigger value="search" className="text-xs sm:text-sm">Search Pastors</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all-pastors" className="space-y-6">
@@ -357,20 +426,28 @@ export default function PastorsPage() {
                     <CardContent className="p-6">
                       <div className="flex items-center gap-4 mb-4">
                         <Avatar className="h-16 w-16">
-                          <AvatarImage src={minister.imageUrl || "/placeholder.svg"} alt={minister.name} />
+                          <AvatarImage src={minister.imageUrl || "/placeholder.svg"} alt={`${minister.firstName} ${minister.lastName}`} />
                           <AvatarFallback>
-                            {minister.firstName?.charAt(0)}{minister.lastName?.charAt(0)}
+                            {minister.firstName?.charAt(0) || 'U'}{minister.lastName?.charAt(0) || 'U'}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg">
-                            {minister.firstName} {minister.middleName} {minister.lastName}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-lg truncate">
+                            {minister.firstName || 'Unknown'} {minister.middleName && `${minister.middleName} `}{minister.lastName || ''}
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            {getMinisterRoleDisplay(minister.ministerRoleId)}
+                            {(() => {
+                              console.log('Minister role data:', {
+                                ministerRole: minister.ministerRole,
+                                ministerRoleId: minister.ministerRoleId,
+                                ministerRoleIdType: typeof minister.ministerRoleId,
+                                roleDisplay: getMinisterRoleDisplay(minister.ministerRoleId)
+                              })
+                              return minister.ministerRole || getMinisterRoleDisplay(minister.ministerRoleId) || 'No Role Assigned'
+                            })()}
                           </p>
                           <Badge variant="outline" className="mt-1">
-                            {getBranchName(minister.branchId)}
+                            {minister.branchName || getBranchName(minister.branchId) || 'No Branch'}
                           </Badge>
                         </div>
                       </div>
@@ -379,7 +456,7 @@ export default function PastorsPage() {
                         {minister.email && (
                           <div className="flex items-center gap-2 text-sm">
                             <Mail className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">{minister.email}</span>
+                            <span className="text-muted-foreground truncate">{minister.email}</span>
                           </div>
                         )}
                         {minister.phoneNumber && (
@@ -418,7 +495,7 @@ export default function PastorsPage() {
                           variant="outline" 
                           size="sm" 
                           className="text-red-600 hover:text-red-700"
-                          onClick={() => handleDeleteMinister(minister.id)}
+                          onClick={() => openDeleteMinisterDialog(minister.id)}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -432,6 +509,10 @@ export default function PastorsPage() {
                 <CardContent className="text-center py-12">
                   <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <p className="text-muted-foreground">No pastors found</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {ministers.length === 0 ? 'Add pastors to get started' : 'Check console for data structure debugging'}
+                  </p>
+
                 </CardContent>
               </Card>
             )}
@@ -556,11 +637,11 @@ export default function PastorsPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                   <Button 
                     onClick={handleCreateMinister} 
                     disabled={isSaving}
-                    className="flex-1"
+                    className="w-full sm:flex-1"
                   >
                     {isSaving ? (
                       <>
@@ -647,7 +728,7 @@ export default function PastorsPage() {
                                   {minister.firstName} {minister.lastName}
                                 </h4>
                                 <p className="text-sm text-muted-foreground">
-                                  {getMinisterRoleDisplay(minister.ministerRoleId)}
+                                  {minister.ministerRole || getMinisterRoleDisplay(minister.ministerRoleId)}
                                 </p>
                                 <p className="text-sm text-muted-foreground">{minister.email}</p>
                               </div>
@@ -665,8 +746,8 @@ export default function PastorsPage() {
 
         {/* Edit Dialog */}
         {isEditDialogOpen && editingMinister && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 !mt-0">
+            <Card className="w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto">
               <CardHeader>
                 <CardTitle>Edit Pastor</CardTitle>
               </CardHeader>
@@ -780,7 +861,45 @@ export default function PastorsPage() {
             </Card>
           </div>
         )}
+
+        {/* Delete Minister Confirmation Modal */}
+        {deleteDialogOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 !mt-0">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle className="text-red-600">Delete Pastor</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">
+                  Are you sure you want to delete this pastor? This action cannot be undone.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setDeleteDialogOpen(false)
+                      setMinisterToDelete(null)
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      if (ministerToDelete) {
+                        handleDeleteMinister(ministerToDelete)
+                      }
+                    }}
+                  >
+                    Delete Pastor
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </AdminLayout>
+    </ProtectedRoute>
   )
 }
