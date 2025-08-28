@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
@@ -14,7 +14,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { resetPassword } from "@/services/user"
 import { ResetPasswordRequest } from "@/types/user"
 
-export default function ResetPassword() {
+function ResetPasswordContent() {
   const [formData, setFormData] = useState({
     newPassword: "",
     confirmPassword: ""
@@ -379,5 +379,20 @@ export default function ResetPassword() {
       </div>
       <Toaster />
     </div>
+  )
+}
+
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   )
 } 
