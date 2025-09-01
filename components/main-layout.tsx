@@ -1,5 +1,5 @@
 "use client"
-import type React from "react"
+import React, { useEffect, useState } from "react"
 import Navbar from "@/components/navbar"
 import Link from "next/link"
 import { useApi } from "@/hooks/useApi"
@@ -13,6 +13,25 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const churchInfo: any = homePageResponse?.isSuccessful
     ? (Array.isArray(homePageResponse.data) ? homePageResponse.data[0] : homePageResponse.data)
     : null
+
+  const [socialLinks, setSocialLinks] = useState<{
+    website?: string
+    facebook?: string
+    twitter?: string
+    instagram?: string
+    youtube?: string
+    linkedin?: string
+  }>({})
+
+  useEffect(() => {
+    try {
+      const savedSocialMedia = typeof window !== 'undefined' ? localStorage.getItem('churchSocialMedia') : null
+      if (savedSocialMedia) {
+        const parsed = JSON.parse(savedSocialMedia)
+        setSocialLinks(parsed || {})
+      }
+    } catch {}
+  }, [])
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -46,26 +65,64 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <div>
               <h3 className="font-bold text-lg mb-4">Connect</h3>
               <ul className="space-y-2 text-sm">
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    Facebook
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    Instagram
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    Twitter
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    YouTube
-                  </a>
-                </li>
+                {socialLinks.facebook && (
+                  <li>
+                    <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                      Facebook
+                    </a>
+                  </li>
+                )}
+                {socialLinks.instagram && (
+                  <li>
+                    <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                      Instagram
+                    </a>
+                  </li>
+                )}
+                {socialLinks.twitter && (
+                  <li>
+                    <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                      Twitter
+                    </a>
+                  </li>
+                )}
+                {socialLinks.youtube && (
+                  <li>
+                    <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                      YouTube
+                    </a>
+                  </li>
+                )}
+                {socialLinks.linkedin && (
+                  <li>
+                    <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                      LinkedIn
+                    </a>
+                  </li>
+                )}
+                {socialLinks.website && (
+                  <li>
+                    <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                      Website
+                    </a>
+                  </li>
+                )}
+                {!socialLinks.facebook && !socialLinks.instagram && !socialLinks.twitter && !socialLinks.youtube && !socialLinks.linkedin && !socialLinks.website && (
+                  <>
+                    <li>
+                      <a href="#" className="text-gray-400 hover:text-white transition-colors">Facebook</a>
+                    </li>
+                    <li>
+                      <a href="#" className="text-gray-400 hover:text-white transition-colors">Instagram</a>
+                    </li>
+                    <li>
+                      <a href="#" className="text-gray-400 hover:text-white transition-colors">Twitter</a>
+                    </li>
+                    <li>
+                      <a href="#" className="text-gray-400 hover:text-white transition-colors">YouTube</a>
+                    </li>
+                  </>
+                )}
               </ul>
             </div>
             <div>
