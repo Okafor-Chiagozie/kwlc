@@ -15,6 +15,7 @@ import MainLayout from "@/components/main-layout"
 import Link from "next/link"
 import { useApi } from "@/hooks/useApi"
 import { getUpcomingEvents } from "@/services/event"
+import { getHomePage } from "@/services/homepage"
 
 export default function Home() {
   // Fetch upcoming events
@@ -22,6 +23,17 @@ export default function Home() {
     () => getUpcomingEvents(),
     []
   )
+
+  // Fetch church homepage information
+  const { data: homePageResponse } = useApi(
+    () => getHomePage(),
+    []
+  )
+
+  // Derive church info from response (API may return an object or array)
+  const churchInfo: any = homePageResponse?.isSuccessful
+    ? (Array.isArray(homePageResponse.data) ? homePageResponse.data[0] : homePageResponse.data)
+    : null
 
   // Format date for display
   const formatEventDate = (dateStr: string) => {
@@ -55,7 +67,7 @@ export default function Home() {
         <ServicesGrid />
 
         {/* Welcome Section */}
-        <WelcomeSection />
+        <WelcomeSection welcomeAddress={churchInfo?.welcomeAddress} />
 
         {/* Worship With Us */}
         <LocationsSection />
@@ -322,14 +334,15 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center">
               <LocationPin
                 location={{
-                  name: "KWLC Headquarters",
-                  title: "KINGDOM WAYS LIVING CHURCH HEADQUARTERS",
+                  name: churchInfo?.name || "KWLC Headquarters",
+                  title: (churchInfo?.name ? String(churchInfo.name).toUpperCase() : "KINGDOM WAYS LIVING CHURCH HEADQUARTERS"),
                   description:
                     "Our main church location with multiple services throughout the week. Join us for worship, prayer, and fellowship.",
                   address:
+                    churchInfo?.address ||
                     "24 Prince Ibrahim Eletu Avenue, Shoprite Circle Mall Road, Jakande Bus Stop, Osapa London, Lagos",
-                  phone: "+234 70 433 2832",
-                  email: "info@kwlchq.org",
+                  phone: churchInfo?.phoneNumber || "+234 70 433 2832",
+                  email: churchInfo?.email || "info@kwlchq.org",
                   image:
                     "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/lagos-VgjOxtCXSS5PU2WpGNpg21KuQQyOqw.png",
                 }}
@@ -344,14 +357,14 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="font-bold text-lg">Call Us</h3>
-                    <p className="text-gray-600">+234 70 433 2832</p>
+                    <p className="text-gray-600">{churchInfo?.phoneNumber || "+234 70 433 2832"}</p>
                   </div>
                 </div>
                 <Button
                   variant="outline"
                   className="w-full border-primary/20 hover:bg-primary/5 hover:border-primary text-primary"
                 >
-                  <a href="tel:+234704332832">Call Now</a>
+                  <a href={`tel:${churchInfo?.phoneNumber || "+234704332832"}`}>Call Now</a>
                 </Button>
               </div>
 
@@ -362,14 +375,14 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="font-bold text-lg">Email Us</h3>
-                    <p className="text-gray-600">info@kwlchq.org</p>
+                    <p className="text-gray-600">{churchInfo?.email || "info@kwlchq.org"}</p>
                   </div>
                 </div>
                 <Button
                   variant="outline"
                   className="w-full border-primary/20 hover:bg-primary/5 hover:border-primary text-primary"
                 >
-                  <a href="mailto:info@kwlchq.org">Send Email</a>
+                  <a href={`mailto:${churchInfo?.email || "info@kwlchq.org"}`}>Send Email</a>
                 </Button>
               </div>
 
