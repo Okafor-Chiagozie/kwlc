@@ -15,6 +15,7 @@ import MainLayout from "@/components/main-layout"
 import Link from "next/link"
 import { useApi } from "@/hooks/useApi"
 import { getUpcomingEvents } from "@/services/event"
+import { useChurchInfo } from "@/components/church-info-provider"
 
 export default function Home() {
   // Fetch upcoming events
@@ -22,6 +23,7 @@ export default function Home() {
     () => getUpcomingEvents(),
     []
   )
+  const { details, socials } = useChurchInfo()
 
   // Format date for display
   const formatEventDate = (dateStr: string) => {
@@ -322,14 +324,14 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center">
               <LocationPin
                 location={{
-                  name: "KWLC Headquarters",
+                  name: details.name || "KWLC Headquarters",
                   title: "KINGDOM WAYS LIVING CHURCH HEADQUARTERS",
                   description:
-                    "Our main church location with multiple services throughout the week. Join us for worship, prayer, and fellowship.",
+                    details.welcomeAddress || "Our main church location with multiple services throughout the week. Join us for worship, prayer, and fellowship.",
                   address:
-                    "24 Prince Ibrahim Eletu Avenue, Shoprite Circle Mall Road, Jakande Bus Stop, Osapa London, Lagos",
-                  phone: "+234 70 433 2832",
-                  email: "info@kwlchq.org",
+                    details.address || "24 Prince Ibrahim Eletu Avenue, Shoprite Circle Mall Road, Jakande Bus Stop, Osapa London, Lagos",
+                  phone: details.phoneNumber || "+234 70 433 2832",
+                  email: details.email || "info@kwlchq.org",
                   image:
                     "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/lagos-VgjOxtCXSS5PU2WpGNpg21KuQQyOqw.png",
                 }}
@@ -344,14 +346,14 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="font-bold text-lg">Call Us</h3>
-                    <p className="text-gray-600">+234 70 433 2832</p>
+                    <p className="text-gray-600">{details.phoneNumber || "+234 70 433 2832"}</p>
                   </div>
                 </div>
                 <Button
                   variant="outline"
                   className="w-full border-primary/20 hover:bg-primary/5 hover:border-primary text-primary"
                 >
-                  <a href="tel:+234704332832">Call Now</a>
+                  <a href={details.phoneNumber ? `tel:${details.phoneNumber}` : "tel:+234704332832"}>Call Now</a>
                 </Button>
               </div>
 
@@ -362,14 +364,14 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="font-bold text-lg">Email Us</h3>
-                    <p className="text-gray-600">info@kwlchq.org</p>
+                    <p className="text-gray-600">{details.email || "info@kwlchq.org"}</p>
                   </div>
                 </div>
                 <Button
                   variant="outline"
                   className="w-full border-primary/20 hover:bg-primary/5 hover:border-primary text-primary"
                 >
-                  <a href="mailto:info@kwlchq.org">Send Email</a>
+                  <a href={`mailto:${details.email || "info@kwlchq.org"}`}>Send Email</a>
                 </Button>
               </div>
 
@@ -430,7 +432,7 @@ export default function Home() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Call us directly at</p>
-                      <p className="font-medium text-gray-800">+234 70 433 2832</p>
+                      <p className="font-medium text-gray-800">{details.phoneNumber || "+234 70 433 2832"}</p>
                     </div>
                   </div>
 
@@ -441,7 +443,7 @@ export default function Home() {
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Our location</p>
                       <p className="text-sm text-gray-800">
-                        24 Prince Ibrahim Eletu Avenue, Shoprite Circle Mall Road, Jakande Bus Stop, Osapa London, Lagos
+                        {details.address || "24 Prince Ibrahim Eletu Avenue, Shoprite Circle Mall Road, Jakande Bus Stop, Osapa London, Lagos"}
                       </p>
                     </div>
                   </div>
@@ -452,112 +454,107 @@ export default function Home() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Email us at</p>
-                      <p className="font-medium text-gray-800">info@kwlchq.org</p>
+                      <p className="font-medium text-gray-800">{details.email || "info@kwlchq.org"}</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex gap-3 mt-8">
-                  <a
-                    href="#"
-                    className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4"
+                  {socials.facebook && (
+                    <a
+                      href={socials.facebook}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
                     >
-                      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-                    </svg>
-                  </a>
-                  <a
-                    href="#"
-                    className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4"
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-4 w-4"
+                      >
+                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                      </svg>
+                    </a>
+                  )}
+                  {socials.instagram && (
+                    <a
+                      href={socials.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
                     >
-                      <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
-                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
-                    </svg>
-                  </a>
-                  <a
-                    href="#"
-                    className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4"
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-4 w-4"
+                      >
+                        <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
+                      </svg>
+                    </a>
+                  )}
+                  {socials.twitter && (
+                    <a
+                      href={socials.twitter}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
                     >
-                      <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-                    </svg>
-                  </a>
-                  <a
-                    href="#"
-                    className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4"
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-4 w-4"
+                      >
+                        <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+                      </svg>
+                    </a>
+                  )}
+                  {socials.youtube && (
+                    <a
+                      href={socials.youtube}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
                     >
-                      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                      <rect width="4" height="12" x="2" y="9"></rect>
-                      <circle cx="4" cy="4" r="2"></circle>
-                    </svg>
-                  </a>
-                  <a
-                    href="#"
-                    className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4"
-                    >
-                      <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"></path>
-                      <path d="m10 15 5-3-5-3z"></path>
-                    </svg>
-                  </a>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-4 w-4"
+                      >
+                        <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"></path>
+                        <path d="m10 15 5-3-5-3z"></path>
+                      </svg>
+                    </a>
+                  )}
                 </div>
               </div>
 

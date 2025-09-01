@@ -1,14 +1,14 @@
 "use client"
 
-import { useState, use, useEffect } from "react"
+import React, { useState, useEffect, use } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Calendar, Clock, MapPin, Share2, ChevronLeft, Users, Heart, AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import MainLayout from "@/components/main-layout"
 import { useApi } from "@/hooks/useApi"
-import { getEvent, getUpcomingEvents } from "@/services/event"
-import { Event } from "@/types/event"
+import { getEvent, getUpcomingEvents, getEventDetail, searchEvent } from "@/services/event"
+import type { EventResponseViewModel, EventViewModel, TimeOnly, SearchEventRequest } from "@/types/event"
 
 const isNoRecordsError = (error: string | null) => {
   return error && error.toLowerCase().includes("no record found")
@@ -51,30 +51,78 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   const [activeTab, setActiveTab] = useState("details")
   const [selectedImage, setSelectedImage] = useState<string>("")
 
-  // Unwrap the params Promise
   const { id } = use(params)
-  const eventId = parseInt(id)
+  const eventId = Number(id)
 
-  // Fetch event details
+  const fetchEvent = async () => {
+    // Try rich details endpoint first
+    const primary = await getEvent(eventId)
+    if (primary?.isSuccessful && Array.isArray(primary.data) && primary.data.length > 0) {
+      return primary
+    }
+    // Fallback to basic detail and map
+    const fallback = await getEventDetail(eventId)
+    if (fallback?.isSuccessful && Array.isArray(fallback.data) && fallback.data.length > 0) {
+      const basic = fallback.data[0]
+      const mapped: EventResponseViewModel = {
+        id: basic.id,
+        name: basic.name,
+        branchName: "",
+        description: basic.description,
+        location: basic.location,
+        address: basic.address,
+        date: basic.date,
+        startTime: basic.startTime,
+        closeTime: basic.closeTime,
+        eventTypeId: basic.eventTypeId,
+        branchId: basic.branchId ?? null,
+        price: (basic as any).price || "0",
+        carouselImages: [],
+        previewImages: [],
+        galleryImages: [],
+        speakers: [],
+        schedule: [],
+      }
+      return { ...fallback, data: [mapped] } as any
+    }
+    return primary
+  }
+
   const { 
     data: eventResponse, 
     loading: eventLoading, 
     error: eventError, 
     refetch: refetchEvent 
-  } = useApi(() => getEvent(eventId), [eventId])
+  } = useApi(fetchEvent, [eventId])
 
-  // Fetch related events (latest 3 upcoming events excluding current event)
-  const { 
-    data: upcomingEventsData, 
-    loading: relatedLoading 
-  } = useApi(() => getUpcomingEvents(), [])
+  // Fetch all events and compute latest 3 (fallback to upcoming)
+  const searchPayload: SearchEventRequest = { pageSize: 50, pageNumber: 1, searchParams: {} }
+  const { data: allEventsResp, loading: allEventsLoading } = useApi(() => searchEvent(searchPayload) as any, [])
+  const { data: upcomingEventsData, loading: upcomingLoading } = useApi(() => getUpcomingEvents(), [])
 
-  // Filter out current event and take only 3
-  const relatedEvents = Array.isArray(upcomingEventsData) 
-    ? upcomingEventsData.filter((e: Event) => e.id !== eventId).slice(0, 3) 
-    : []
+  const computeLatest = (): Array<EventViewModel | EventResponseViewModel> => {
+    const all = (allEventsResp && (allEventsResp as any).isSuccessful && Array.isArray((allEventsResp as any).data))
+      ? (allEventsResp as any).data as EventViewModel[]
+      : Array.isArray(upcomingEventsData) ? upcomingEventsData as EventViewModel[] : []
+    return [...all]
+      .filter(e => Number(e?.id) !== eventId)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 3)
+  }
 
-  const event = eventResponse?.data?.[0]
+  const relatedEvents: Array<EventViewModel | EventResponseViewModel> = computeLatest()
+  const relatedLoading = allEventsLoading && upcomingLoading
+
+  // Tolerant extraction: handle array or object, nested shapes
+  const extractEvent = (resp: any): any => {
+    if (!resp) return null
+    const d1 = resp.data ?? resp
+    const d2 = d1?.data ?? d1
+    if (Array.isArray(d2)) return d2[0]
+    if (d2 && typeof d2 === 'object') return d2
+    return null
+  }
+  const event = extractEvent(eventResponse)
 
   // Set default selected image when event data loads
   useEffect(() => {
@@ -86,7 +134,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   }, [event])
 
   // Handle loading state
-  if (eventLoading) {
+  if (eventLoading || !eventId) {
     return (
       <MainLayout>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -128,25 +176,57 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   const displayImage = selectedImage || galleryImages[0] || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
 
   // Format date and time
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-GB', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric' 
-    }).replace(/\//g, '. ')
+  const formatDate = (input: any) => {
+    if (!input) return 'TBD'
+    try {
+      // Accept either date-only string or ISO datetime string
+      const date = new Date(String(input))
+      if (isNaN(date.getTime())) return 'TBD'
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }).replace(/\//g, '. ')
+    } catch {
+      return 'TBD'
+    }
   }
 
-  const formatTime = (timeString: string) => {
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
+  const toHhMm = (time: TimeOnly | string): string => {
+    if (typeof time === 'string') {
+      const hm = time.match(/^(\d{1,2}):(\d{2})/)
+      if (hm) return `${hm[1].padStart(2,'0')}:${hm[2]}`
+      // Try ISO datetime
+      const d = new Date(time)
+      if (!isNaN(d.getTime())) return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+      return '00:00'
+    }
+    const hh = String(time.hour).padStart(2, '0')
+    const mm = String(time.minute).padStart(2, '0')
+    return `${hh}:${mm}`
+  }
+
+  const formatTime = (input: TimeOnly | string): string => {
+    const hhmm = toHhMm(input)
+    const [hStr, mStr] = hhmm.split(':')
+    const d = new Date()
+    d.setHours(Number(hStr) || 0, Number(mStr) || 0, 0, 0)
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()
   }
 
   const eventDate = formatDate(event.date)
   const eventTime = `${formatTime(event.startTime)} - ${formatTime(event.closeTime)}`
+
+  // Price display
+  const priceDisplay = Number(event.price) > 0 ? `₦${event.price}` : 'Free'
+
+  // Directions link and map embed
+  const directionsHref = event.location && String(event.location).startsWith('http')
+    ? event.location
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.address || '')}`
+  const mapSrc = (event.location && String(event.location).includes('/embed'))
+    ? event.location
+    : `https://www.google.com/maps?q=${encodeURIComponent(event.address || '')}&output=embed`
 
   return (
     <MainLayout>
@@ -201,18 +281,18 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                   <Users className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-white/70">Price</p>
-                    <p className="font-medium">₦{event.price || '0'}</p>
+                    <p className="font-medium">{priceDisplay}</p>
                   </div>
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button className="bg-white text-primary hover:bg-white/90">Register Now</Button>
-                <Button variant="outline" className="border-white/30 text-white hover:bg-white/10">
+                <Button variant="outline" className="border-white/30 text-white bg-white/10">
                   <Share2 className="h-4 w-4 mr-2" />
                   Share Event
                 </Button>
-                <Button variant="outline" className="border-white/30 text-white hover:bg-white/10">
+                <Button variant="outline" className="border-white/30 text-white bg-white/10">
                   <Heart className="h-4 w-4 mr-2" />
                   Save Event
                 </Button>
@@ -315,7 +395,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                       <h2 className="text-2xl font-bold mb-6">Event Schedule</h2>
 
                       <div className="space-y-6">
-                        {event.schedule.map((scheduleItem, index) => (
+                        {event.schedule.map((scheduleItem: any, index: number) => (
                           <div key={scheduleItem.id} className="bg-gray-50 rounded-xl p-6 border border-gray-100">
                             <div className="flex items-start gap-4">
                               <div className="w-16 h-16 bg-primary/10 rounded-lg flex flex-col items-center justify-center text-primary shrink-0">
@@ -349,7 +429,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                       <h2 className="text-2xl font-bold mb-6">Event Speakers</h2>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {event.speakers.map((speaker) => (
+                        {event.speakers.map((speaker: any) => (
                           <div key={speaker.id} className="bg-gray-50 rounded-xl p-6 border border-gray-100 text-center">
                             <div className="w-32 h-32 mx-auto rounded-full overflow-hidden mb-4 relative">
                               <Image
@@ -380,16 +460,22 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                             <MapPin className="h-6 w-6 text-primary" />
                           </div>
                           <div>
-                            <h3 className="font-bold text-lg mb-1">{event.location || "Location TBD"}</h3>
+                            <h3 className="font-bold text-lg mb-1">Event Address</h3>
                             <p className="text-gray-600">{event.address || "Address will be provided soon"}</p>
+                            <div className="mt-2">
+                              <a href={directionsHref} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Get directions</a>
+                            </div>
                           </div>
                         </div>
                       </div>
 
                       <div className="aspect-video rounded-xl overflow-hidden bg-gray-200 relative">
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <p className="text-gray-500">Map will be displayed here</p>
-                        </div>
+                        <iframe
+                          src={mapSrc}
+                          className="absolute inset-0 w-full h-full border-0"
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                        />
                       </div>
                     </div>
                   )}
@@ -484,7 +570,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="font-bold text-lg">Event Details</h3>
                     <div className="px-3 py-1 bg-primary/10 rounded-full text-primary text-sm font-medium">
-                      ₦{event.price || '0'}
+                      {priceDisplay}
                     </div>
                   </div>
 
@@ -514,11 +600,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         <MapPin className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500 mb-0.5">Location</p>
-                        <p className="font-medium text-gray-900">{event.location || "TBD"}</p>
-                        {event.address && (
-                          <p className="text-sm text-gray-500 mt-1">{event.address}</p>
-                        )}
+                        <p className="text-sm text-gray-500 mb-0.5">Address</p>
+                        <p className="font-medium text-gray-900">{event.address || "TBD"}</p>
+                        <a href={directionsHref} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline mt-1 inline-block">Get directions</a>
                       </div>
                     </div>
                   </div>
@@ -527,10 +611,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     Register Now
                   </Button>
 
-                  {event.price && event.price !== "0" && (
+                  {Number(event.price) > 0 ? (
                     <p className="text-center text-sm text-gray-500">
                       Registration fee: ₦{event.price}
                     </p>
+                  ) : (
+                    <p className="text-center text-sm text-gray-500">Free</p>
                   )}
                 </div>
               </div>
@@ -549,14 +635,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             ) : relatedEvents && relatedEvents.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {relatedEvents.slice(0, 3).map((relatedEvent: Event) => (
+                {relatedEvents.slice(0, 3).map((relatedEvent: any) => (
                   <div
                     key={relatedEvent.id}
                     className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow"
                   >
                     <div className="relative h-48">
                       <Image
-                        src={relatedEvent.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
+                        src={(relatedEvent.imageUrl || relatedEvent.previewImages?.[0] || relatedEvent.carouselImages?.[0]) || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
                         alt={relatedEvent.name}
                         fill
                         className="object-cover"

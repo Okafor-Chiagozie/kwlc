@@ -7,11 +7,10 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Phone, Clock, Users, ChevronLeft, ExternalLink, Loader2, AlertCircle } from "lucide-react"
 import Image from "next/image"
 import MainLayout from "@/components/main-layout"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { getAllBranches } from "@/services/branch"
 import { useApi } from "@/hooks/useApi"
 import { Branch, GetAllBranchesRequest } from "@/types/branch"
+import { useRouter } from "next/navigation"
 
 // Loading component
 const LoadingState = () => (
@@ -41,7 +40,7 @@ const ErrorState = ({ error, onRetry }: { error: string; onRetry: () => void }) 
 )
 
 export default function BranchesPage() {
-  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null)
+  const router = useRouter()
 
   // Fetch all branches
   const { 
@@ -140,7 +139,7 @@ export default function BranchesPage() {
                   <Card
                     key={branch.id}
                     className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() => setSelectedBranch(branch)}
+                    onClick={() => router.push(`/branches/${branch.id}`)}
                   >
                     <div className="relative h-48">
                       <Image
@@ -188,7 +187,7 @@ export default function BranchesPage() {
                       )}
 
                       <div className="flex gap-2">
-                        <Button className="flex-1" onClick={() => setSelectedBranch(branch)}>
+                        <Button className="flex-1" onClick={() => router.push(`/branches/${branch.id}`)}>
                           View Details
                         </Button>
                         <Button variant="outline" className="flex-1" asChild>
@@ -221,119 +220,6 @@ export default function BranchesPage() {
           </div>
         </section>
       </div>
-
-      {/* Branch Details Dialog */}
-      {selectedBranch && (
-        <Dialog open={!!selectedBranch} onOpenChange={() => setSelectedBranch(null)}>
-          <DialogContent className="sm:max-w-[800px] p-0">
-            <ScrollArea className="max-h-[90vh] overflow-y-auto">
-              <div className="relative h-64 w-full">
-                <Image
-                  src={selectedBranch.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
-                  alt={selectedBranch.name}
-                  fill
-                  className="object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement
-                    target.src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
-                  }}
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-4 left-4 text-white bg-black/50 hover:bg-black/70"
-                  onClick={() => setSelectedBranch(null)}
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
-              </div>
-              <div className="p-6">
-                <DialogHeader className="mb-4">
-                  <DialogTitle className="text-3xl font-bold">{selectedBranch.name}</DialogTitle>
-                  <DialogDescription className="text-lg text-gray-600">
-                    Established: {formatEstablishedYear(selectedBranch.dateCreated)}
-                  </DialogDescription>
-                </DialogHeader>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Contact Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-xl font-semibold flex items-center gap-2">
-                      <MapPin className="h-5 w-5" /> Location & Contact
-                    </h3>
-                    <div className="space-y-2">
-                      <p className="text-gray-700">{selectedBranch.address}</p>
-                      <p className="text-gray-700">
-                        <span className="font-medium">{selectedBranch.lga}, {selectedBranch.state}</span>
-                      </p>
-                      <p className="text-gray-700">
-                        <span className="font-medium">{selectedBranch.country}</span>
-                      </p>
-                      <p className="text-gray-700 flex items-center gap-2">
-                        <Phone className="h-4 w-4" /> {selectedBranch.phoneNumber}
-                      </p>
-                      {selectedBranch.email && (
-                        <p className="text-gray-700">{selectedBranch.email}</p>
-                      )}
-                    </div>
-                    <Button asChild>
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedBranch.address)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2"
-                      >
-                        Get Directions <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </Button>
-                  </div>
-
-                  {/* Branch Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-xl font-semibold flex items-center gap-2">
-                      <Users className="h-5 w-5" /> Branch Information
-                    </h3>
-                    <div className="space-y-2">
-                      <p className="text-gray-700">
-                        <span className="font-medium">Established:</span> {formatEstablishedYear(selectedBranch.dateCreated)}
-                      </p>
-                      <p className="text-gray-700">
-                        <span className="font-medium">Location:</span> {selectedBranch.lga}, {selectedBranch.state}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Welcome Address */}
-                {selectedBranch.welcomeAddress && (
-                  <div className="mt-6">
-                    <h3 className="text-xl font-semibold mb-3">Welcome Message</h3>
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <p className="text-gray-700">{selectedBranch.welcomeAddress}</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-8 flex gap-4">
-                  <Button className="flex-1" asChild>
-                    <a
-                      href={selectedBranch.location?.replace('/embed', '') || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedBranch.address)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2"
-                    >
-                      Visit Branch <ExternalLink className="h-4 w-4" />
-                    </a>
-                  </Button>
-                  <Button variant="outline" className="flex-1" asChild>
-                    <a href={`tel:${selectedBranch.phoneNumber}`}>Contact Branch</a>
-                  </Button>
-                </div>
-              </div>
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
-      )}
     </MainLayout>
   )
 }

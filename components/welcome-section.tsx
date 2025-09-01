@@ -1,8 +1,10 @@
 "use client"
 
 import Image from "next/image"
+import { useChurchInfo } from "@/components/church-info-provider"
 
 export default function WelcomeSection() {
+  const { details } = useChurchInfo()
   return (
     <section id="about" className="py-24 bg-gradient-to-b from-white to-gray-50 overflow-hidden">
       <div className="container mx-auto px-4 relative">
@@ -27,8 +29,7 @@ export default function WelcomeSection() {
             <p className="text-gray-600 mb-4 text-lg font-medium">Hello people,</p>
 
             <p className="text-gray-700 mb-6 leading-relaxed">
-              My Name is Ken MBACHI, the lead pastor in Kingdom Ways Living Church International. It's my humble
-              pleasure to welcome you to our world.
+              {details.welcomeAddress || "My Name is Ken MBACHI, the lead pastor in Kingdom Ways Living Church International. It's my humble pleasure to welcome you to our world."}
             </p>
 
             <p className="text-gray-700 mb-6 leading-relaxed">

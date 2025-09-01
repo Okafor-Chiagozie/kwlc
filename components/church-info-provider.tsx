@@ -44,12 +44,23 @@ export function ChurchInfoProvider({ children }: { children: React.ReactNode }) 
   const load = async () => {
     try {
       setIsLoading(true)
-      // Home page aggregate (if available)
+      // Home page aggregate (mirror admin parsing)
       try {
         const hp = await getHomePage()
         if (hp?.isSuccessful && hp?.data) {
-          const cd = (hp.data as any).churchDetails || (hp.data as any).data?.churchDetails
-          if (cd) setDetails(cd)
+          const raw = hp.data as any
+          const obj = Array.isArray(raw) ? raw[0] : raw
+          if (obj && typeof obj === "object") {
+            setDetails({
+              id: obj.id ?? null,
+              name: obj.name ?? "",
+              email: obj.email ?? "",
+              address: obj.address ?? "",
+              location: obj.location ?? "",
+              phoneNumber: obj.phoneNumber ?? "",
+              welcomeAddress: obj.welcomeAddress ?? "",
+            })
+          }
         }
       } catch {}
 

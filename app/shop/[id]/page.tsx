@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import ShopNav from "@/components/shop-nav"
 import Link from "next/link"
+import { useChurchInfo } from "@/components/church-info-provider"
 
 const product = {
   id: 1,
@@ -55,6 +56,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState("description")
+  const { details, socials } = useChurchInfo()
 
   const formatCurrency = (amount: number) => {
     return `₦${amount}`
@@ -263,12 +265,12 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
-                    <span className="text-sm">+ 234 70 433 2832</span>
+                    <span className="text-sm">{details.phoneNumber || "+234 70 433 2832"}</span>
                   </div>
                   <div className="text-sm">
-                    24 Prince Ibrahim Eletu Avenue, Shoprite Circle Mall Road Jakande Bus Stop, Osapa London,Lagos
+                    {details.address || "24 Prince Ibrahim Eletu Avenue, Shoprite Circle Mall Road Jakande Bus Stop, Osapa London,Lagos"}
                   </div>
-                  <div className="text-sm">info@kwlchq.org</div>
+                  <div className="text-sm">{details.email || "info@kwlchq.org"}</div>
                 </div>
               </div>
 
@@ -300,15 +302,18 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
               <div>
                 <h3 className="font-bold text-lg mb-6">FOLLOW US</h3>
                 <div className="flex gap-3">
-                  {["linkedin", "twitter", "facebook", "instagram"].map((social) => (
-                    <a
-                      key={social}
-                      href="#"
-                      className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors"
-                    >
-                      <span className="text-xs">{social[0].toUpperCase()}</span>
-                    </a>
-                  ))}
+                  {socials.linkedin && (
+                    <a href={socials.linkedin} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors"><span className="text-xs">L</span></a>
+                  )}
+                  {socials.twitter && (
+                    <a href={socials.twitter} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors"><span className="text-xs">T</span></a>
+                  )}
+                  {socials.facebook && (
+                    <a href={socials.facebook} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors"><span className="text-xs">F</span></a>
+                  )}
+                  {socials.instagram && (
+                    <a href={socials.instagram} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors"><span className="text-xs">I</span></a>
+                  )}
                 </div>
               </div>
             </div>

@@ -4,18 +4,23 @@ import { MapPin, Phone, Mail } from "lucide-react"
 
 export default function LocationPin({ location }) {
   return (
-    <div className="h-[40rem] w-full flex items-center justify-center">
-      <PinContainer title={location.name} href={`https://maps.google.com/?q=${encodeURIComponent(location.address)}`}>
-        <div className="flex basis-full flex-col p-4 tracking-tight text-gray-800 sm:basis-1/2 w-[24rem] h-[24rem]">
-          <h3 className="max-w-xs !pb-2 !m-0 font-bold text-xl text-gray-900">{location.title}</h3>
+    <div className="relative isolate z-0 w-full flex items-center justify-center min-h-[36rem] sm:min-h-[40rem] py-8">
+      <PinContainer
+        title={location.name}
+        href={`https://maps.google.com/?q=${encodeURIComponent(location.address)}`}
+        containerClassName="block w-full"
+        className="w-[90vw] max-w-3xl"
+      >
+        <div className="flex basis-full flex-col p-4 tracking-tight text-gray-800 w-full">
+          <h3 className="max-w-full !pb-2 !m-0 font-bold text-xl text-gray-900 break-words text-center sm:text-left">{location.title}</h3>
           <div className="text-base !m-0 !p-0 font-normal">
-            <span className="text-gray-700">{location.description}</span>
+            <span className="text-gray-700 break-words">{location.description}</span>
           </div>
 
           <div className="mt-4 space-y-3">
             <div className="flex items-start gap-3">
               <MapPin className="h-5 w-5 text-primary shrink-0 mt-1" />
-              <p className="text-sm text-gray-700">{location.address}</p>
+              <p className="text-sm text-gray-700 break-words">{location.address}</p>
             </div>
             <div className="flex items-center gap-3">
               <Phone className="h-5 w-5 text-primary" />
@@ -27,9 +32,9 @@ export default function LocationPin({ location }) {
             </div>
           </div>
 
-          <div className="flex flex-1 w-full rounded-lg mt-6 overflow-hidden">
+          <div className="w-full rounded-lg mt-6 overflow-hidden">
             <div className="w-full h-full bg-gradient-to-br from-primary/80 via-primary/50 to-primary/30 p-1 rounded-lg">
-              <div className="w-full h-full rounded-md overflow-hidden">
+              <div className="w-full h-60 sm:h-80 rounded-md overflow-hidden">
                 {location.image && (
                   <img
                     src={location.image || "/placeholder.svg"}

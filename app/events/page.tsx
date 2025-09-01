@@ -251,7 +251,9 @@ export default function EventsPage() {
                         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-md z-20">
                           <div className="text-xs font-semibold text-gray-500">PRICE</div>
                           <div className="text-lg font-bold text-primary">
-                            {event.price || `₦${event.fee.toLocaleString()}`}
+                            {Number(event.price) > 0 || Number(event.fee) > 0
+                              ? `₦${(Number(event.price) || Number(event.fee) || 0).toLocaleString()}`
+                              : 'Free'}
                           </div>
                         </div>
                       </div>

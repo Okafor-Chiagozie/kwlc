@@ -3,7 +3,7 @@
 import { useState, use } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowLeft, MapPin, Users, Phone, Mail, Award, Heart, BookOpen, AlertCircle, Loader2 } from "lucide-react"
+import { ArrowLeft, MapPin, Users, Phone, Mail, Award, BookOpen, AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +11,9 @@ import MainLayout from "@/components/main-layout"
 import { useApi } from "@/hooks/useApi"
 import { getAllMinisters } from "@/services/minister"
 import { MinisterViewModel } from "@/types/minister"
+import { getWeeklyActivities } from "@/services/branch"
+import { WeeklyActivityViewModel, TimeOnly } from "@/types/branch"
+import React from "react"
 
 const isNoRecordsError = (error: string | null) => {
   return error && error.toLowerCase().includes("no record found")
@@ -65,6 +68,41 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
   const ministers = Array.isArray(ministersResponse?.data) ? ministersResponse.data : []
   const pastor = ministers.find((minister: MinisterViewModel) => minister.id === pastorId)
 
+  // Weekly activities for pastor's branch
+  const [activities, setActivities] = useState<WeeklyActivityViewModel[]>([])
+  const [activitiesLoading, setActivitiesLoading] = useState<boolean>(false)
+  const [activitiesError, setActivitiesError] = useState<string | null>(null)
+
+  const formatTime = (time: TimeOnly | string): string => {
+    if (!time) return ""
+    if (typeof time === "string") return time.slice(0, 5)
+    const hh = String(time.hour).padStart(2, '0')
+    const mm = String(time.minute).padStart(2, '0')
+    return `${hh}:${mm}`
+  }
+
+  // Load branch weekly activities when pastor is available and has branchId
+  React.useEffect(() => {
+    const load = async () => {
+      if (!pastor?.branchId) return
+      try {
+        setActivitiesLoading(true)
+        setActivitiesError(null)
+        const resp = await getWeeklyActivities(pastor.branchId)
+        if (resp?.isSuccessful && Array.isArray(resp.data)) {
+          setActivities(resp.data)
+        } else {
+          setActivities([])
+        }
+      } catch (e: any) {
+        setActivitiesError(e?.message || 'Failed to load weekly activities')
+      } finally {
+        setActivitiesLoading(false)
+      }
+    }
+    load()
+  }, [pastor?.branchId])
+
   // Handle loading state
   if (ministersLoading) {
     return (
@@ -98,20 +136,6 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
     )
   }
 
-  // Format time for display
-  const formatTime = (timeString: string) => {
-    if (!timeString) return "TBD"
-    try {
-      return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      })
-    } catch {
-      return timeString
-    }
-  }
-
   // Format date for display
   const formatDate = (dateString: string) => {
     if (!dateString) return "TBD"
@@ -125,25 +149,6 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
     } catch {
       return dateString
     }
-  }
-
-  // Extract specializations from description or use default
-  const getSpecializations = (description: string) => {
-    if (!description) return ["Ministry", "Leadership"]
-    
-    // Try to extract meaningful keywords from description
-    const keywords = description.toLowerCase()
-    const specializations = []
-    
-    if (keywords.includes("leadership") || keywords.includes("lead")) specializations.push("Leadership")
-    if (keywords.includes("youth") || keywords.includes("young")) specializations.push("Youth Ministry")
-    if (keywords.includes("women") || keywords.includes("ladies")) specializations.push("Women's Ministry")
-    if (keywords.includes("counsel") || keywords.includes("therapy")) specializations.push("Counseling")
-    if (keywords.includes("music") || keywords.includes("worship")) specializations.push("Music Ministry")
-    if (keywords.includes("teach") || keywords.includes("bible")) specializations.push("Biblical Teaching")
-    if (keywords.includes("evangel") || keywords.includes("mission")) specializations.push("Evangelism")
-    
-    return specializations.length > 0 ? specializations : ["Ministry", "Leadership"]
   }
 
   // Get branch information
@@ -172,32 +177,9 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
     return achievements
   }
 
-  // Get ministry areas
-  const getMinistryAreas = () => [
-    "Pastoral Care",
-    "Church Leadership",
-    "Biblical Teaching",
-    "Community Outreach"
-  ]
-
-  // Get sample schedule
-  const getSampleSchedule = () => {
-    const schedule = [
-      { day: "Sunday", time: "8:30 AM - 10:30 AM", activity: "Sunday Service" },
-      { day: "Wednesday", time: "6:00 PM - 8:00 PM", activity: "Bible Study" },
-      { day: "Friday", time: "2:00 PM - 4:00 PM", activity: "Pastoral Counseling" },
-      { day: "Saturday", time: "10:00 AM - 12:00 PM", activity: "Leadership Meeting" }
-    ]
-    
-    return schedule
-  }
-
-  const specializations = getSpecializations(pastor.biography || "")
   const branchInfo = getBranchInfo()
   const education = getSampleEducation()
   const achievements = getSampleAchievements()
-  const ministryAreas = getMinistryAreas()
-  const schedule = getSampleSchedule()
 
   return (
     <MainLayout>
@@ -283,14 +265,6 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
                     </div>
                   </div>
                 </div>
-
-                <div className="flex flex-wrap gap-3 pt-4">
-                  {specializations.map((spec: string) => (
-                    <Badge key={spec} variant="outline" className="text-primary border-primary">
-                      {spec}
-                    </Badge>
-                  ))}
-                </div>
               </div>
             </div>
           </div>
@@ -342,26 +316,8 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
               </Card>
             </div>
 
-            {/* Ministries & Schedule */}
+            {/* Weekly Schedule from Branch */}
             <div className="space-y-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Heart className="h-5 w-5 text-primary" />
-                    Ministry Areas
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 gap-3">
-                    {ministryAreas.map((ministry: string, index: number) => (
-                      <div key={index} className="p-3 bg-primary/5 rounded-lg border border-primary/10">
-                        <span className="text-gray-700 font-medium">{ministry}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -370,19 +326,28 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {schedule.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="font-medium text-gray-900">{item.day}</p>
-                          <p className="text-sm text-gray-600">{item.activity}</p>
+                  {activitiesLoading ? (
+                    <div className="flex items-center gap-2 text-gray-600"><Loader2 className="h-4 w-4 animate-spin" /> Loading activities...</div>
+                  ) : activitiesError ? (
+                    <div className="text-sm text-red-600">{activitiesError}</div>
+                  ) : activities.length > 0 ? (
+                    <div className="space-y-4">
+                      {activities.map((act) => (
+                        <div key={act.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="font-medium text-gray-900">{act.name}</p>
+                            <p className="text-sm text-gray-600">{act.description}</p>
+                          </div>
+                          <div className="text-right text-sm text-gray-700">
+                            <div>{act.day}</div>
+                            <div>{formatTime(act.startTime)} - {formatTime(act.closeTime)}</div>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm text-gray-600">{item.time}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500">No weekly activities found for this pastor's branch.</div>
+                  )}
                 </CardContent>
               </Card>
             </div>
