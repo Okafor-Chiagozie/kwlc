@@ -1,8 +1,18 @@
+"use client"
 import type React from "react"
 import Navbar from "@/components/navbar"
 import Link from "next/link"
+import { useApi } from "@/hooks/useApi"
+import { getHomePage } from "@/services/homepage"
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
+  const { data: homePageResponse } = useApi(
+    () => getHomePage(),
+    []
+  )
+  const churchInfo: any = homePageResponse?.isSuccessful
+    ? (Array.isArray(homePageResponse.data) ? homePageResponse.data[0] : homePageResponse.data)
+    : null
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -61,9 +71,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <div>
               <h3 className="font-bold text-lg mb-4">Contact</h3>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li>+234 70 433 2832</li>
-                <li>info@kwlchq.org</li>
-                <li>24 Prince Ibrahim Eletu Avenue, Lagos</li>
+                <li>{churchInfo?.phoneNumber || "+234 70 433 2832"}</li>
+                <li>{churchInfo?.email || "info@kwlchq.org"}</li>
+                <li>{churchInfo?.address || "24 Prince Ibrahim Eletu Avenue, Lagos"}</li>
               </ul>
             </div>
           </div>

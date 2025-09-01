@@ -6,11 +6,22 @@ import Link from "next/link"
 import { Phone, X, Menu, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
+import { useApi } from "@/hooks/useApi"
+import { getHomePage } from "@/services/homepage"
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [sideNavOpen, setSideNavOpen] = useState(false)
   const { getItemCount } = useCart()
+
+  // Fetch church info for phone number
+  const { data: homePageResponse } = useApi(
+    () => getHomePage(),
+    []
+  )
+  const churchInfo: any = homePageResponse?.isSuccessful
+    ? (Array.isArray(homePageResponse.data) ? homePageResponse.data[0] : homePageResponse.data)
+    : null
 
   useEffect(() => {
     const handleScroll = () => {
@@ -81,7 +92,9 @@ export default function Navbar() {
             }`}
           >
             <Phone className="h-4 w-4" />
-            <span>+234 70 433 2832</span>
+            <a href={`tel:${churchInfo?.phoneNumber || "+234704332832"}`}>
+              {churchInfo?.phoneNumber || "+234 70 433 2832"}
+            </a>
           </Button>
 
           <Link href="/checkout" className="relative">
@@ -217,8 +230,9 @@ export default function Navbar() {
               </Button>
               <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-md">
                 <Phone className="h-5 w-5 text-primary" />
-                {/* <span className="text-gray-700 text-sm">+234 70 433 2832</span> */}
-                <a href="tel:+234704332832" className="text-gray-700 text-sm">+234 70 433 2832</a>
+                <a href={`tel:${churchInfo?.phoneNumber || "+234704332832"}`} className="text-gray-700 text-sm">
+                  {churchInfo?.phoneNumber || "+234 70 433 2832"}
+                </a>
               </div>
             </div>
           </nav>
