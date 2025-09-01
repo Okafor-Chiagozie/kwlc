@@ -225,6 +225,7 @@ export default function ChurchInfoPage() {
       // Prepare payload with ChurchDays if API requires it
       const payload = {
         ...churchInfo,
+        id: 1,
         // Add empty ChurchDays array if API requires it
         ChurchDays: []
       }
@@ -257,11 +258,11 @@ export default function ChurchInfoPage() {
           }
         }
         setHasChurchInfo(true)
+        // Refetch to ensure latest values
+        await loadChurchData()
         
-        // Reload all church data to ensure everything is up to date
-        setTimeout(() => {
-          loadChurchData()
-        }, 1000)
+        // Reset error state
+        setError(null)
         
       } else {
         const errorMessage = response.errors?.map(e => e.description).join(', ') || response.responseMessage || 'Failed to update church information'
@@ -286,14 +287,14 @@ export default function ChurchInfoPage() {
       // Ensure we have at least one church day (API requirement)
       const scheduleToSave = {
         ...newServiceSchedule,
-        churchDays: newServiceSchedule.churchDays.length > 0 
+        churchDays: (newServiceSchedule.churchDays.length > 0 
           ? newServiceSchedule.churchDays 
-          : [{
-              id: null,
-              day: DayOfWeek.Sunday,
-              startTime: { hour: 9, minute: 0 },
-              closeTime: { hour: 12, minute: 0 }
-            }]
+          : [{ id: null, day: DayOfWeek.Sunday, startTime: { hour: 9, minute: 0 }, closeTime: { hour: 12, minute: 0 } }]
+        ).map(d => ({
+          ...d,
+          startTime: `${String((d as any).startTime.hour ?? 0).padStart(2,'0')}:${String((d as any).startTime.minute ?? 0).padStart(2,'0')}:00`,
+          closeTime: `${String((d as any).closeTime.hour ?? 0).padStart(2,'0')}:${String((d as any).closeTime.minute ?? 0).padStart(2,'0')}:00`
+        }))
       }
 
       console.log('Creating service schedule with payload:', scheduleToSave)
@@ -320,7 +321,12 @@ export default function ChurchInfoPage() {
   const handleAddChurchDay = async () => {
     try {
       setIsSaving(true)
-      const response = await createOrUpdateChurchdayDetails([newChurchDay])
+      const payload = [{
+        ...newChurchDay,
+        startTime: `${String((newChurchDay as any).startTime.hour ?? 0).padStart(2,'0')}:${String((newChurchDay as any).startTime.minute ?? 0).padStart(2,'0')}:00`,
+        closeTime: `${String((newChurchDay as any).closeTime.hour ?? 0).padStart(2,'0')}:${String((newChurchDay as any).closeTime.minute ?? 0).padStart(2,'0')}:00`
+      }]
+      const response = await createOrUpdateChurchdayDetails(payload as any)
 
       if (response.isSuccessful) {
         toast.success("Church day added successfully!")
@@ -475,29 +481,29 @@ export default function ChurchInfoPage() {
   if (isLoading) {
     return (
       <ProtectedRoute>
-        <AdminLayout>
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <span>Loading church information...</span>
-            </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Loading church information...</span>
           </div>
-        </AdminLayout>
+        </div>
+      </AdminLayout>
       </ProtectedRoute>
     )
   }
 
   return (
     <ProtectedRoute>
-      <AdminLayout>
-        <div className="space-y-6">
+    <AdminLayout>
+      <div className="space-y-6">
           {/* Header */}
           <div className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
             <div className="min-w-0 flex-1">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Church Information</h1>
               <p className="text-gray-600 mt-1">Manage your church details, schedules, and settings</p>
             </div>
-            <Button 
+          <Button 
                 onClick={() => {
                   console.log('Button clicked - isEditing:', isEditing)
                   if (isEditing) {
@@ -508,19 +514,19 @@ export default function ChurchInfoPage() {
                     setIsEditing(true)
                   }
                 }}
-                disabled={isSaving}
+            disabled={isSaving}
                 className="bg-primary hover:bg-primary/90 w-full sm:w-auto flex-shrink-0"
-              >
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : isEditing ? (
-                  <Save className="h-4 w-4 mr-2" />
-                ) : (
-                  <Edit className="h-4 w-4 mr-2" />
-                )}
-                {isSaving ? "Saving..." : isEditing ? "Save Changes" : "Edit Info"}
-              </Button>
-          </div>
+          >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : isEditing ? (
+              <Save className="h-4 w-4 mr-2" />
+            ) : (
+              <Edit className="h-4 w-4 mr-2" />
+            )}
+            {isSaving ? "Saving..." : isEditing ? "Save Changes" : "Edit Info"}
+          </Button>
+        </div>
 
           {/* Status Message */}
           {hasChurchInfo && !isEditing && (
@@ -538,14 +544,14 @@ export default function ChurchInfoPage() {
           )}
 
           {/* Error Display */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-center">
                 <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
                 <span className="text-red-700">{error}</span>
               </div>
-            </div>
-          )}
+          </div>
+        )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 h-auto">
@@ -555,110 +561,110 @@ export default function ChurchInfoPage() {
               <TabsTrigger value="church-days" className="text-xs sm:text-sm">Days</TabsTrigger>
               <TabsTrigger value="images" className="text-xs sm:text-sm">Images</TabsTrigger>
               <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
-            </TabsList>
+          </TabsList>
 
             {/* General Information Tab */}
-            <TabsContent value="general" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Church className="h-5 w-5" />
-                      Basic Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="churchName">Church Name *</Label>
-                      <Input
-                        id="churchName"
-                        value={churchInfo.name}
-                        onChange={(e) => handleInputChange('name', e.target.value)}
-                        disabled={!isEditing}
-                        placeholder="Enter church name"
-                        required
+          <TabsContent value="general" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Church className="h-5 w-5" />
+                    Basic Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="churchName">Church Name *</Label>
+                    <Input
+                      id="churchName"
+                      value={churchInfo.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="Enter church name"
+                      required
                         className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="location">Location</Label>
-                      <Input
-                        id="location"
-                        value={churchInfo.location}
-                        onChange={(e) => handleInputChange('location', e.target.value)}
-                        disabled={!isEditing}
-                        placeholder="Enter church location"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={churchInfo.location}
+                      onChange={(e) => handleInputChange('location', e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="Enter church location"
                         className="mt-1"
-                      />
-                    </div>
-                    <div>
+                    />
+                  </div>
+                  <div>
                       <Label htmlFor="welcomeAddress">Welcome Message</Label>
-                      <Textarea
-                        id="welcomeAddress"
-                        value={churchInfo.welcomeAddress}
-                        onChange={(e) => handleInputChange('welcomeAddress', e.target.value)}
-                        disabled={!isEditing}
+                    <Textarea
+                      id="welcomeAddress"
+                      value={churchInfo.welcomeAddress}
+                      onChange={(e) => handleInputChange('welcomeAddress', e.target.value)}
+                      disabled={!isEditing}
                         placeholder="Enter welcome message for visitors"
                         rows={4}
                         className="mt-1"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <MapPin className="h-5 w-5" />
-                      Contact Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="address">Address</Label>
-                      <Textarea
-                        id="address"
-                        value={churchInfo.address}
-                        onChange={(e) => handleInputChange('address', e.target.value)}
-                        disabled={!isEditing}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Contact Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="address">Address</Label>
+                    <Textarea
+                      id="address"
+                      value={churchInfo.address}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
+                      disabled={!isEditing}
                         placeholder="Enter full church address"
-                        rows={3}
+                      rows={3}
                         className="mt-1"
-                      />
-                    </div>
-                    <div>
+                    />
+                  </div>
+                  <div>
                       <Label htmlFor="phone">Phone Number</Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <Input
-                          id="phone"
-                          value={churchInfo.phoneNumber}
-                          onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                          disabled={!isEditing}
-                          placeholder="Enter phone number"
+                    <Input
+                      id="phone"
+                      value={churchInfo.phoneNumber}
+                      onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="Enter phone number"
                           className="pl-10 mt-1"
-                        />
+                    />
                       </div>
-                    </div>
-                    <div>
+                  </div>
+                  <div>
                       <Label htmlFor="email">Email Address *</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <Input
-                          id="email"
-                          value={churchInfo.email}
-                          onChange={(e) => handleInputChange('email', e.target.value)}
-                          disabled={!isEditing}
-                          placeholder="Enter email address"
-                          type="email"
-                          required
+                    <Input
+                      id="email"
+                      value={churchInfo.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="Enter email address"
+                      type="email"
+                      required
                           className="pl-10 mt-1"
-                        />
+                    />
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
             </TabsContent>
 
             {/* Social Media Tab */}
@@ -687,7 +693,7 @@ export default function ChurchInfoPage() {
                           placeholder="https://yourchurch.com"
                           className="pl-10 mt-1"
                         />
-                      </div>
+                    </div>
                     </div>
 
                     <div>
@@ -767,73 +773,73 @@ export default function ChurchInfoPage() {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
+          </TabsContent>
 
             {/* Service Schedule Tab */}
-            <TabsContent value="schedule" className="space-y-6">
-              <Card>
-                <CardHeader>
+          <TabsContent value="schedule" className="space-y-6">
+            <Card>
+              <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="h-5 w-5" />
                     Service Schedules
-                  </CardTitle>
+                </CardTitle>
                   <p className="text-sm text-gray-600 mt-1">
                     Configure your church service schedules and timings.
                   </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Add New Service Schedule */}
-                    <div className="border rounded-lg p-4 bg-gray-50">
-                      <h4 className="font-semibold mb-3">Add New Service Schedule</h4>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Add New Service Schedule */}
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <h4 className="font-semibold mb-3">Add New Service Schedule</h4>
                       <div className="mb-2">
                         <p className="text-sm text-gray-600">
                           💡 A default Sunday service (9:00 AM - 12:00 PM) will be created. You can edit church days later.
                         </p>
                       </div>
-                      <div className="flex gap-2">
-                        <Input
+                    <div className="flex gap-2">
+                      <Input
                           placeholder="Service name (e.g., First Service, Evening Service)"
-                          value={newServiceSchedule.name}
-                          onChange={(e) => setNewServiceSchedule({
-                            ...newServiceSchedule,
-                            name: e.target.value
-                          })}
+                        value={newServiceSchedule.name}
+                        onChange={(e) => setNewServiceSchedule({
+                          ...newServiceSchedule,
+                          name: e.target.value
+                        })}
                           className="flex-1"
-                        />
-                        <Button 
-                          onClick={handleAddServiceSchedule}
+                      />
+                      <Button 
+                        onClick={handleAddServiceSchedule}
                           disabled={isSaving || !newServiceSchedule.name.trim()}
-                        >
-                          {isSaving ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Plus className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
+                      >
+                        {isSaving ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Plus className="h-4 w-4" />
+                        )}
+                      </Button>
                     </div>
+                  </div>
 
-                    {/* Existing Service Schedules */}
-                    {serviceSchedules.length > 0 ? (
+                  {/* Existing Service Schedules */}
+                  {serviceSchedules.length > 0 ? (
                       <div className="space-y-3">
                         {serviceSchedules.map((schedule, index) => (
                           <div key={schedule.id || index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                            <div>
-                              <h3 className="font-semibold">{schedule.name || schedule.eventName || `Service ${index + 1}`}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {schedule.email || 'No additional details'}
-                              </p>
-                            </div>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => schedule.id && handleDeleteServiceSchedule(schedule.id)}
+                        <div>
+                          <h3 className="font-semibold">{schedule.name || schedule.eventName || `Service ${index + 1}`}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {schedule.email || 'No additional details'}
+                          </p>
+                        </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => schedule.id && handleDeleteServiceSchedule(schedule.id)}
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                         ))}
                       </div>
                     ) : (
@@ -842,105 +848,105 @@ export default function ChurchInfoPage() {
                         <p>No service schedules configured</p>
                         <p className="text-sm">Add your first service schedule above</p>
                       </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
             {/* Church Days Tab */}
-            <TabsContent value="church-days" className="space-y-6">
-              <Card>
-                <CardHeader>
+          <TabsContent value="church-days" className="space-y-6">
+            <Card>
+              <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Calendar className="h-5 w-5" />
                     Church Operating Days
-                  </CardTitle>
+                </CardTitle>
                   <p className="text-sm text-gray-600 mt-1">
                     Set the days and times when your church is open for services and activities.
                   </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Add New Church Day */}
-                    <div className="border rounded-lg p-4 bg-gray-50">
-                      <h4 className="font-semibold mb-3">Add New Church Day</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Add New Church Day */}
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <h4 className="font-semibold mb-3">Add New Church Day</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                         <div>
                           <Label htmlFor="day">Day</Label>
-                          <select
-                            value={newChurchDay.day}
-                            onChange={(e) => setNewChurchDay({
-                              ...newChurchDay,
-                              day: e.target.value as DayOfWeek
-                            })}
+                      <select
+                        value={newChurchDay.day}
+                        onChange={(e) => setNewChurchDay({
+                          ...newChurchDay,
+                          day: e.target.value as DayOfWeek
+                        })}
                             className="w-full px-3 py-2 border rounded-md mt-1"
-                          >
-                            {Object.values(DayOfWeek).map(day => (
-                              <option key={day} value={day}>{day}</option>
-                            ))}
-                          </select>
+                      >
+                        {Object.values(DayOfWeek).map(day => (
+                          <option key={day} value={day}>{day}</option>
+                        ))}
+                      </select>
                         </div>
                         <div>
                           <Label htmlFor="startTime">Start Time</Label>
-                          <Input
-                            type="time"
-                            value={formatTime(newChurchDay.startTime)}
-                            onChange={(e) => setNewChurchDay({
-                              ...newChurchDay,
-                              startTime: parseTime(e.target.value)
-                            })}
+                      <Input
+                        type="time"
+                        value={formatTime(newChurchDay.startTime)}
+                        onChange={(e) => setNewChurchDay({
+                          ...newChurchDay,
+                          startTime: parseTime(e.target.value)
+                        })}
                             className="mt-1"
-                          />
+                      />
                         </div>
                         <div>
                           <Label htmlFor="endTime">End Time</Label>
-                          <Input
-                            type="time"
-                            value={formatTime(newChurchDay.closeTime)}
-                            onChange={(e) => setNewChurchDay({
-                              ...newChurchDay,
-                              closeTime: parseTime(e.target.value)
-                            })}
+                      <Input
+                        type="time"
+                        value={formatTime(newChurchDay.closeTime)}
+                        onChange={(e) => setNewChurchDay({
+                          ...newChurchDay,
+                          closeTime: parseTime(e.target.value)
+                        })}
                             className="mt-1"
-                          />
+                      />
                         </div>
                         <div className="flex items-end">
-                          <Button 
-                            onClick={handleAddChurchDay}
-                            disabled={isSaving}
+                      <Button 
+                        onClick={handleAddChurchDay}
+                        disabled={isSaving}
                             className="w-full"
-                          >
-                            {isSaving ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Plus className="h-4 w-4" />
-                            )}
-                          </Button>
+                      >
+                        {isSaving ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Plus className="h-4 w-4" />
+                        )}
+                      </Button>
                         </div>
-                      </div>
                     </div>
+                  </div>
 
-                    {/* Existing Church Days */}
-                    {churchDays.length > 0 ? (
+                  {/* Existing Church Days */}
+                  {churchDays.length > 0 ? (
                       <div className="space-y-3">
                         {churchDays.map((day, index) => (
                           <div key={day.id || index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                            <div>
-                              <h3 className="font-semibold">{day.day}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {formatTime(day.startTime)} - {formatTime(day.closeTime)}
-                              </p>
-                            </div>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => day.id && handleDeleteChurchDay(day.id)}
+                        <div>
+                          <h3 className="font-semibold">{day.day}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {formatTime(day.startTime)} - {formatTime(day.closeTime)}
+                          </p>
+                        </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => day.id && handleDeleteChurchDay(day.id)}
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                         ))}
                       </div>
                     ) : (
@@ -949,25 +955,25 @@ export default function ChurchInfoPage() {
                         <p>No church days configured</p>
                         <p className="text-sm">Add your church operating hours above</p>
                       </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
             {/* Images Tab */}
             <TabsContent value="images" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
                     <ImageIcon className="h-5 w-5" />
                     Church Images
-                  </CardTitle>
+                </CardTitle>
                   <p className="text-sm text-gray-600 mt-1">
                     Upload and manage images for your church website and promotional materials.
                   </p>
-                </CardHeader>
-                <CardContent>
+              </CardHeader>
+              <CardContent>
                   <div className="space-y-6">
                     {/* Image Upload Section */}
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
@@ -1063,11 +1069,11 @@ export default function ChurchInfoPage() {
                               <p className="text-white text-xs truncate">
                                 {image.imageName || `Church Image ${index + 1}`}
                               </p>
-                            </div>
-                          </div>
-                        ))}
+                        </div>
                       </div>
-                    ) : (
+                    ))}
+                  </div>
+                ) : (
                       <div className="text-center py-8 text-muted-foreground">
                         <ImageIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                         <p>No images uploaded yet</p>
@@ -1075,47 +1081,47 @@ export default function ChurchInfoPage() {
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Branches</CardTitle>
-                    <Church className="h-4 w-4 text-green-600" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-green-600">
-                      {branches.filter(b => !b.isDeleted).length}
-                    </div>
-                    <p className="text-xs text-muted-foreground">Active branches</p>
-                  </CardContent>
-                </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Branches</CardTitle>
+                  <Church className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">
+                    {branches.filter(b => !b.isDeleted).length}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Active branches</p>
+                </CardContent>
+              </Card>
 
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Service Schedules</CardTitle>
-                    <Clock className="h-4 w-4 text-blue-600" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-blue-600">{serviceSchedules.length}</div>
-                    <p className="text-xs text-muted-foreground">Configured schedules</p>
-                  </CardContent>
-                </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Service Schedules</CardTitle>
+                  <Clock className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">{serviceSchedules.length}</div>
+                  <p className="text-xs text-muted-foreground">Configured schedules</p>
+                </CardContent>
+              </Card>
 
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Church Days</CardTitle>
-                    <Calendar className="h-4 w-4 text-purple-600" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-purple-600">{churchDays.length}</div>
-                    <p className="text-xs text-muted-foreground">Days configured</p>
-                  </CardContent>
-                </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Church Days</CardTitle>
+                  <Calendar className="h-4 w-4 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-purple-600">{churchDays.length}</div>
+                  <p className="text-xs text-muted-foreground">Days configured</p>
+                </CardContent>
+              </Card>
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -1153,7 +1159,7 @@ export default function ChurchInfoPage() {
                         console.log('Total image count calculated:', totalCount)
                         return totalCount
                       })()}
-                    </div>
+            </div>
                     <p className="text-xs text-muted-foreground">Images uploaded</p>
                   </CardContent>
                 </Card>
@@ -1174,7 +1180,7 @@ export default function ChurchInfoPage() {
                         <div key={branch.id || index} className="p-4 border rounded-lg hover:bg-gray-50">
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="font-semibold">{branch.name}</h3>
-                            <Badge variant={branch.isDeleted ? "secondary" : "default"}>
+                            <Badge variant={branch.isDeleted ? "destructive" : "default"}>
                               {branch.isDeleted ? "Inactive" : "Active"}
                             </Badge>
                           </div>
@@ -1207,10 +1213,10 @@ export default function ChurchInfoPage() {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </AdminLayout>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </AdminLayout>
     </ProtectedRoute>
   )
 }

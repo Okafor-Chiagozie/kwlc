@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,52 +8,26 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { Users, Shield, Plus, Edit, Trash2, Eye, Settings, UserPlus, Key } from "lucide-react"
+import { Users, Shield, Plus, Edit, Trash2, Eye, Settings, UserPlus, Key, Loader2 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import AdminLayout from "@/components/admin/admin-layout"
 import { toast } from "sonner"
+import { getAllUsers, blockUser, unblockUser, updateUser } from "@/services/user"
+import { GetAllUsersRequest, UserViewModel, UpdateUserRequest } from "@/types/user"
 
 export default function RolesPage() {
-  const [users] = useState([
-    {
-      id: 1,
-      name: "Michael Blackson",
-      email: "michael@kwlc.org",
-      role: "Super Admin",
-      branch: "All Branches",
-      status: "active",
-      lastLogin: "2024-06-06 10:30 AM",
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      email: "sarah@kwlc.org",
-      role: "Branch Admin",
-      branch: "Abuja Branch",
-      status: "active",
-      lastLogin: "2024-06-05 2:15 PM",
-    },
-    {
-      id: 3,
-      name: "David Wilson",
-      email: "david@kwlc.org",
-      role: "Finance Manager",
-      branch: "Port Harcourt",
-      status: "active",
-      lastLogin: "2024-06-04 9:45 AM",
-    },
-    {
-      id: 4,
-      name: "Grace Adamu",
-      email: "grace@kwlc.org",
-      role: "Pastor",
-      branch: "Kano Branch",
-      status: "inactive",
-      lastLogin: "2024-06-01 11:20 AM",
-    },
-  ])
+  // Users state (API-backed)
+  const [users, setUsers] = useState<UserViewModel[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [busyUserId, setBusyUserId] = useState<number | null>(null)
 
+  // Block/Unblock confirm dialog
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [confirmUserId, setConfirmUserId] = useState<number | null>(null)
+  const [confirmAction, setConfirmAction] = useState<"block" | "unblock">("block")
+
+  // Mock roles (kept as-is)
   const [roles] = useState([
     {
       id: 1,
@@ -125,15 +99,72 @@ export default function RolesPage() {
     toast.success("Role created successfully!")
   }
 
+  const loadUsers = async () => {
+    try {
+      setIsLoading(true)
+      const payload: GetAllUsersRequest = { pageSize: 100, pageNumber: 1, searchParams: {} }
+      const response = await getAllUsers(payload)
+      if (response.isSuccessful && Array.isArray(response.data)) {
+        setUsers(response.data)
+      } else {
+        setUsers([])
+      }
+    } catch (err) {
+      console.error("Failed to load users", err)
+      toast.error("Failed to load users")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadUsers()
+  }, [])
+
+  const openConfirm = (userId: number, action: "block" | "unblock") => {
+    setConfirmUserId(userId)
+    setConfirmAction(action)
+    setConfirmOpen(true)
+  }
+
+  const handleConfirm = async () => {
+    if (!confirmUserId) return
+    try {
+      setBusyUserId(confirmUserId)
+      if (confirmAction === "block") {
+        const resp = await blockUser({ userId: confirmUserId })
+        if (!resp.isSuccessful) throw new Error(resp.responseMessage || "Block failed")
+        toast.success("User blocked")
+      } else {
+        const resp = await unblockUser({ userId: confirmUserId })
+        if (!resp.isSuccessful) throw new Error(resp.responseMessage || "Unblock failed")
+        toast.success("User unblocked")
+      }
+      setConfirmOpen(false)
+      setConfirmUserId(null)
+      await loadUsers()
+    } catch (err: any) {
+      console.error("Action failed", err)
+      toast.error(err.message || "Action failed")
+    } finally {
+      setBusyUserId(null)
+    }
+  }
+
+  const getRoleLabel = (userTypeId: any) => {
+    if (typeof userTypeId === "string") return userTypeId
+    return String(userTypeId)
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Roles & Access Management</h1>
-          <div className="flex gap-2">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <h1 className="text-xl sm:text-2xl font-bold">Roles & Access Management</h1>
+          <div className="flex gap-2 w-full sm:w-auto">
             <Dialog>
               <DialogTrigger asChild>
-                <Button>
+                <Button className="w-full sm:w-auto">
                   <UserPlus className="h-4 w-4 mr-2" />
                   Add User
                 </Button>
@@ -189,180 +220,84 @@ export default function RolesPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="users" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="roles">Roles</TabsTrigger>
-            <TabsTrigger value="permissions">Permissions</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  User Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {users.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                          <Users className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">{user.name}</h3>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
-                          <p className="text-sm text-muted-foreground">Last login: {user.lastLogin}</p>
-                        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              User Management
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading users...
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {users.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-start gap-4 min-w-0">
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                        <Users className="h-5 w-5 text-primary" />
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <Badge variant={user.role === "Super Admin" ? "default" : "secondary"}>{user.role}</Badge>
-                          <p className="text-sm text-muted-foreground mt-1">{user.branch}</p>
-                        </div>
-                        <Badge variant={user.status === "active" ? "default" : "secondary"}>{user.status}</Badge>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Key className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold truncate">{user.firstName} {user.lastName}</h3>
+                        <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="roles" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    Role Management
-                  </span>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button size="sm">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Role
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Create New Role</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="roleName">Role Name</Label>
-                          <Input id="roleName" placeholder="Enter role name" />
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <Badge>{getRoleLabel(user.userTypeId)}</Badge>
+                        <div className="mt-1">
+                          <Badge variant="outline" className={user.isBanned ? "text-red-600" : "text-green-600"}>
+                            {user.isBanned ? "inactive" : "active"}
+                          </Badge>
                         </div>
-                        <div>
-                          <Label htmlFor="roleDescription">Description</Label>
-                          <Input id="roleDescription" placeholder="Enter role description" />
-                        </div>
-                        <Button onClick={handleCreateRole} className="w-full">
-                          Create Role
-                        </Button>
                       </div>
-                    </DialogContent>
-                  </Dialog>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {roles.map((role) => (
-                    <div key={role.id} className="p-4 border rounded-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold">{role.name}</h3>
-                        <Badge>{role.userCount} users</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3">{role.description}</p>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
+                        {user.isBanned ? (
+                          <Button variant="outline" size="sm" disabled={busyUserId === user.id} onClick={() => openConfirm(user.id, "unblock")}>
+                            {busyUserId === user.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Unblock"}
+                          </Button>
+                        ) : (
+                          <Button variant="destructive" size="sm" disabled={busyUserId === user.id} onClick={() => openConfirm(user.id, "block")}>
+                            {busyUserId === user.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Block"}
+                          </Button>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="permissions" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Permission Matrix
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-2">Role</th>
-                        <th className="text-center p-2">Dashboard</th>
-                        <th className="text-center p-2">Finance</th>
-                        <th className="text-center p-2">Events</th>
-                        <th className="text-center p-2">Pastors</th>
-                        <th className="text-center p-2">Branches</th>
-                        <th className="text-center p-2">Users</th>
-                        <th className="text-center p-2">Settings</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {roles.map((role) => (
-                        <tr key={role.id} className="border-b">
-                          <td className="p-2 font-medium">{role.name}</td>
-                          <td className="p-2 text-center">
-                            <Switch checked={role.permissions.dashboard} />
-                          </td>
-                          <td className="p-2 text-center">
-                            <Switch checked={role.permissions.finance} />
-                          </td>
-                          <td className="p-2 text-center">
-                            <Switch checked={role.permissions.events} />
-                          </td>
-                          <td className="p-2 text-center">
-                            <Switch checked={role.permissions.pastors} />
-                          </td>
-                          <td className="p-2 text-center">
-                            <Switch checked={role.permissions.branches} />
-                          </td>
-                          <td className="p-2 text-center">
-                            <Switch checked={role.permissions.users} />
-                          </td>
-                          <td className="p-2 text-center">
-                            <Switch checked={role.permissions.settings} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                  </div>
+                ))}
+                {users.length === 0 && (
+                  <div className="text-center text-sm text-muted-foreground py-8">No users found</div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Block/Unblock Confirmation */}
+      {confirmOpen && confirmUserId && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4" onClick={() => setConfirmOpen(false)}>
+          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle>{confirmAction === "block" ? "Block User" : "Unblock User"}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                {confirmAction === "block" ? "Are you sure you want to block this user?" : "Are you sure you want to unblock this user?"}
+              </p>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancel</Button>
+                <Button variant={confirmAction === "block" ? "destructive" : "default"} onClick={handleConfirm} disabled={busyUserId === confirmUserId}>
+                  {busyUserId === confirmUserId ? <Loader2 className="h-4 w-4 animate-spin" /> : (confirmAction === "block" ? "Block" : "Unblock")}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </AdminLayout>
   )
 }

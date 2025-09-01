@@ -429,7 +429,7 @@ export default function ShopPage() {
                             <p className="text-sm font-semibold text-primary">
                               {book.priceDisplay || `₦${book.price.toLocaleString()}`}
                           </p>
-                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>

@@ -522,7 +522,7 @@ export default function AdminDashboard() {
                         <span className="font-medium">{branch.name}</span>
                         <p className="text-sm text-muted-foreground">{branch.state}, {branch.country}</p>
                       </div>
-                      <Badge variant={branch.isDeleted ? "secondary" : "default"}>
+                      <Badge variant={branch.isDeleted ? "destructive" : "default"}>
                         {branch.isDeleted ? "Inactive" : "Active"}
                       </Badge>
                     </div>

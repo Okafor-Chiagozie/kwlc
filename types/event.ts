@@ -202,7 +202,22 @@ export interface AddEventTypeViewModel {
 
 // Request types
 export type SearchEventRequest = SearchFilter;
-export type CreateOrUpdateEventRequest = AddEventViewModel;
+export type CreateOrUpdateEventRequest = {
+  id?: number | null;
+  name: string;
+  // Allow either structured DateOnly or ISO-like date string (YYYY-MM-DD)
+  date: DateOnly | string;
+  // Allow either structured TimeOnly or HH:mm:ss string
+  startTime: TimeOnly | string;
+  closeTime: TimeOnly | string;
+  branchId?: number | null;
+  eventTypeId: number;
+  fee?: number | null;
+  maxAttendance?: number | null;
+  description: string;
+  location: string;
+  address: string;
+};
 export type AddOrUpdateEventSpeakerRequest = {
   Id: number;
   Name: string;

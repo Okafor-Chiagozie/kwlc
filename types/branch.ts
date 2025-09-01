@@ -145,8 +145,9 @@ export interface AddWeeklyActivityViewModel {
   name: string;
   description: string;
   day: DayOfWeek;
-  startTime: TimeOnly;
-  closeTime: TimeOnly;
+  // Allow either structured TimeOnly or HH:mm:ss string for API flexibility
+  startTime: TimeOnly | string;
+  closeTime: TimeOnly | string;
   weeklyActivityTypeId: WeeklyActivityTypes;
   branchId: number;
 }
@@ -265,7 +266,7 @@ export interface DeleteBranchImageResponse extends Int32Result {}
 
 export interface CreateOrUpdateWeeklyActivityResponse extends Int32ListResult {}
 export interface GetWeeklyActivityResponse extends WeeklyActivityViewModelListResult {}
-export interface GetWeeklyActivitiesResponse extends Int32ListResult {}
+export interface GetWeeklyActivitiesResponse extends WeeklyActivityViewModelListResult {}
 export interface GetAllWeeklyActivitiesResponse extends Int32ListResult {}
 export interface DeleteWeeklyActivityResponse extends Int32ListResult {}
 

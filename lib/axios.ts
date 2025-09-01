@@ -15,10 +15,13 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Add any auth tokens here if needed
-    // const token = localStorage.getItem('token')
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`
-    // }
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken')
+      if (token) {
+        config.headers = config.headers || {}
+        ;(config.headers as any).Authorization = `Bearer ${token}`
+      }
+    } catch {}
     return config
   },
   (error) => {

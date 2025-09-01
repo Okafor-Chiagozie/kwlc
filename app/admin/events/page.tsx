@@ -51,6 +51,22 @@ import {
   SpeakerRole
 } from "@/types/event"
 
+// Local form state type to keep structured date/time in UI
+type EventFormState = {
+  id: number | null
+  name: string
+  date: DateOnly
+  startTime: TimeOnly
+  closeTime: TimeOnly
+  branchId: number | null
+  eventTypeId: number
+  fee: number | null
+  maxAttendance: number | null
+  description: string
+  location: string
+  address: string
+}
+
 export default function EventsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -72,7 +88,7 @@ export default function EventsPage() {
   })
 
   // New Event Form State
-  const [newEvent, setNewEvent] = useState<CreateOrUpdateEventRequest>({
+  const [newEvent, setNewEvent] = useState<EventFormState>({
     id: null,
     name: "",
     date: {
@@ -103,9 +119,12 @@ export default function EventsPage() {
   // Event Images State
   const [selectedEventForImages, setSelectedEventForImages] = useState<number | null>(null)
   const [eventImages, setEventImages] = useState<any[]>([])
+  const [imageCategoryId, setImageCategoryId] = useState<string>("CarouselImage")
+  const [uploadingImages, setUploadingImages] = useState(false)
+  const [filesToUpload, setFilesToUpload] = useState<File[]>([])
 
   // Edit States
-  const [editingEvent, setEditingEvent] = useState<CreateOrUpdateEventRequest | null>(null)
+  const [editingEvent, setEditingEvent] = useState<EventFormState | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   // Load initial data
@@ -208,7 +227,30 @@ export default function EventsPage() {
       }
 
       setIsSaving(true)
-      const response = await createOrUpdateEvent(newEvent)
+
+      // Map state into required payload shape
+      const payload: CreateOrUpdateEventRequest = {
+        id: newEvent.id ?? null,
+        name: newEvent.name,
+        date: typeof newEvent.date === 'string' 
+          ? newEvent.date 
+          : formatDateOnlyToISO(newEvent.date),
+        startTime: typeof newEvent.startTime === 'string' 
+          ? newEvent.startTime 
+          : formatTimeOnlyToHMS(newEvent.startTime),
+        closeTime: typeof newEvent.closeTime === 'string' 
+          ? newEvent.closeTime 
+          : formatTimeOnlyToHMS(newEvent.closeTime),
+        branchId: newEvent.branchId ?? null,
+        eventTypeId: newEvent.eventTypeId,
+        fee: newEvent.fee ?? 0,
+        maxAttendance: newEvent.maxAttendance ?? null,
+        description: newEvent.description,
+        location: newEvent.location,
+        address: newEvent.address
+      }
+
+      const response = await createOrUpdateEvent(payload)
 
       if (response) { // The API returns EventViewModel directly
         toast.success('Event created successfully!')
@@ -254,7 +296,30 @@ export default function EventsPage() {
       if (!editingEvent) return
 
       setIsSaving(true)
-      const response = await createOrUpdateEvent(editingEvent)
+
+      // Map editing state into required payload shape
+      const payload: CreateOrUpdateEventRequest = {
+        id: editingEvent.id ?? null,
+        name: editingEvent.name,
+        date: typeof editingEvent.date === 'string'
+          ? editingEvent.date
+          : formatDateOnlyToISO(editingEvent.date),
+        startTime: typeof editingEvent.startTime === 'string'
+          ? editingEvent.startTime
+          : formatTimeOnlyToHMS(editingEvent.startTime),
+        closeTime: typeof editingEvent.closeTime === 'string'
+          ? editingEvent.closeTime
+          : formatTimeOnlyToHMS(editingEvent.closeTime),
+        branchId: editingEvent.branchId ?? null,
+        eventTypeId: editingEvent.eventTypeId,
+        fee: editingEvent.fee ?? 0,
+        maxAttendance: editingEvent.maxAttendance ?? null,
+        description: editingEvent.description,
+        location: editingEvent.location,
+        address: editingEvent.address
+      }
+
+      const response = await createOrUpdateEvent(payload)
 
       if (response) {
         toast.success('Event updated successfully!')
@@ -327,9 +392,43 @@ export default function EventsPage() {
         console.log('Event images loaded for event:', eventId, response.data)
       } else {
         console.error('Failed to load event images:', response)
+        setEventImages([])
+        setSelectedEventForImages(eventId)
       }
     } catch (err: any) {
       console.error('Error loading event images:', err)
+      setEventImages([])
+      setSelectedEventForImages(eventId)
+    }
+  }
+
+  const handleUploadEventImages = async () => {
+    try {
+      if (!selectedEventForImages || filesToUpload.length === 0) {
+        toast.error('Select files to upload')
+        return
+      }
+
+      setUploadingImages(true)
+      const payload: CreateOrUpdateEventImageRequest = {
+        eventId: selectedEventForImages,
+        file: filesToUpload,
+        imageCategoryId: imageCategoryId as any
+      }
+
+      const resp = await createOrUpdateEventImage(payload)
+      if (resp && resp.isSuccessful !== false) {
+        toast.success('Images uploaded successfully!')
+        setFilesToUpload([])
+        await loadEventImages(selectedEventForImages)
+      } else {
+        toast.error('Failed to upload images')
+      }
+    } catch (err: any) {
+      console.error('Error uploading images:', err)
+      toast.error('Failed to upload images')
+    } finally {
+      setUploadingImages(false)
     }
   }
 
@@ -370,14 +469,53 @@ export default function EventsPage() {
     return { hour: hour || 0, minute: minute || 0 }
   }
 
+  // Helpers to format structured date/time to API string shapes
+  const formatDateOnlyToISO = (date: DateOnly): string => {
+    const y = date.year
+    const m = String(date.month).padStart(2, '0')
+    const d = String(date.day).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
+  const formatTimeOnlyToHMS = (time: TimeOnly): string => {
+    const hh = String(time.hour).padStart(2, '0')
+    const mm = String(time.minute).padStart(2, '0')
+    const ss = String(time.second ?? 0).padStart(2, '0')
+    return `${hh}:${mm}:${ss}`
+  }
+
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString()
   }
 
-  const getBranchName = (branchId: number | null): string => {
+  // Detect if a string is likely a URL (e.g., Google Maps link)
+  const isLikelyUrl = (value: string | null | undefined): boolean => {
+    if (!value) return false
+    try {
+      new URL(value)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  const normalizeText = (s?: string | null) => (s || '').toLowerCase().trim()
+  const addressesEqual = (a?: string | null, b?: string | null) => {
+    const na = normalizeText(a)
+    const nb = normalizeText(b)
+    return na !== '' && na === nb
+  }
+
+  const getBranchName = (branchId: number | null | undefined): string => {
     if (!branchId) return 'No Branch'
     const branch = branches.find(b => b.id === branchId)
     return branch ? branch.name : `Branch ID: ${branchId}`
+  }
+
+  // Get full branch object by id for address and map link usage
+  const getBranchById = (branchId: number | null | undefined) => {
+    if (!branchId) return null
+    return branches.find(b => b.id === branchId) || null
   }
 
   // Calculate statistics
@@ -388,7 +526,7 @@ export default function EventsPage() {
   if (isLoading) {
     return (
       <ProtectedRoute>
-        <AdminLayout>
+      <AdminLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="flex items-center gap-2">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -402,7 +540,7 @@ export default function EventsPage() {
 
   return (
     <ProtectedRoute>
-      <AdminLayout>
+    <AdminLayout>
       <div className="space-y-6">
         <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <h1 className="text-xl sm:text-2xl font-bold">Events Management</h1>
@@ -494,46 +632,46 @@ export default function EventsPage() {
                   e.preventDefault()
                   handleSearchEvents()
                 }}>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label>Page Size</Label>
-                      <Input
-                        type="number"
-                        value={searchParams.pageSize}
-                        onChange={(e) => setSearchParams({ 
-                          ...searchParams, 
-                          pageSize: Number(e.target.value) || 20 
-                        })}
-                        min="1"
-                        max="100"
-                      />
-                    </div>
-                    <div>
-                      <Label>Page Number</Label>
-                      <Input
-                        type="number"
-                        value={searchParams.pageNumber}
-                        onChange={(e) => setSearchParams({ 
-                          ...searchParams, 
-                          pageNumber: Number(e.target.value) || 1 
-                        })}
-                        min="1"
-                      />
-                    </div>
-                    <div className="flex items-end">
-                      <Button 
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Page Size</Label>
+                    <Input
+                      type="number"
+                      value={searchParams.pageSize}
+                      onChange={(e) => setSearchParams({ 
+                        ...searchParams, 
+                        pageSize: Number(e.target.value) || 20 
+                      })}
+                      min="1"
+                      max="100"
+                    />
+                  </div>
+                  <div>
+                    <Label>Page Number</Label>
+                    <Input
+                      type="number"
+                      value={searchParams.pageNumber}
+                      onChange={(e) => setSearchParams({ 
+                        ...searchParams, 
+                        pageNumber: Number(e.target.value) || 1 
+                      })}
+                      min="1"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button 
                         type="submit"
                         disabled={isSearching}
-                        className="w-full"
-                      >
+                      className="w-full"
+                    >
                         {isSearching ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        ) : (
-                          'Search Events'
-                        )}
-                      </Button>
-                    </div>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        'Search Events'
+                      )}
+                    </Button>
                   </div>
+                </div>
                 </form>
               </CardContent>
             </Card>
@@ -564,7 +702,7 @@ export default function EventsPage() {
                           <div className="space-y-1">
                             <h3 className="font-semibold">{event.name}</h3>
                             <p className="text-sm text-muted-foreground line-clamp-1">{event.description}</p>
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
                                 {formatDate(event.date)}
@@ -575,10 +713,24 @@ export default function EventsPage() {
                               </div>
                               <div className="flex items-center gap-1">
                                 <MapPin className="h-3 w-3" />
-                                {event.location || 'No location'}
+                                {event.address
+                                  ? event.address
+                                  : (event.location && !isLikelyUrl(event.location) ? event.location : 'No location')}
                               </div>
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-2 min-w-0">
                                 <span>{getBranchName(event.branchId)}</span>
+                                {(() => {
+                                  const branch = getBranchById(event.branchId)
+                                  if (!branch) return null
+                                  const eventDisplayedAddress = event.address || (event.location && !isLikelyUrl(event.location) ? event.location : '')
+                                  const showBranchAddress = branch.address && !addressesEqual(branch.address, eventDisplayedAddress)
+                                  return showBranchAddress ? (
+                                    <span className="text-muted-foreground truncate max-w-[260px]">• {branch.address}</span>
+                                  ) : null
+                                })()}
+                                {(() => { const branch = getBranchById(event.branchId); return branch && branch.location ? (
+                                  <a href={branch.location} target="_blank" rel="noopener noreferrer" className="text-primary underline">Get directions</a>
+                                ) : null })()}
                               </div>
                             </div>
                           </div>
@@ -664,9 +816,9 @@ export default function EventsPage() {
                         onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
                       />
                     </div>
-                    <div>
+                      <div>
                       <Label htmlFor="event-date">Event Date *</Label>
-                      <Input
+                        <Input
                         id="event-date"
                         type="date"
                         value={`${newEvent.date.year}-${String(newEvent.date.month).padStart(2, '0')}-${String(newEvent.date.day).padStart(2, '0')}`}
@@ -785,7 +937,7 @@ export default function EventsPage() {
                       </div>
                     </div>
                     <div>
-                      <Label>Location</Label>
+                      <Label>Event Location</Label>
                       <Input
                         placeholder="Event location"
                         value={newEvent.location}
@@ -793,7 +945,7 @@ export default function EventsPage() {
                       />
                     </div>
                     <div>
-                      <Label>Address</Label>
+                      <Label>Event Address</Label>
                       <Textarea
                         placeholder="Full address"
                         value={newEvent.address}
@@ -966,39 +1118,80 @@ export default function EventsPage() {
         </Tabs>
 
         {/* Event Images Modal */}
-        {selectedEventForImages && eventImages.length > 0 && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        {selectedEventForImages && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 !mt-0">
+            <Card className="w-full max-w-4xl max-h-[calc(100vh-2rem)] overflow-y-auto">
               <CardHeader>
                 <CardTitle>Event Images</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Images for Event ID: {selectedEventForImages}
+                  Images for {events.find(e => e.id === selectedEventForImages)?.name || `Event #${selectedEventForImages}`}
                 </p>
+                <div className="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-3">
+                  <div>
+                    <Label>Category</Label>
+                    <Select value={imageCategoryId} onValueChange={(v) => setImageCategoryId(v)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="CarouselImage">Carousel</SelectItem>
+                        <SelectItem value="GalleryImages">Gallery</SelectItem>
+                        <SelectItem value="PreviewImage">Preview</SelectItem>
+                        <SelectItem value="ThumbnailImage">Thumbnail</SelectItem>
+                        <SelectItem value="Headshots">Headshots</SelectItem>
+                        <SelectItem value="TicketImage">Ticket</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Files</Label>
+                    <Input type="file" multiple onChange={(e) => setFilesToUpload(Array.from(e.target.files || []))} />
+                  </div>
+                  <div className="flex items-end">
+                    <Button onClick={handleUploadEventImages} disabled={uploadingImages || filesToUpload.length === 0} className="w-full">
+                      {uploadingImages ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Uploading...
+                        </>
+                      ) : (
+                        'Upload'
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {eventImages.map((image, index) => (
-                    <div key={image.id || index} className="relative">
-                      <img 
-                        src={image.imageUrl || "/placeholder.svg"} 
-                        alt={image.imageName || 'Event image'}
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
-                      <div className="absolute bottom-2 left-2 right-2">
-                        <div className="bg-black/75 text-white p-2 rounded text-sm">
-                          <p className="font-medium truncate">{image.imageName}</p>
-                          <p className="text-xs opacity-75">{image.imageCategoryId}</p>
+                {eventImages.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {eventImages.map((image, index) => (
+                      <div key={image.id || index} className="relative">
+                        <img 
+                          src={image.imageUrl || "/placeholder.svg"} 
+                          alt={image.imageName || 'Event image'}
+                          className="w-full h-48 object-cover rounded-lg"
+                        />
+                        <div className="absolute bottom-2 left-2 right-2">
+                          <div className="bg-black/75 text-white p-2 rounded text-sm">
+                            <p className="font-medium truncate">{image.imageName}</p>
+                            <p className="text-xs opacity-75">{image.imageCategoryId}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No images yet. Upload to get started.
+                  </div>
+                )}
                 <div className="flex justify-end mt-4">
                   <Button 
                     variant="outline"
                     onClick={() => {
                       setSelectedEventForImages(null)
                       setEventImages([])
+                      setFilesToUpload([])
                     }}
                   >
                     Close
@@ -1011,8 +1204,8 @@ export default function EventsPage() {
 
         {/* Edit Event Dialog */}
         {isEditDialogOpen && editingEvent && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 !mt-0">
+            <Card className="w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto">
               <CardHeader>
                 <CardTitle>Edit Event</CardTitle>
               </CardHeader>
@@ -1026,7 +1219,7 @@ export default function EventsPage() {
                     />
                   </div>
                   <div>
-                    <Label>Location</Label>
+                    <Label>Event Location</Label>
                     <Input
                       value={editingEvent.location}
                       onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value })}
@@ -1086,7 +1279,7 @@ export default function EventsPage() {
                   />
                 </div>
                 <div>
-                  <Label>Address</Label>
+                  <Label>Event Address</Label>
                   <Textarea
                     value={editingEvent.address}
                     onChange={(e) => setEditingEvent({ ...editingEvent, address: e.target.value })}

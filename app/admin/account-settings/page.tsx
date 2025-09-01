@@ -14,13 +14,14 @@ import AdminLayout from "@/components/admin/admin-layout"
 import ProtectedRoute from "@/components/admin/protected-route"
 import { toast } from "sonner"
 import { useAuth } from "@/hooks/useAuth"
-import { changePassword } from "@/services/user"
-import { ChangePasswordRequest } from "@/types/user"
+import { changePassword, updateUser, getUserById } from "@/services/user"
+import { ChangePasswordRequest, UpdateUserRequest } from "@/types/user"
 
 export default function AccountSettingsPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const { user: currentUser, isLoading: isLoadingUser } = useAuth()
+  const [userId, setUserId] = useState<number | null>(null)
 
   // Profile form state
   const [profileData, setProfileData] = useState({
@@ -50,6 +51,7 @@ export default function AccountSettingsPage() {
   // Load user data when component mounts or user changes
   useEffect(() => {
     if (currentUser) {
+      setUserId(currentUser.id)
       setProfileData({
         firstName: currentUser.firstName || "",
         middleName: currentUser.middleName || "",
@@ -58,6 +60,24 @@ export default function AccountSettingsPage() {
         phoneNumber: currentUser.phoneNumber || "",
         bio: "" // Assuming bio is not in current user type, can be added later
       })
+      // Fetch latest user details by id to ensure freshest data
+      ;(async () => {
+        try {
+          const resp = await getUserById(currentUser.id)
+          if (resp.isSuccessful && resp.data) {
+            const u = resp.data
+            setUserId(u.id)
+            setProfileData({
+              firstName: u.firstName || "",
+              middleName: u.middleName || "",
+              lastName: u.lastName || "",
+              email: u.email || "",
+              phoneNumber: u.phoneNumber || "",
+              bio: ""
+            })
+          }
+        } catch {}
+      })()
     }
   }, [currentUser])
 
@@ -97,11 +117,20 @@ export default function AccountSettingsPage() {
   const handleProfileSave = async () => {
     try {
       setIsSaving(true)
-      
-      // TODO: Implement profile update API call
-      // For now, just show success message
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
-      
+      if (!userId) throw new Error("No authenticated user")
+      const payload: UpdateUserRequest = {
+        id: userId,
+        firstName: profileData.firstName,
+        middleName: profileData.middleName,
+        lastName: profileData.lastName,
+        email: profileData.email,
+        phoneNumber: profileData.phoneNumber,
+        userTypeId: (currentUser?.userTypeId as any) || "User"
+      }
+      const resp = await updateUser(payload)
+      if (!resp.isSuccessful) {
+        throw new Error(resp.responseMessage || "Failed to update profile")
+      }
       toast.success("Profile updated successfully!")
     } catch (error: any) {
       console.error("Error updating profile:", error)
@@ -147,8 +176,7 @@ export default function AccountSettingsPage() {
 
       const requestData: ChangePasswordRequest = {
         currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword,
-        confirmPassword: passwordData.confirmPassword
+        newPassword: passwordData.newPassword
       }
 
       const response = await changePassword(requestData)
@@ -334,7 +362,7 @@ export default function AccountSettingsPage() {
                     />
                   </div>
 
-                  <Button onClick={handleProfileSave} disabled={isSaving}>
+                  <Button onClick={handleProfileSave} disabled={isSaving || isLoadingUser || !userId}>
                     {isSaving ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />

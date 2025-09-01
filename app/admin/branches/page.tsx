@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MapPin, Plus, Edit, Trash2, Users, Phone, Calendar, Building, Loader2 } from "lucide-react"
+import { MapPin, Plus, Edit, Trash2, Users, Phone, Calendar, Building, Loader2, Image } from "lucide-react"
 import AdminLayout from "@/components/admin/admin-layout"
 import ProtectedRoute from "@/components/admin/protected-route"
 import { toast } from "sonner"
@@ -20,7 +20,9 @@ import {
   deleteBranch,
   createOrUpdateWeeklyActivity,
   getWeeklyActivities,
-  deleteWeeklyActivity
+  deleteWeeklyActivity,
+  createBranchImages,
+  getBranchImages
 } from "@/services/branch"
 
 import {
@@ -36,7 +38,8 @@ import {
   WeeklyActivityViewModel,
   DayOfWeek,
   TimeOnly,
-  WeeklyActivityTypes
+  WeeklyActivityTypes,
+  ImageCategory
 } from "@/types/branch"
 import {
   Country,
@@ -73,6 +76,14 @@ export default function BranchesPage() {
 
   // Weekly Activities State
   const [weeklyActivities, setWeeklyActivities] = useState<WeeklyActivityViewModel[]>([])
+  const [branchActivitiesMap, setBranchActivitiesMap] = useState<Record<number, WeeklyActivityViewModel[]>>({})
+  const [selectedBranchForActivities, setSelectedBranchForActivities] = useState<number | null>(null)
+  // Branch Images State
+  const [selectedBranchForImages, setSelectedBranchForImages] = useState<number | null>(null)
+  const [branchImages, setBranchImages] = useState<any[]>([])
+  const [branchImageCategoryId, setBranchImageCategoryId] = useState<ImageCategory>(ImageCategory.CarouselImage)
+  const [branchFilesToUpload, setBranchFilesToUpload] = useState<File[]>([])
+  const [isUploadingBranchImages, setIsUploadingBranchImages] = useState(false)
   const [newWeeklyActivity, setNewWeeklyActivity] = useState<CreateOrUpdateWeeklyActivityRequest>({
     id: null,
     name: "",
@@ -83,6 +94,8 @@ export default function BranchesPage() {
     weeklyActivityTypeId: WeeklyActivityTypes.BibleStudy,
     branchId: 0
   })
+  const [editingWeeklyActivity, setEditingWeeklyActivity] = useState<CreateOrUpdateWeeklyActivityRequest | null>(null)
+  const [isEditActivityDialogOpen, setIsEditActivityDialogOpen] = useState(false)
 
   // Edit States
   const [editingBranch, setEditingBranch] = useState<CreateOrUpdateBranchRequest | null>(null)
@@ -93,6 +106,25 @@ export default function BranchesPage() {
   const [branchToDelete, setBranchToDelete] = useState<number | null>(null)
   const [deleteActivityDialogOpen, setDeleteActivityDialogOpen] = useState(false)
   const [activityToDelete, setActivityToDelete] = useState<number | null>(null)
+  const [activityBranchIdToDelete, setActivityBranchIdToDelete] = useState<number | null>(null)
+
+  const openDeleteActivityDialog = (branchId: number, activityId: number) => {
+    setActivityBranchIdToDelete(branchId)
+    setActivityToDelete(activityId)
+    setDeleteActivityDialogOpen(true)
+  }
+
+  // Lock body scroll when any overlay is open
+  useEffect(() => {
+    const anyOpen = isEditDialogOpen || deleteBranchDialogOpen || deleteActivityDialogOpen || isEditActivityDialogOpen || !!selectedBranchForImages || !!selectedBranchForActivities
+    if (anyOpen) {
+      const prev = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = prev
+      }
+    }
+  }, [isEditDialogOpen, deleteBranchDialogOpen, deleteActivityDialogOpen, isEditActivityDialogOpen, selectedBranchForImages, selectedBranchForActivities])
 
   // Load initial data
   useEffect(() => {
@@ -209,13 +241,59 @@ export default function BranchesPage() {
       const response = await getWeeklyActivities(branchId)
       
       if (response.isSuccessful && response.data) {
-        setWeeklyActivities(Array.isArray(response.data) ? response.data as WeeklyActivityViewModel[] : [])
+        const activities = (response.data as WeeklyActivityViewModel[]) || []
+        setWeeklyActivities(activities)
+        setBranchActivitiesMap(prev => ({ ...prev, [branchId]: activities }))
         console.log('Weekly activities loaded for branch:', branchId, response.data)
       } else {
         console.error('Failed to load weekly activities:', response)
       }
     } catch (err: any) {
       console.error('Error loading weekly activities:', err)
+    }
+  }
+  
+  const loadBranchImages = async (branchId: number) => {
+    try {
+      const response = await getBranchImages(branchId)
+      if (response.isSuccessful && response.data) {
+        setBranchImages(response.data)
+      } else {
+        setBranchImages([])
+      }
+      setSelectedBranchForImages(branchId)
+    } catch (err) {
+      console.error('Error loading branch images:', err)
+      setBranchImages([])
+      setSelectedBranchForImages(branchId)
+    }
+  }
+
+  const handleUploadBranchImages = async () => {
+    try {
+      if (!selectedBranchForImages || branchFilesToUpload.length === 0) {
+        toast.error('Select files to upload')
+        return
+      }
+      setIsUploadingBranchImages(true)
+      const payload = {
+        branchId: selectedBranchForImages,
+        file: branchFilesToUpload,
+        categoryId: branchImageCategoryId
+      }
+      const resp = await createBranchImages(payload)
+      if (resp && resp.isSuccessful !== false) {
+        toast.success('Branch images uploaded!')
+        setBranchFilesToUpload([])
+        await loadBranchImages(selectedBranchForImages)
+      } else {
+        toast.error('Failed to upload branch images')
+      }
+    } catch (err) {
+      console.error('Error uploading branch images:', err)
+      toast.error('Failed to upload branch images')
+    } finally {
+      setIsUploadingBranchImages(false)
     }
   }
 
@@ -320,7 +398,12 @@ export default function BranchesPage() {
       }
 
       setIsSaving(true)
-      const response = await createOrUpdateWeeklyActivity(newWeeklyActivity)
+      const payload = {
+        ...newWeeklyActivity,
+        startTime: formatTimeOnlyToHMS(newWeeklyActivity.startTime),
+        closeTime: formatTimeOnlyToHMS(newWeeklyActivity.closeTime)
+      }
+      const response = await createOrUpdateWeeklyActivity(payload)
 
       if (response.isSuccessful) {
         toast.success('Weekly activity created successfully!')
@@ -389,7 +472,11 @@ export default function BranchesPage() {
     setIsEditDialogOpen(true)
   }
 
-  const formatTime = (time: TimeOnly): string => {
+  const formatTime = (time: TimeOnly | string): string => {
+    if (typeof time === 'string') {
+      // Expecting HH:mm:ss or HH:mm
+      return time.slice(0, 5)
+    }
     const hour = time.hour.toString().padStart(2, '0')
     const minute = time.minute.toString().padStart(2, '0')
     return `${hour}:${minute}`
@@ -398,6 +485,62 @@ export default function BranchesPage() {
   const parseTime = (timeString: string): TimeOnly => {
     const [hour, minute] = timeString.split(':').map(Number)
     return { hour: hour || 0, minute: minute || 0 }
+  }
+
+  // Format TimeOnly to HH:mm:ss for API payload
+  const formatTimeOnlyToHMS = (time: TimeOnly | string): string => {
+    if (typeof time === 'string') return time
+    const hh = String(time.hour).padStart(2, '0')
+    const mm = String(time.minute).padStart(2, '0')
+    const ss = '00'
+    return `${hh}:${mm}:${ss}`
+  }
+
+  const startEditWeeklyActivity = (activity: WeeklyActivityViewModel) => {
+    setEditingWeeklyActivity({
+      id: activity.id,
+      name: activity.name,
+      description: activity.description,
+      day: activity.day,
+      startTime: activity.startTime,
+      closeTime: activity.closeTime,
+      weeklyActivityTypeId: activity.weeklyActivityTypeId,
+      branchId: activity.branchId
+    })
+    setIsEditActivityDialogOpen(true)
+  }
+
+  const handleUpdateWeeklyActivity = async () => {
+    try {
+      if (!editingWeeklyActivity) return
+
+      setIsSaving(true)
+      const payload: CreateOrUpdateWeeklyActivityRequest = {
+        ...editingWeeklyActivity,
+        startTime: formatTimeOnlyToHMS(editingWeeklyActivity.startTime),
+        closeTime: formatTimeOnlyToHMS(editingWeeklyActivity.closeTime)
+      }
+
+      const response = await createOrUpdateWeeklyActivity(payload)
+
+      if (response.isSuccessful) {
+        toast.success('Weekly activity updated successfully!')
+        const branchId = editingWeeklyActivity.branchId
+        setIsEditActivityDialogOpen(false)
+        setEditingWeeklyActivity(null)
+        if (branchId) {
+          loadWeeklyActivities(branchId)
+        }
+      } else {
+        const errorMessage = response.errors?.map(e => e.description).join(', ') || response.responseMessage
+        throw new Error(errorMessage || 'Failed to update weekly activity')
+      }
+    } catch (err: any) {
+      console.error('Error updating weekly activity:', err)
+      toast.error(err.message || 'Failed to update weekly activity')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const getDayOfWeekDisplay = (day: DayOfWeek): string => {
@@ -419,7 +562,7 @@ export default function BranchesPage() {
   if (isLoading) {
     return (
       <ProtectedRoute>
-        <AdminLayout>
+      <AdminLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="flex items-center gap-2">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -433,7 +576,7 @@ export default function BranchesPage() {
 
   return (
     <ProtectedRoute>
-      <AdminLayout>
+    <AdminLayout>
       <div className="space-y-6">
         <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <h1 className="text-xl sm:text-2xl font-bold">Branches Management</h1>
@@ -526,15 +669,15 @@ export default function BranchesPage() {
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
                           <h3 className="text-xl font-semibold truncate">{branch.name}</h3>
                           <div className="flex gap-2 flex-wrap">
-                            <Badge variant={branch.isDeleted ? "secondary" : "default"}>
-                              {branch.isDeleted ? "Inactive" : "Active"}
+                            <Badge variant={branch.isDeleted ? "destructive" : "default"}>
+                            {branch.isDeleted ? "Inactive" : "Active"}
+                          </Badge>
+                          {branch.dateCreated && (
+                            <Badge variant="outline">
+                              Est. {new Date(branch.dateCreated).getFullYear()}
                             </Badge>
-                            {branch.dateCreated && (
-                              <Badge variant="outline">
-                                Est. {new Date(branch.dateCreated).getFullYear()}
-                              </Badge>
-                            )}
-                          </div>
+                          )}
+                        </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                           <div className="space-y-2">
@@ -587,6 +730,15 @@ export default function BranchesPage() {
                         <Button 
                           variant="outline" 
                           size="sm" 
+                          onClick={() => loadBranchImages(branch.id)}
+                          className="w-full sm:w-auto"
+                        >
+                          <Image className="h-3 w-3 mr-1" />
+                          Images
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
                           className="text-red-600 hover:text-red-700 w-full sm:w-auto"
                           onClick={() => openDeleteBranchDialog(branch.id)}
                         >
@@ -599,7 +751,7 @@ export default function BranchesPage() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => loadWeeklyActivities(branch.id)}
+                        onClick={async () => { setSelectedBranchForActivities(branch.id); await loadWeeklyActivities(branch.id); }}
                         className="w-full sm:w-auto"
                       >
                         View Activities
@@ -880,49 +1032,56 @@ export default function BranchesPage() {
               </CardContent>
             </Card>
 
-            {/* Weekly Activities List */}
-            {weeklyActivities.length > 0 && (
+            {/* Weekly Activities grouped by Branch */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Weekly Activities</CardTitle>
+                <CardTitle>Weekly Activities by Branch</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {weeklyActivities.map((activity) => (
-                      <div key={activity.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <h3 className="font-semibold">{activity.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {getDayOfWeekDisplay(activity.day)} • {formatTime(activity.startTime)} - {formatTime(activity.closeTime)}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {getActivityTypeDisplay(activity.weeklyActivityTypeId)}
-                          </p>
-                          {activity.description && (
-                            <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
-                          )}
+                  {branches.filter(b => !b.isDeleted).map((branch) => (
+                    <div key={branch.id} className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-semibold">{branch.name}</h3>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => loadWeeklyActivities(branch.id)}>Load Activities</Button>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-red-600 hover:text-red-700"
-                          onClick={() => handleDeleteWeeklyActivity(activity.branchId, activity.id)}
-                        >
+                      </div>
+                      <div className="space-y-3">
+                        {(branchActivitiesMap[branch.id] || []).length > 0 ? (
+                          branchActivitiesMap[branch.id].map((activity) => (
+                            <div key={activity.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                                <div className="font-medium">{activity.name}</div>
+                                <div className="text-xs text-muted-foreground">{getDayOfWeekDisplay(activity.day)} • {formatTime(activity.startTime)} - {formatTime(activity.closeTime)} • {getActivityTypeDisplay(activity.weeklyActivityTypeId)}</div>
+                                {activity.description && <div className="text-xs text-muted-foreground mt-1">{activity.description}</div>}
+                        </div>
+                              <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm" onClick={() => startEditWeeklyActivity(activity)}>
+                                  <Edit className="h-3 w-3 mr-1" /> Edit
+                                </Button>
+                                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700" onClick={() => openDeleteActivityDialog(activity.branchId, activity.id)}>
                           <Trash2 className="h-3 w-3" />
                         </Button>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-sm text-muted-foreground">No activities loaded for this branch.</div>
+                        )}
+                      </div>
                       </div>
                     ))}
                   </div>
                 </CardContent>
               </Card>
-            )}
           </TabsContent>
         </Tabs>
 
         {/* Edit Branch Dialog */}
         {isEditDialogOpen && editingBranch && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 !mt-0">
-            <Card className="w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 !mt-0" onClick={() => { setIsEditDialogOpen(false); setEditingBranch(null) }}>
+            <Card className="w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <CardHeader>
                 <CardTitle>Edit Branch</CardTitle>
               </CardHeader>
@@ -1027,8 +1186,8 @@ export default function BranchesPage() {
 
         {/* Delete Branch Confirmation Modal */}
         {deleteBranchDialogOpen && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 !mt-0">
-            <Card className="w-full max-w-md">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4 !mt-0" onClick={() => { setDeleteBranchDialogOpen(false); setBranchToDelete(null) }}>
+            <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
               <CardHeader>
                 <CardTitle className="text-red-600">Delete Branch</CardTitle>
               </CardHeader>
@@ -1064,8 +1223,8 @@ export default function BranchesPage() {
 
         {/* Delete Activity Confirmation Modal */}
         {deleteActivityDialogOpen && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 !mt-0">
-            <Card className="w-full max-w-md">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4 !mt-0" onClick={() => { setDeleteActivityDialogOpen(false); setActivityToDelete(null); setActivityBranchIdToDelete(null) }}>
+            <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
               <CardHeader>
                 <CardTitle className="text-red-600">Delete Activity</CardTitle>
               </CardHeader>
@@ -1079,21 +1238,237 @@ export default function BranchesPage() {
                     onClick={() => {
                       setDeleteActivityDialogOpen(false)
                       setActivityToDelete(null)
+                      setActivityBranchIdToDelete(null)
                     }}
                   >
                     Cancel
                   </Button>
                   <Button
                     variant="destructive"
-                    onClick={() => {
-                      if (activityToDelete) {
+                    onClick={async () => {
+                      if (activityToDelete && activityBranchIdToDelete) {
+                        await handleDeleteWeeklyActivity(activityBranchIdToDelete, activityToDelete)
                         setDeleteActivityDialogOpen(false)
                         setActivityToDelete(null)
+                        setActivityBranchIdToDelete(null)
                       }
                     }}
                   >
                     Delete Activity
                   </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Edit Weekly Activity Dialog */}
+        {isEditActivityDialogOpen && editingWeeklyActivity && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 !mt-0" onClick={() => { setIsEditActivityDialogOpen(false); setEditingWeeklyActivity(null) }}>
+            <Card className="w-full max-w-xl max-h-[calc(100vh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <CardHeader>
+                <CardTitle>Edit Weekly Activity</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Activity Name</Label>
+                    <Input
+                      value={editingWeeklyActivity.name}
+                      onChange={(e) => setEditingWeeklyActivity({ ...editingWeeklyActivity, name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Branch</Label>
+                    <Select 
+                      value={editingWeeklyActivity.branchId?.toString() || undefined}
+                      onValueChange={(value) => setEditingWeeklyActivity({ ...editingWeeklyActivity, branchId: Number(value) })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select branch" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {branches.filter(b => !b.isDeleted).map(branch => (
+                          <SelectItem key={branch.id} value={branch.id.toString()}>
+                            {branch.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Day of Week</Label>
+                    <Select 
+                      value={editingWeeklyActivity.day}
+                      onValueChange={(value) => setEditingWeeklyActivity({ ...editingWeeklyActivity, day: value as DayOfWeek })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.values(DayOfWeek).map(day => (
+                          <SelectItem key={day} value={day}>{getDayOfWeekDisplay(day)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Activity Type</Label>
+                    <Select 
+                      value={editingWeeklyActivity.weeklyActivityTypeId}
+                      onValueChange={(value) => setEditingWeeklyActivity({ ...editingWeeklyActivity, weeklyActivityTypeId: value as WeeklyActivityTypes })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.values(WeeklyActivityTypes).map(type => (
+                          <SelectItem key={type} value={type}>{getActivityTypeDisplay(type)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Start Time</Label>
+                    <Input
+                      type="time"
+                      value={formatTime(editingWeeklyActivity.startTime)}
+                      onChange={(e) => setEditingWeeklyActivity({ ...editingWeeklyActivity, startTime: parseTime(e.target.value) })}
+                    />
+                  </div>
+                  <div>
+                    <Label>End Time</Label>
+                    <Input
+                      type="time"
+                      value={formatTime(editingWeeklyActivity.closeTime)}
+                      onChange={(e) => setEditingWeeklyActivity({ ...editingWeeklyActivity, closeTime: parseTime(e.target.value) })}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Description</Label>
+                  <Textarea
+                    value={editingWeeklyActivity.description}
+                    onChange={(e) => setEditingWeeklyActivity({ ...editingWeeklyActivity, description: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button onClick={handleUpdateWeeklyActivity} disabled={isSaving} className="flex-1">
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      'Update Activity'
+                    )}
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => { setIsEditActivityDialogOpen(false); setEditingWeeklyActivity(null) }}
+                    disabled={isSaving}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Branch Images Modal */}
+        {selectedBranchForImages && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 !mt-0" onClick={() => { setSelectedBranchForImages(null); setBranchImages([]); setBranchFilesToUpload([]) }}>
+            <Card className="w-full max-w-4xl max-h-[calc(100vh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <CardHeader>
+                <CardTitle>Branch Images</CardTitle>
+                <p className="text-sm text-muted-foreground">Images for {branches.find(b => b.id === selectedBranchForImages)?.name || `Branch #${selectedBranchForImages}`}</p>
+                <div className="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-3">
+                  <div>
+                    <Label>Category</Label>
+                    <Select value={branchImageCategoryId} onValueChange={(v) => setBranchImageCategoryId(v as ImageCategory)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ImageCategory.CarouselImage}>Carousel</SelectItem>
+                        <SelectItem value={ImageCategory.GalleryImages}>Gallery</SelectItem>
+                        <SelectItem value={ImageCategory.PreviewImage}>Preview</SelectItem>
+                        <SelectItem value={ImageCategory.ThumbnailImage}>Thumbnail</SelectItem>
+                        <SelectItem value={ImageCategory.Headshots}>Headshots</SelectItem>
+                        <SelectItem value={ImageCategory.TicketImage}>Ticket</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Files</Label>
+                    <Input type="file" multiple onChange={(e) => setBranchFilesToUpload(Array.from(e.target.files || []))} />
+                  </div>
+                  <div className="flex items-end">
+                    <Button onClick={handleUploadBranchImages} disabled={isUploadingBranchImages || branchFilesToUpload.length === 0} className="w-full">
+                      {isUploadingBranchImages ? (<><Loader2 className="h-4 w-4 animate-spin mr-2" />Uploading...</>) : 'Upload'}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {branchImages.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {branchImages.map((img, idx) => (
+                      <div key={img.id || idx} className="relative">
+                        <img src={img.imageUrl || "/placeholder.svg"} alt={img.imageName || 'Branch image'} className="w-full h-48 object-cover rounded-lg" />
+                        <div className="absolute bottom-2 left-2 right-2">
+                          <div className="bg-black/75 text-white p-2 rounded text-sm">
+                            <p className="font-medium truncate">{img.imageName}</p>
+                            <p className="text-xs opacity-75">{img.imageCategoryId}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">No images yet. Upload to get started.</div>
+                )}
+                <div className="flex justify-end mt-4">
+                  <Button variant="outline" onClick={() => { setSelectedBranchForImages(null); setBranchImages([]); setBranchFilesToUpload([]) }}>Close</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Branch Activities Modal */}
+        {selectedBranchForActivities && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 !mt-0" onClick={() => setSelectedBranchForActivities(null)}>
+            <Card className="w-full max-w-3xl max-h-[calc(100vh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <CardHeader>
+                <CardTitle>Weekly Activities</CardTitle>
+                <p className="text-sm text-muted-foreground">{branches.find(b => b.id === selectedBranchForActivities)?.name || `Branch #${selectedBranchForActivities}`}</p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {(branchActivitiesMap[selectedBranchForActivities] || []).length > 0 ? (
+                    branchActivitiesMap[selectedBranchForActivities].map((activity) => (
+                      <div key={activity.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <div className="font-medium">{activity.name}</div>
+                          <div className="text-xs text-muted-foreground">{getDayOfWeekDisplay(activity.day)} • {formatTime(activity.startTime)} - {formatTime(activity.closeTime)} • {getActivityTypeDisplay(activity.weeklyActivityTypeId)}</div>
+                          {activity.description && <div className="text-xs text-muted-foreground mt-1">{activity.description}</div>}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700" onClick={() => openDeleteActivityDialog(activity.branchId, activity.id)}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-muted-foreground">No activities found.</div>
+                  )}
+                </div>
+                <div className="flex justify-end mt-4">
+                  <Button variant="outline" onClick={() => setSelectedBranchForActivities(null)}>Close</Button>
                 </div>
               </CardContent>
             </Card>

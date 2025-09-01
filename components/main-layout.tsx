@@ -1,8 +1,10 @@
 import type React from "react"
 import Navbar from "@/components/navbar"
 import Link from "next/link"
+import { useChurchInfo } from "@/components/church-info-provider"
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
+  const { details, socials } = useChurchInfo()
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -13,7 +15,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <div>
               <h3 className="font-bold text-lg mb-4">About Us</h3>
               <p className="text-gray-400 text-sm">
-                Kingdom Ways Living Church is dedicated to spreading God's love and building a community of believers.
+                {details.welcomeAddress || "Kingdom Ways Living Church is dedicated to spreading God's love and building a community of believers."}
               </p>
             </div>
             <div>
@@ -36,39 +38,39 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <div>
               <h3 className="font-bold text-lg mb-4">Connect</h3>
               <ul className="space-y-2 text-sm">
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    Facebook
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    Instagram
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    Twitter
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    YouTube
-                  </a>
-                </li>
+                {socials.facebook && (
+                  <li>
+                    <a href={socials.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">Facebook</a>
+                  </li>
+                )}
+                {socials.instagram && (
+                  <li>
+                    <a href={socials.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">Instagram</a>
+                  </li>
+                )}
+                {socials.twitter && (
+                  <li>
+                    <a href={socials.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">Twitter</a>
+                  </li>
+                )}
+                {socials.youtube && (
+                  <li>
+                    <a href={socials.youtube} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">YouTube</a>
+                  </li>
+                )}
               </ul>
             </div>
             <div>
               <h3 className="font-bold text-lg mb-4">Contact</h3>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li>+234 70 433 2832</li>
-                <li>info@kwlchq.org</li>
-                <li>24 Prince Ibrahim Eletu Avenue, Lagos</li>
+                <li>{details.phoneNumber || "+234 70 433 2832"}</li>
+                <li>{details.email || "info@kwlchq.org"}</li>
+                <li>{details.address || "24 Prince Ibrahim Eletu Avenue, Lagos"}</li>
               </ul>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-gray-800 text-center text-sm text-gray-400">
-            <p>© 2024 Kingdom Ways Living Church. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} {details.name || "Kingdom Ways Living Church"}. All rights reserved.</p>
           </div>
         </div>
       </footer>

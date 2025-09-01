@@ -6,11 +6,13 @@ import Link from "next/link"
 import { Phone, X, Menu, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
+import { useChurchInfo } from "@/components/church-info-provider"
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [sideNavOpen, setSideNavOpen] = useState(false)
   const { getItemCount } = useCart()
+  const { details } = useChurchInfo()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -81,7 +83,7 @@ export default function Navbar() {
             }`}
           >
             <Phone className="h-4 w-4" />
-            <span>+234 70 433 2832</span>
+            <span>{details.phoneNumber || "+234 70 433 2832"}</span>
           </Button>
 
           <Link href="/checkout" className="relative">
@@ -189,7 +191,7 @@ export default function Navbar() {
                   className="object-contain"
                 />
               </div>
-              <span className="font-bold text-gray-900">KWLC</span>
+              <span className="font-bold text-gray-900">{details.name || "KWLC"}</span>
             </div>
             <button className="p-2 rounded-full hover:bg-gray-100 text-gray-500" onClick={() => setSideNavOpen(false)}>
               <X className="h-5 w-5" />
@@ -218,7 +220,7 @@ export default function Navbar() {
               <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-md">
                 <Phone className="h-5 w-5 text-primary" />
                 {/* <span className="text-gray-700 text-sm">+234 70 433 2832</span> */}
-                <a href="tel:+234704332832" className="text-gray-700 text-sm">+234 70 433 2832</a>
+                <a href={details.phoneNumber ? `tel:${details.phoneNumber}` : "tel:+234704332832"} className="text-gray-700 text-sm">{details.phoneNumber || "+234 70 433 2832"}</a>
               </div>
             </div>
           </nav>
