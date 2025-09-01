@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState } from "react"
+import React from "react"
 import Navbar from "@/components/navbar"
 import Link from "next/link"
 import { useApi } from "@/hooks/useApi"
@@ -13,25 +13,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const churchInfo: any = homePageResponse?.isSuccessful
     ? (Array.isArray(homePageResponse.data) ? homePageResponse.data[0] : homePageResponse.data)
     : null
-
-  const [socialLinks, setSocialLinks] = useState<{
-    website?: string
-    facebook?: string
-    twitter?: string
-    instagram?: string
-    youtube?: string
-    linkedin?: string
-  }>({})
-
-  useEffect(() => {
-    try {
-      const savedSocialMedia = typeof window !== 'undefined' ? localStorage.getItem('churchSocialMedia') : null
-      if (savedSocialMedia) {
-        const parsed = JSON.parse(savedSocialMedia)
-        setSocialLinks(parsed || {})
-      }
-    } catch {}
-  }, [])
+  const socialLinks = {
+    website: churchInfo?.website,
+    facebook: churchInfo?.facebook,
+    twitter: churchInfo?.twitter,
+    instagram: churchInfo?.instagram,
+    youtube: churchInfo?.youtube,
+    linkedin: churchInfo?.linkedin,
+  }
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
