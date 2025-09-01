@@ -2,7 +2,11 @@
 
 import Image from "next/image"
 
-export default function WelcomeSection() {
+type WelcomeSectionProps = {
+  welcomeAddress?: string
+}
+
+export default function WelcomeSection({ welcomeAddress }: WelcomeSectionProps) {
   return (
     <section id="about" className="py-24 bg-gradient-to-b from-white to-gray-50 overflow-hidden">
       <div className="container mx-auto px-4 relative">
@@ -26,22 +30,30 @@ export default function WelcomeSection() {
 
             <p className="text-gray-600 mb-4 text-lg font-medium">Hello people,</p>
 
-            <p className="text-gray-700 mb-6 leading-relaxed">
-              My Name is Ken MBACHI, the lead pastor in Kingdom Ways Living Church International. It's my humble
-              pleasure to welcome you to our world.
-            </p>
+            {welcomeAddress ? (
+              <p className="text-gray-700 mb-6 leading-relaxed">
+                {welcomeAddress}
+              </p>
+            ) : (
+              <>
+                <p className="text-gray-700 mb-6 leading-relaxed">
+                  My Name is Ken MBACHI, the lead pastor in Kingdom Ways Living Church International. It's my humble
+                  pleasure to welcome you to our world.
+                </p>
 
-            <p className="text-gray-700 mb-6 leading-relaxed">
-              In Matthew, Jesus said to Peter fear not just follow me and I will make you... One major assignment of
-              Jesus Christ through His church is the Making of great destinies.
-            </p>
+                <p className="text-gray-700 mb-6 leading-relaxed">
+                  In Matthew, Jesus said to Peter fear not just follow me and I will make you... One major assignment of
+                  Jesus Christ through His church is the Making of great destinies.
+                </p>
 
-            <p className="text-gray-700 mb-6 leading-relaxed">
-              It's my pleasure to personally invite you to follow us in any of our live services, social media platforms
-              and you will see what Jesus Christ through His word will make out of your life. Please enjoy your time in
-              our world and feel very free to use any of our contact points in case you need any information or clarity
-              about us.
-            </p>
+                <p className="text-gray-700 mb-6 leading-relaxed">
+                  It's my pleasure to personally invite you to follow us in any of our live services, social media platforms
+                  and you will see what Jesus Christ through His word will make out of your life. Please enjoy your time in
+                  our world and feel very free to use any of our contact points in case you need any information or clarity
+                  about us.
+                </p>
+              </>
+            )}
 
             <p className="text-gray-700 font-medium text-lg mb-8">Welcome! I celebrate you.</p>
 
