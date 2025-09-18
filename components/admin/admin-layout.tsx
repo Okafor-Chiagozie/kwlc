@@ -23,7 +23,6 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -181,21 +180,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* User Status Badge */}
-            {currentUser && (
-              <div className="hidden sm:flex items-center gap-2">
-                <Badge 
-                  variant={getUserStatus() === "Active" ? "secondary" : "destructive"} 
-                  className="text-xs"
-                >
-                  {getUserStatus()}
-                </Badge>
-                <Badge variant="outline" className="text-xs">
-                  {getUserRole()}
-                </Badge>
-              </div>
-            )}
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2">
@@ -221,28 +205,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <div className="px-2 py-1.5 text-sm">
                   <div className="font-medium">{getDisplayName()}</div>
                   {currentUser && (
-                    <>
-                      <div className="text-xs text-gray-500 mt-1">{currentUser.email}</div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge 
-                          variant={getUserStatus() === "Active" ? "secondary" : "destructive"} 
-                          className="text-xs"
-                        >
-                          {getUserStatus()}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {getUserRole()}
-                        </Badge>
-                      </div>
-                      {currentUser.phoneNumber && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          📞 {currentUser.phoneNumber}
-                        </div>
-                      )}
-                      <div className="text-xs text-gray-400 mt-1">
-                        Member since {new Date(currentUser.dateCreated).toLocaleDateString()}
-                      </div>
-                    </>
+                    <div className="text-xs text-gray-500 mt-1">{currentUser.email}</div>
                   )}
                 </div>
                 <DropdownMenuSeparator />

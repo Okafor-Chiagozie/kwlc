@@ -842,6 +842,144 @@
         }
       }
     },
+    "/api/v1/BookPurchase/GetBookPurchasesReport": {
+      "post": {
+        "tags": [
+          "BookPurchase"
+        ],
+        "operationId": "GetBookPurchasesReport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookPurchaseViewModelListPaginationResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookPurchaseViewModelListPaginationResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookPurchaseViewModelListPaginationResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookPurchaseViewModelListPaginationResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookPurchaseViewModelListPaginationResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookPurchaseViewModelListPaginationResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/BookPurchase/DownloadBookPurchasesReport": {
+      "post": {
+        "tags": [
+          "BookPurchase"
+        ],
+        "operationId": "DownloadBookPurchasesReport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/Branch/CreateOrUpdateBranch": {
       "post": {
         "tags": [
@@ -873,17 +1011,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               }
             }
@@ -893,17 +1031,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               }
             }
@@ -942,17 +1080,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/BranchViewModelListPaginationResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/BranchViewModelListPaginationResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/BranchViewModelListPaginationResult"
                 }
               }
             }
@@ -962,17 +1100,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/BranchViewModelListPaginationResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/BranchViewModelListPaginationResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/BranchViewModelListPaginationResult"
                 }
               }
             }
@@ -1002,17 +1140,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/BranchViewModelResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/BranchViewModelResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/BranchViewModelResult"
                 }
               }
             }
@@ -1022,17 +1160,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/BranchViewModelResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/BranchViewModelResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/BranchViewModelResult"
                 }
               }
             }
@@ -1112,17 +1250,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               }
             }
@@ -1132,17 +1270,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchViewModelListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               }
             }
@@ -1198,17 +1336,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               }
             }
@@ -1218,17 +1356,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               }
             }
@@ -1275,17 +1413,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/BranchImageViewModelResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/BranchImageViewModelResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/BranchImageViewModelResult"
                 }
               }
             }
@@ -1295,17 +1433,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/BranchImageViewModelResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/BranchImageViewModelResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/BranchImageViewModelResult"
                 }
               }
             }
@@ -1381,14 +1519,6 @@
         "operationId": "GetBranchImage",
         "parameters": [
           {
-            "name": "branchId",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
             "name": "imageId",
             "in": "query",
             "schema": {
@@ -1403,17 +1533,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/BranchImageViewModelResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/BranchImageViewModelResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/BranchImageViewModelResult"
                 }
               }
             }
@@ -1423,17 +1553,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/BranchImageViewModelResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/BranchImageViewModelResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchImageViewModelListResult"
+                  "$ref": "#/components/schemas/BranchImageViewModelResult"
                 }
               }
             }
@@ -1448,14 +1578,6 @@
         ],
         "operationId": "DeleteBranchImage",
         "parameters": [
-          {
-            "name": "branchId",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
           {
             "name": "imageId",
             "in": "query",
@@ -1540,17 +1662,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               }
             }
@@ -1560,17 +1682,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               }
             }
@@ -1585,14 +1707,6 @@
         ],
         "operationId": "GetWeeklyActivity",
         "parameters": [
-          {
-            "name": "branchId",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
           {
             "name": "activityId",
             "in": "query",
@@ -1668,17 +1782,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/WeeklyActivityViewModelListResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/WeeklyActivityViewModelListResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/WeeklyActivityViewModelListResult"
                 }
               }
             }
@@ -1688,17 +1802,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/WeeklyActivityViewModelListResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/WeeklyActivityViewModelListResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/WeeklyActivityViewModelListResult"
                 }
               }
             }
@@ -1718,17 +1832,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/WeeklyActivityViewModelListResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/WeeklyActivityViewModelListResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/WeeklyActivityViewModelListResult"
                 }
               }
             }
@@ -1738,17 +1852,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/WeeklyActivityViewModelListResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/WeeklyActivityViewModelListResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/WeeklyActivityViewModelListResult"
                 }
               }
             }
@@ -1764,15 +1878,7 @@
         "operationId": "DeleteWeeklyActivity",
         "parameters": [
           {
-            "name": "branchId",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "imageId",
+            "name": "activityId",
             "in": "query",
             "schema": {
               "type": "integer",
@@ -1786,17 +1892,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               }
             }
@@ -1806,17 +1912,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               }
             }
@@ -1824,10 +1930,10 @@
         }
       }
     },
-    "/api/v1/Branch/CreateBranchReport": {
+    "/api/v1/BranchReport/CreateBranchReport": {
       "post": {
         "tags": [
-          "Branch"
+          "BranchReport"
         ],
         "operationId": "CreateBranchReport",
         "requestBody": {
@@ -1855,17 +1961,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               }
             }
@@ -1875,17 +1981,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               }
             }
@@ -1893,91 +1999,12 @@
         }
       }
     },
-    "/api/v1/Branch/UpdateBranchReport": {
-      "put": {
+    "/api/v1/BranchReport/GetBranchReports": {
+      "post": {
         "tags": [
-          "Branch"
-        ],
-        "operationId": "UpdateBranchReport",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddBranchReportViewModel"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddBranchReportViewModel"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddBranchReportViewModel"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/Branch/GetBranchReports": {
-      "get": {
-        "tags": [
-          "Branch"
+          "BranchReport"
         ],
         "operationId": "GetBranchReports",
-        "parameters": [
-          {
-            "name": "branchId",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -2041,22 +2068,14 @@
         }
       }
     },
-    "/api/v1/Branch/GetBranchReport": {
+    "/api/v1/BranchReport/GetBranchReport": {
       "get": {
         "tags": [
-          "Branch"
+          "BranchReport"
         ],
         "operationId": "GetBranchReport",
         "parameters": [
           {
-            "name": "branchId",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
             "name": "reportId",
             "in": "query",
             "schema": {
@@ -2071,17 +2090,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchReportViewModelListResult"
+                  "$ref": "#/components/schemas/BranchReportViewModelListPaginationResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchReportViewModelListResult"
+                  "$ref": "#/components/schemas/BranchReportViewModelListPaginationResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchReportViewModelListResult"
+                  "$ref": "#/components/schemas/BranchReportViewModelListPaginationResult"
                 }
               }
             }
@@ -2091,17 +2110,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchReportViewModelListResult"
+                  "$ref": "#/components/schemas/BranchReportViewModelListPaginationResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchReportViewModelListResult"
+                  "$ref": "#/components/schemas/BranchReportViewModelListPaginationResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchReportViewModelListResult"
+                  "$ref": "#/components/schemas/BranchReportViewModelListPaginationResult"
                 }
               }
             }
@@ -2109,21 +2128,82 @@
         }
       }
     },
-    "/api/v1/Branch/DeleteBranchReport": {
+    "/api/v1/BranchReport/DownloadBranchReport": {
+      "post": {
+        "tags": [
+          "BranchReport"
+        ],
+        "operationId": "DownloadBranchReport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/BranchReport/DeleteBranchReport": {
       "delete": {
         "tags": [
-          "Branch"
+          "BranchReport"
         ],
         "operationId": "DeleteBranchReport",
         "parameters": [
-          {
-            "name": "branchId",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
           {
             "name": "reportId",
             "in": "query",
@@ -2139,17 +2219,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               }
             }
@@ -2159,17 +2239,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Int32ListResult"
+                  "$ref": "#/components/schemas/Int32Result"
                 }
               }
             }
@@ -2933,6 +3013,336 @@
         }
       }
     },
+    "/api/v1/Dashboard/BranchDashBord": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "BranchDashBord",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchDashboardResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchDashboardResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchDashboardResponseResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchDashboardResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchDashboardResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchDashboardResponseResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Dashboard/FinancialReportDashBoard": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "FinancialReportDashBoard",
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceDashboardResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceDashboardResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceDashboardResponseResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceDashboardResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceDashboardResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceDashboardResponseResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Dashboard/EventReportDashBoard": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "EventReportDashBoard",
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDashboardResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDashboardResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDashboardResponseResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDashboardResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDashboardResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDashboardResponseResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Dashboard/MinisterReportDashBoard": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "MinisterReportDashBoard",
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinisterDashboardResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinisterDashboardResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinisterDashboardResponseResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinisterDashboardResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinisterDashboardResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinisterDashboardResponseResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Dashboard/BookReportDashBoard": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "BookReportDashBoard",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreDashboardResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreDashboardResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreDashboardResponseResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreDashboardResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreDashboardResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreDashboardResponseResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Dashboard/StreamReportDashBoard": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "StreamReportDashBoard",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveStreamDashboardResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveStreamDashboardResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveStreamDashboardResponseResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveStreamDashboardResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveStreamDashboardResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveStreamDashboardResponseResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/Donation/InitiateDonation": {
       "post": {
         "tags": [
@@ -3112,17 +3522,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/CheckoutResponse"
+                  "$ref": "#/components/schemas/DonationViewModelListPaginationResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CheckoutResponse"
+                  "$ref": "#/components/schemas/DonationViewModelListPaginationResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CheckoutResponse"
+                  "$ref": "#/components/schemas/DonationViewModelListPaginationResult"
                 }
               }
             }
@@ -3132,17 +3542,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/CheckoutResponse"
+                  "$ref": "#/components/schemas/DonationViewModelListPaginationResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CheckoutResponse"
+                  "$ref": "#/components/schemas/DonationViewModelListPaginationResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CheckoutResponse"
+                  "$ref": "#/components/schemas/DonationViewModelListPaginationResult"
                 }
               }
             }
@@ -3181,17 +3591,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/DonationViewModelListPaginationResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/DonationViewModelListPaginationResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/DonationViewModelListPaginationResult"
                 }
               }
             }
@@ -3201,17 +3611,86 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/DonationViewModelListPaginationResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/DonationViewModelListPaginationResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/DonationViewModelListPaginationResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Donation/DownloadDonationReport": {
+      "post": {
+        "tags": [
+          "Donation"
+        ],
+        "operationId": "DownloadDonationReport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
                 }
               }
             }
@@ -3241,17 +3720,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/DonationViewModelResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/DonationViewModelResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/DonationViewModelResult"
                 }
               }
             }
@@ -3261,17 +3740,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/DonationViewModelResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/DonationViewModelResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/DonationViewModelResult"
                 }
               }
             }
@@ -3301,17 +3780,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/BooleanResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/BooleanResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/BooleanResult"
                 }
               }
             }
@@ -3321,17 +3800,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/BooleanResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/BooleanResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
+                  "$ref": "#/components/schemas/BooleanResult"
                 }
               }
             }
@@ -4995,6 +5474,144 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EventResponseViewModelListResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Event/GetEventsReport": {
+      "post": {
+        "tags": [
+          "Event"
+        ],
+        "operationId": "GetEventsReport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponseViewModelListPaginationResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponseViewModelListPaginationResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponseViewModelListPaginationResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponseViewModelListPaginationResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponseViewModelListPaginationResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponseViewModelListPaginationResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Event/DownloadEventsReport": {
+      "post": {
+        "tags": [
+          "Event"
+        ],
+        "operationId": "DownloadEventsReport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
                 }
               }
             }
@@ -8745,6 +9362,28 @@
   },
   "components": {
     "schemas": {
+      "AddAttendanceViewModel": {
+        "type": "object",
+        "properties": {
+          "menCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "womenCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "childrenCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "teenagersCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "AddBookOrderViewModel": {
         "type": "object",
         "properties": {
@@ -8809,15 +9448,11 @@
             "type": "string",
             "format": "date-time"
           },
-          "recordUpdatedBy": {
-            "type": "string",
-            "nullable": true
-          },
           "attendance": {
-            "$ref": "#/components/schemas/AttendanceViewModel"
+            "$ref": "#/components/schemas/AddAttendanceViewModel"
           },
           "financialRecord": {
-            "$ref": "#/components/schemas/FinancialRecordViewModel"
+            "$ref": "#/components/schemas/AddFinancialRecordViewModel"
           }
         },
         "additionalProperties": false
@@ -9095,8 +9730,7 @@
             "nullable": true
           },
           "eventTypeId": {
-            "type": "integer",
-            "format": "int32"
+            "$ref": "#/components/schemas/EventTypes"
           },
           "fee": {
             "type": "number",
@@ -9119,6 +9753,40 @@
           "address": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AddFinancialRecordViewModel": {
+        "type": "object",
+        "properties": {
+          "normalOffering": {
+            "type": "number",
+            "format": "double"
+          },
+          "testimonyOffering": {
+            "type": "number",
+            "format": "double"
+          },
+          "titheOffering": {
+            "type": "number",
+            "format": "double"
+          },
+          "seedFaith": {
+            "type": "number",
+            "format": "double"
+          },
+          "specialThanksgiving": {
+            "type": "number",
+            "format": "double"
+          },
+          "childDedication": {
+            "type": "number",
+            "format": "double"
+          },
+          "others": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -9291,10 +9959,6 @@
           "teenagersCount": {
             "type": "integer",
             "format": "int32"
-          },
-          "recordedBy": {
-            "type": "string",
-            "nullable": true
           }
         },
         "additionalProperties": false
@@ -9479,15 +10143,15 @@
             "type": "string",
             "nullable": true
           },
+          "paymentReference": {
+            "type": "string",
+            "nullable": true
+          },
           "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/OrderItemViewModel"
             },
-            "nullable": true
-          },
-          "paymentReference": {
-            "type": "string",
             "nullable": true
           }
         },
@@ -9663,6 +10327,59 @@
         },
         "additionalProperties": false
       },
+      "BranchDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "totalBranches": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "statesCovered": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activeBranches": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "inactiveBranches": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countriesCovered": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BranchDashboardResponseResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BranchDashboardResponse"
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "nullable": true
+          },
+          "responseMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "BranchImageViewModel": {
         "type": "object",
         "properties": {
@@ -9723,6 +10440,33 @@
         },
         "additionalProperties": false
       },
+      "BranchImageViewModelResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BranchImageViewModel"
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "nullable": true
+          },
+          "responseMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "BranchReportViewModel": {
         "type": "object",
         "properties": {
@@ -9734,6 +10478,10 @@
           "branchId": {
             "type": "integer",
             "format": "int32"
+          },
+          "branchName": {
+            "type": "string",
+            "nullable": true
           },
           "preacher": {
             "type": "string",
@@ -9751,19 +10499,63 @@
             "type": "string",
             "nullable": true
           },
+          "lga": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "branch": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
           "reportWeek": {
             "type": "string",
             "format": "date-time"
-          },
-          "recordUpdatedBy": {
-            "type": "string",
-            "nullable": true
           },
           "attendance": {
             "$ref": "#/components/schemas/AttendanceViewModel"
           },
           "financialRecord": {
             "$ref": "#/components/schemas/FinancialRecordViewModel"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BranchReportViewModelListPaginationResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BranchReportViewModel"
+            },
+            "nullable": true
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "responseMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseCode": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -9869,6 +10661,45 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "weeklyActivities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WeeklyActivityViewModel"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "BranchViewModelListPaginationResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BranchViewModel"
+            },
+            "nullable": true
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "responseMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseCode": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -9882,6 +10713,33 @@
               "$ref": "#/components/schemas/BranchViewModel"
             },
             "nullable": true
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "nullable": true
+          },
+          "responseMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "BranchViewModelResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BranchViewModel"
           },
           "isSuccessful": {
             "type": "boolean"
@@ -10369,6 +11227,150 @@
         ],
         "type": "string"
       },
+      "DonationViewModel": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "currencyId": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "donorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "isAnnonymous": {
+            "type": "boolean"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "churchProjectId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "purposeCode": {
+            "$ref": "#/components/schemas/PurposeCode"
+          },
+          "donationTypeId": {
+            "$ref": "#/components/schemas/DonationType"
+          },
+          "paymenMethodId": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "paymentChannelId": {
+            "$ref": "#/components/schemas/PaymentChannel"
+          },
+          "isDeleted": {
+            "type": "boolean"
+          },
+          "deletedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true
+          },
+          "donationType": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentChannel": {
+            "type": "string",
+            "nullable": true
+          },
+          "dateDeleted": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DonationViewModelListPaginationResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DonationViewModel"
+            },
+            "nullable": true
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "responseMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DonationViewModelResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DonationViewModel"
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "nullable": true
+          },
+          "responseMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "Error": {
         "type": "object",
         "properties": {
@@ -10377,6 +11379,55 @@
             "nullable": true
           },
           "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EventDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "totalEvents": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activeEvents": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "upcomingEvents": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalAttendees": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EventDashboardResponseResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EventDashboardResponse"
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "nullable": true
+          },
+          "responseMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseCode": {
             "type": "string",
             "nullable": true
           }
@@ -10510,8 +11561,11 @@
             "nullable": true
           },
           "eventTypeId": {
-            "type": "integer",
-            "format": "int32"
+            "$ref": "#/components/schemas/EventTypes"
+          },
+          "eventType": {
+            "type": "string",
+            "nullable": true
           },
           "branchId": {
             "type": "integer",
@@ -10525,6 +11579,14 @@
           "thumbnailImage": {
             "type": "string",
             "nullable": true
+          },
+          "attendanceCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxAttendance": {
+            "type": "integer",
+            "format": "int32"
           },
           "carouselImages": {
             "type": "array",
@@ -10559,6 +11621,38 @@
             "items": {
               "$ref": "#/components/schemas/EventScheduleViewModel"
             },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EventResponseViewModelListPaginationResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventResponseViewModel"
+            },
+            "nullable": true
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "responseMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseCode": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -10794,6 +11888,7 @@
           "ChurchService",
           "YouthEmpowerment",
           "PrayerAndIntercession",
+          "Harvest",
           "Wedding",
           "Birthday",
           "Anniversary",
@@ -10981,18 +12076,102 @@
         },
         "additionalProperties": false
       },
+      "FileStreamResponse": {
+        "type": "object",
+        "properties": {
+          "fileStream": {
+            "$ref": "#/components/schemas/Stream"
+          },
+          "fileName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FileStreamResponseResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FileStreamResponse"
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "nullable": true
+          },
+          "responseMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FinanceDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "tithes": {
+            "type": "number",
+            "format": "double"
+          },
+          "offerings": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalIncome": {
+            "type": "number",
+            "format": "double"
+          },
+          "specialGifts": {
+            "type": "number",
+            "format": "double"
+          },
+          "thanksGiving": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FinanceDashboardResponseResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FinanceDashboardResponse"
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "nullable": true
+          },
+          "responseMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "FinancialRecordViewModel": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "branchReportId": {
-            "type": "integer",
-            "format": "int32"
-          },
           "totalAmount": {
             "type": "number",
             "format": "double"
@@ -11001,16 +12180,11 @@
             "type": "integer",
             "format": "int32"
           },
-          "paymentMethodId": {
-            "$ref": "#/components/schemas/PaymentMethod"
-          },
-          "paymentChannelId": {
-            "$ref": "#/components/schemas/PaymentChannel"
-          },
-          "paymentTypeId": {
-            "$ref": "#/components/schemas/PaymentType"
-          },
           "recordedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedBy": {
             "type": "string",
             "nullable": true
           },
@@ -11042,32 +12216,9 @@
             "type": "number",
             "format": "double"
           },
-          "lga": {
-            "type": "string",
-            "nullable": true
-          },
-          "state": {
-            "type": "string",
-            "nullable": true
-          },
-          "branch": {
-            "type": "string",
-            "nullable": true
-          },
-          "address": {
-            "type": "string",
-            "nullable": true
-          },
-          "country": {
-            "type": "string",
-            "nullable": true
-          },
-          "isDeleted": {
-            "type": "boolean"
-          },
-          "updatedBy": {
-            "type": "string",
-            "nullable": true
+          "branchReportId": {
+            "type": "integer",
+            "format": "int32"
           },
           "dateDeleted": {
             "type": "string",
@@ -11270,6 +12421,55 @@
         },
         "additionalProperties": false
       },
+      "LiveStreamDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "totalViews": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "liveStreams": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalStreams": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "upcomingStreams": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LiveStreamDashboardResponseResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/LiveStreamDashboardResponse"
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "nullable": true
+          },
+          "responseMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "LoginRequestViewModel": {
         "type": "object",
         "properties": {
@@ -11280,6 +12480,63 @@
           "password": {
             "type": "string",
             "format": "password",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MinisterDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "lead": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "associate": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalMinisters": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activeMinisters": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "generalOverseer": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "inactiveMinisters": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MinisterDashboardResponseResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/MinisterDashboardResponse"
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "nullable": true
+          },
+          "responseMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseCode": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -11673,18 +12930,6 @@
         },
         "additionalProperties": false
       },
-      "PaymentType": {
-        "enum": [
-          "NormalOffering",
-          "TestimonyOffering",
-          "TitheOffering",
-          "SeedFaith",
-          "SpecialThanksgiving",
-          "ChildDedication",
-          "Others"
-        ],
-        "type": "string"
-      },
       "ProjectImageViewModel": {
         "type": "object",
         "properties": {
@@ -11948,6 +13193,98 @@
           "Other"
         ],
         "type": "string"
+      },
+      "StoreDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "freeBooks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "paidBooks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalBooks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "inactiveBooks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averagePrice": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StoreDashboardResponseResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/StoreDashboardResponse"
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "nullable": true
+          },
+          "responseMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Stream": {
+        "type": "object",
+        "properties": {
+          "canRead": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "canWrite": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "canSeek": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "canTimeout": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "length": {
+            "type": "integer",
+            "format": "int64",
+            "readOnly": true
+          },
+          "position": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "readTimeout": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "writeTimeout": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
       },
       "StringResult": {
         "type": "object",
@@ -12613,7 +13950,9 @@
       "WeeklyActivityTypes": {
         "enum": [
           "BibleStudy",
-          "Fellowship"
+          "Fellowship",
+          "SundayService",
+          "WeekdayService"
         ],
         "type": "string"
       },
@@ -12654,6 +13993,10 @@
           "dateDeleted": {
             "type": "string",
             "format": "date-time",
+            "nullable": true
+          },
+          "activityName": {
+            "type": "string",
             "nullable": true
           }
         },

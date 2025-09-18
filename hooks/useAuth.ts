@@ -29,7 +29,8 @@ export const useAuth = (): UseAuthReturn => {
       const auth = localStorage.getItem("adminAuth")
       const userIdFromStorage = localStorage.getItem("userId")
 
-      if (!auth) {
+      // Require both adminAuth flag and a valid userId
+      if (!auth || !userIdFromStorage || isNaN(Number(userIdFromStorage))) {
         setIsAuthenticated(false)
         setUser(null)
         return
@@ -37,17 +38,20 @@ export const useAuth = (): UseAuthReturn => {
 
       setIsAuthenticated(true)
 
-      // Fetch user details if userId exists
-      if (userIdFromStorage && !isNaN(Number(userIdFromStorage))) {
+      // Fetch user details
         try {
           const response = await getUserById(Number(userIdFromStorage))
           if (response.isSuccessful && response.data) {
             setUser(response.data)
+        } else {
+          // Treat failure to load user as unauthenticated
+          setIsAuthenticated(false)
+          setUser(null)
           }
         } catch (error) {
           console.error("Failed to fetch user details:", error)
-          // Keep authenticated state even if user fetch fails
-        }
+        setIsAuthenticated(false)
+        setUser(null)
       }
     } catch (error) {
       console.error("Auth check failed:", error)
@@ -68,6 +72,7 @@ export const useAuth = (): UseAuthReturn => {
   const logout = () => {
     localStorage.removeItem("adminAuth")
     localStorage.removeItem("userId")
+    localStorage.removeItem("kwlc_admin_token")
     setIsAuthenticated(false)
     setUser(null)
     router.push("/admin/login")

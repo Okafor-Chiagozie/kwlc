@@ -79,6 +79,25 @@ export interface TimeOnly {
   ticks?: number;
 }
 
+// File download related types (from Swagger)
+export interface Stream {
+  canRead?: boolean;
+  canWrite?: boolean;
+  canSeek?: boolean;
+  canTimeout?: boolean;
+  length?: number;
+  position?: number;
+  readTimeout?: number;
+  writeTimeout?: number;
+}
+
+export interface FileStreamResponse {
+  fileStream: Stream;
+  fileName?: string;
+}
+
+export interface FileStreamResponseResult extends StandardApiResponse<FileStreamResponse> {}
+
 // Request/Response schemas exactly as defined in API documentation
 
 // AddBranchViewModel from API
@@ -166,7 +185,7 @@ export interface WeeklyActivityViewModel {
   dateDeleted?: string;
 }
 
-// AttendanceViewModel from API
+// AttendanceViewModel (response)
 export interface AttendanceViewModel {
   id: number;
   branchReportId: number;
@@ -178,7 +197,7 @@ export interface AttendanceViewModel {
   recordedBy: string;
 }
 
-// FinancialRecordViewModel from API
+// FinancialRecordViewModel (response)
 export interface FinancialRecordViewModel {
   id?: number | null;
   branchReportId: number;
@@ -205,21 +224,40 @@ export interface FinancialRecordViewModel {
   dateDeleted?: string;
 }
 
-// AddBranchReportViewModel from API
+// AddAttendanceViewModel (request)
+export interface AddAttendanceViewModel {
+  menCount: number;
+  womenCount: number;
+  childrenCount: number;
+  teenagersCount: number;
+}
+
+// AddFinancialRecordViewModel (request)
+export interface AddFinancialRecordViewModel {
+  normalOffering: number;
+  testimonyOffering: number;
+  titheOffering: number;
+  seedFaith: number;
+  specialThanksgiving: number;
+  childDedication: number;
+  others: number;
+}
+
+// AddBranchReportViewModel from API (request)
 export interface AddBranchReportViewModel {
   id?: number | null;
   branchId: number;
-  preacher: string;
-  topic: string;
-  programme: string;
-  venue: string;
+  preacher?: string;
+  topic?: string;
+  programme?: string;
+  venue?: string;
   reportWeek: string; // DateTime in API
-  recordUpdatedBy: string;
-  attendance: AttendanceViewModel;
-  financialRecord: FinancialRecordViewModel;
+  recordUpdatedBy?: string;
+  attendance: AddAttendanceViewModel;
+  financialRecord: AddFinancialRecordViewModel;
 }
 
-// BranchReportViewModel from API
+// BranchReportViewModel from API (response)
 export interface BranchReportViewModel {
   id?: number | null;
   branchId: number;
@@ -250,6 +288,7 @@ export interface BranchViewModelListResult extends PaginatedApiResponse<BranchVi
 export interface BranchImageViewModelListResult extends StandardApiResponse<BranchImageViewModel[]> {}
 export interface WeeklyActivityViewModelListResult extends StandardApiResponse<WeeklyActivityViewModel[]> {}
 export interface BranchReportViewModelListResult extends StandardApiResponse<BranchReportViewModel[]> {}
+export interface DownloadBranchReportResponse extends FileStreamResponseResult {}
 
 // Response interfaces matching API exactly
 export interface CreateOrUpdateBranchResponse extends Int32ListResult {}

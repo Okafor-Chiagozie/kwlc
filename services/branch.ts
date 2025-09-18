@@ -28,7 +28,8 @@ import {
   GetBranchReportsResponse,
   GetBranchReportResponse,
   DeleteBranchReportResponse,
-  ImageCategory
+  ImageCategory,
+  DownloadBranchReportResponse
 } from '@/types/branch';
 
 // Branch CRUD operations
@@ -208,9 +209,45 @@ export const deleteWeeklyActivity = async (
 export const createBranchReport = async (
   payload: CreateBranchReportRequest
 ): Promise<CreateBranchReportResponse> => {
+  // Normalize payload to avoid null/undefined causing server errors
+  const normalized = {
+    id: payload.id ?? null,
+    branchId: payload.branchId,
+    preacher: payload.preacher ?? "",
+    topic: payload.topic ?? "",
+    programme: payload.programme ?? "",
+    venue: payload.venue ?? "",
+    reportWeek: ((): string => {
+      const v: any = payload.reportWeek as any;
+      if (typeof v === 'string') return v;
+      if (v && typeof v.toISOString === 'function') return v.toISOString();
+      try {
+        return new Date(payload.reportWeek as any).toISOString();
+      } catch {
+        return String(payload.reportWeek);
+      }
+    })(),
+    recordUpdatedBy: payload.recordUpdatedBy ?? "",
+    attendance: {
+      menCount: payload.attendance?.menCount ?? 0,
+      womenCount: payload.attendance?.womenCount ?? 0,
+      childrenCount: payload.attendance?.childrenCount ?? 0,
+      teenagersCount: payload.attendance?.teenagersCount ?? 0,
+    },
+    financialRecord: {
+      normalOffering: payload.financialRecord?.normalOffering ?? 0,
+      testimonyOffering: payload.financialRecord?.testimonyOffering ?? 0,
+      titheOffering: payload.financialRecord?.titheOffering ?? 0,
+      seedFaith: payload.financialRecord?.seedFaith ?? 0,
+      specialThanksgiving: payload.financialRecord?.specialThanksgiving ?? 0,
+      childDedication: payload.financialRecord?.childDedication ?? 0,
+      others: payload.financialRecord?.others ?? 0,
+    },
+  };
+
   const response = await api.post<CreateBranchReportResponse>(
-    '/api/v1/Branch/CreateBranchReport',
-    payload
+    '/api/v1/BranchReport/CreateBranchReport',
+    normalized
   );
   return response.data;
 };
@@ -219,7 +256,7 @@ export const updateBranchReport = async (
   payload: UpdateBranchReportRequest
 ): Promise<UpdateBranchReportResponse> => {
   const response = await api.put<UpdateBranchReportResponse>(
-    '/api/v1/Branch/UpdateBranchReport',
+    '/api/v1/BranchReport/UpdateBranchReport',
     payload
   );
   return response.data;
@@ -229,12 +266,10 @@ export const getBranchReports = async (
   branchId: number,
   payload: GetBranchReportsRequest
 ): Promise<GetBranchReportsResponse> => {
-  // API shows GET with requestBody, which is unusual but following the spec
-  const response = await api.get<GetBranchReportsResponse>(
-    `/api/v1/Branch/GetBranchReports?branchId=${branchId}`,
-    {
-      data: payload
-    }
+  // Swagger lists a GET with requestBody. Use POST to send the SearchFilter body reliably.
+  const response = await api.post<GetBranchReportsResponse>(
+    `/api/v1/BranchReport/GetBranchReports?branchId=${branchId}`,
+    payload
   );
   return response.data;
 };
@@ -244,7 +279,7 @@ export const getBranchReport = async (
   reportId: number
 ): Promise<GetBranchReportResponse> => {
   const response = await api.get<GetBranchReportResponse>(
-    `/api/v1/Branch/GetBranchReport?branchId=${branchId}&reportId=${reportId}`
+    `/api/v1/BranchReport/GetBranchReport?branchId=${branchId}&reportId=${reportId}`
   );
   return response.data;
 };
@@ -254,7 +289,18 @@ export const deleteBranchReport = async (
   reportId: number
 ): Promise<DeleteBranchReportResponse> => {
   const response = await api.delete<DeleteBranchReportResponse>(
-    `/api/v1/Branch/DeleteBranchReport?branchId=${branchId}&reportId=${reportId}`
+    `/api/v1/BranchReport/DeleteBranchReport?branchId=${branchId}&reportId=${reportId}`
   );
   return response.data;
+};
+
+export const downloadBranchReport = async (
+  payload: GetBranchReportsRequest
+): Promise<Blob> => {
+  const response = await api.post<DownloadBranchReportResponse>(
+    '/api/v1/BranchReport/DownloadBranchReport',
+    payload,
+    { responseType: 'blob' as any }
+  );
+  return response.data as unknown as Blob;
 };

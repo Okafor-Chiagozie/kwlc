@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Download, FileText, DollarSign, TrendingUp, Calendar, Eye, Loader2, Save, Plus } from "lucide-react"
+import { Download, FileText, DollarSign, TrendingUp, Calendar, Loader2, Save, Plus } from "lucide-react"
 import AdminLayout from "@/components/admin/admin-layout"
 import ProtectedRoute from "@/components/admin/protected-route"
 import { Textarea } from "@/components/ui/textarea"
@@ -20,7 +20,8 @@ import {
   updateBranchReport,
   getBranchReports,
   getBranchReport,
-  deleteBranchReport
+  deleteBranchReport,
+  downloadBranchReport
 } from "@/services/branch"
 import { getAllBranches } from "@/services/branch"
 import {
@@ -42,6 +43,9 @@ export default function FinancePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ branchId: number; reportId: number } | null>(null)
 
   // Data States
   const [branches, setBranches] = useState<any[]>([])
@@ -183,6 +187,32 @@ export default function FinancePage() {
     }
   }
 
+  const handleExportReports = async () => {
+    try {
+      setIsExporting(true)
+      const payload: GetBranchReportsRequest = {
+        pageSize: 1000,
+        pageNumber: 1,
+        searchParams: selectedBranch ? { branchId: String(selectedBranch) } : {}
+      }
+      const blob = await downloadBranchReport(payload)
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = selectedBranch ? `branch-${selectedBranch}-reports.xlsx` : 'branch-reports.xlsx'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+      toast.success('Export started')
+    } catch (err: any) {
+      console.error('Export error:', err)
+      toast.error('Failed to export reports')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   const handleCreateReport = async () => {
     try {
       // Validate required fields
@@ -290,12 +320,15 @@ export default function FinancePage() {
     }
   }
 
-  const handleDeleteReport = async (branchId: number, reportId: number) => {
+  const openDeleteReportDialog = (branchId: number, reportId: number) => {
+    setDeleteTarget({ branchId, reportId })
+    setIsDeleteOpen(true)
+  }
+
+  const confirmDeleteReport = async () => {
+    if (!deleteTarget) return
     try {
-      if (!confirm('Are you sure you want to delete this financial report?')) return
-
-      const response = await deleteBranchReport(branchId, reportId)
-
+      const response = await deleteBranchReport(deleteTarget.branchId, deleteTarget.reportId)
       if (response.isSuccessful) {
         toast.success('Financial report deleted successfully!')
         if (selectedBranch) {
@@ -308,6 +341,9 @@ export default function FinancePage() {
     } catch (err: any) {
       console.error('Error deleting report:', err)
       toast.error(err.message || 'Failed to delete financial report')
+    } finally {
+      setIsDeleteOpen(false)
+      setDeleteTarget(null)
     }
   }
 
@@ -384,9 +420,18 @@ export default function FinancePage() {
                 ))}
               </SelectContent>
             </Select>
-            <Button className="w-full sm:w-auto">
-              <Download className="h-4 w-4 mr-2" />
-              <span className="sm:inline">Export Reports</span>
+            <Button className="w-full sm:w-auto" onClick={handleExportReports} disabled={isExporting}>
+              {isExporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  <span className="sm:inline">Export Reports</span>
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -464,20 +509,20 @@ export default function FinancePage() {
                 {reports.length > 0 ? (
                   <div className="space-y-4">
                     {reports.map((report) => (
-                      <div key={report.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-4">
-                          <div className="p-2 bg-primary/10 rounded-lg">
+                      <div key={report.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg gap-3">
+                        <div className="flex items-start sm:items-center gap-4 min-w-0">
+                          <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
                             <FileText className="h-5 w-5 text-primary" />
                           </div>
-                          <div>
-                            <h3 className="font-semibold">{report.topic || 'Service Report'}</h3>
-                            <p className="text-sm text-muted-foreground">
+                          <div className="min-w-0">
+                            <h3 className="font-semibold truncate">{report.topic || 'Service Report'}</h3>
+                            <p className="text-sm text-muted-foreground truncate">
                               Preacher: {report.preacher} | Programme: {report.programme}
                             </p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-muted-foreground truncate">
                               Date: {new Date(report.reportWeek).toLocaleDateString()} | Venue: {report.venue}
                             </p>
-                            <div className="flex gap-4 text-sm text-muted-foreground mt-1">
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
                               <span>Attendance: {report.attendance?.totalCount || 0}</span>
                               <span>Men: {report.attendance?.menCount || 0}</span>
                               <span>Women: {report.attendance?.womenCount || 0}</span>
@@ -485,7 +530,7 @@ export default function FinancePage() {
                             </div>
                           </div>
                         </div>
-                        <div className="text-right space-y-2">
+                        <div className="text-left sm:text-right space-y-2 flex-shrink-0">
                           <div className="font-semibold text-lg">
                             {formatCurrency(report.financialRecord?.totalAmount || 0)}
                           </div>
@@ -493,17 +538,13 @@ export default function FinancePage() {
                             <div>Tithes: {formatCurrency(report.financialRecord?.titheOffering || 0)}</div>
                             <div>Offerings: {formatCurrency((report.financialRecord?.normalOffering || 0) + (report.financialRecord?.testimonyOffering || 0))}</div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <Badge variant="default">Submitted</Badge>
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
                             <Button 
                               variant="outline" 
                               size="sm"
                               className="text-red-600 hover:text-red-700"
-                              onClick={() => handleDeleteReport(report.branchId, report.id)}
+                              onClick={() => openDeleteReportDialog(report.branchId, report.id)}
                             >
                               Delete
                             </Button>
@@ -971,6 +1012,39 @@ export default function FinancePage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Delete Report Confirmation Modal (matches Branch page style) */}
+      {isDeleteOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4 !mt-0" onClick={() => { setIsDeleteOpen(false); setDeleteTarget(null) }}>
+          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle className="text-red-600">Delete Financial Report</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                Are you sure you want to delete this financial report? This action cannot be undone.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsDeleteOpen(false)
+                    setDeleteTarget(null)
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={confirmDeleteReport}
+                >
+                  Delete Report
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </AdminLayout>
     </ProtectedRoute>
   )

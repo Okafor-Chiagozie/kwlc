@@ -68,9 +68,12 @@ export default function AdminLogin() {
 
       const response = await login(loginData)
 
-      if (response.isSuccessful) {
-        // Use the auth hook to handle login
-        authLogin(response.data.toString())
+      if (response.isSuccessful && response.data) {
+        const { userId, jwtToken } = response.data as any
+        if (jwtToken) {
+          localStorage.setItem('kwlc_admin_token', jwtToken)
+        }
+        authLogin(String(userId))
         
         toast.success("Login successful! Redirecting to dashboard...")
         setTimeout(() => {

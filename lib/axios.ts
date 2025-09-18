@@ -3,7 +3,7 @@ import axios from 'axios'
 
 const api = axios.create({
   // baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://kwlc-e6dhgtd9bvg6bkea.canadacentral-01.azurewebsites.net',
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://musharealestate-001-site4.jtempurl.com',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || '',
   // withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -16,7 +16,7 @@ api.interceptors.request.use(
   (config) => {
     // Add any auth tokens here if needed
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken')
+      const token = localStorage.getItem('kwlc_admin_token')
       if (token) {
         config.headers = config.headers || {}
         ;(config.headers as any).Authorization = `Bearer ${token}`

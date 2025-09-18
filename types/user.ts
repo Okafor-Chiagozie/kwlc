@@ -110,8 +110,17 @@ export interface StringResult extends StandardApiResponse<string> {}
 export interface UserViewModelResult extends StandardApiResponse<UserViewModel> {}
 export interface UserViewModelListPaginationResult extends PaginatedApiResponse<UserViewModel[]> {}
 
+// Login success payload per Swagger
+export interface LoginSuccessData {
+  userId: number;
+  email: string;
+  jwtToken: string;
+  jwtTokenExpiry: string;
+  permissions: string[];
+}
+
 // Response interfaces matching API exactly
-export interface LoginResponse extends Int32Result {}
+export interface LoginResponse extends StandardApiResponse<LoginSuccessData> {}
 export interface RegistrationResponse extends Int32Result {}
 export interface UpdateUserResponse extends StringResult {}
 export interface GetAllUsersResponse extends UserViewModelListPaginationResult {}

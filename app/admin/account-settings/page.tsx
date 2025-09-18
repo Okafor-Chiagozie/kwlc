@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -29,8 +28,7 @@ export default function AccountSettingsPage() {
     middleName: "",
     lastName: "",
     email: "",
-    phoneNumber: "",
-    bio: ""
+    phoneNumber: ""
   })
 
   // Password change state
@@ -57,8 +55,7 @@ export default function AccountSettingsPage() {
         middleName: currentUser.middleName || "",
         lastName: currentUser.lastName || "",
         email: currentUser.email || "",
-        phoneNumber: currentUser.phoneNumber || "",
-        bio: "" // Assuming bio is not in current user type, can be added later
+        phoneNumber: currentUser.phoneNumber || ""
       })
       // Fetch latest user details by id to ensure freshest data
       ;(async () => {
@@ -72,8 +69,7 @@ export default function AccountSettingsPage() {
               middleName: u.middleName || "",
               lastName: u.lastName || "",
               email: u.email || "",
-              phoneNumber: u.phoneNumber || "",
-              bio: ""
+              phoneNumber: u.phoneNumber || ""
             })
           }
         } catch {}
@@ -349,17 +345,6 @@ export default function AccountSettingsPage() {
                         placeholder="Enter your phone number"
                       />
                     </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="bio">Bio</Label>
-                    <Textarea
-                      id="bio"
-                      value={profileData.bio}
-                      onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                      placeholder="Tell us about yourself..."
-                      rows={4}
-                    />
                   </div>
 
                   <Button onClick={handleProfileSave} disabled={isSaving || isLoadingUser || !userId}>
