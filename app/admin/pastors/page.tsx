@@ -446,9 +446,16 @@ export default function PastorsPage() {
                               return minister.ministerRole || getMinisterRoleDisplay(minister.ministerRoleId) || 'No Role Assigned'
                             })()}
                           </p>
-                          <Badge variant="outline" className="mt-1">
-                            {minister.branchName || getBranchName(minister.branchId) || 'No Branch'}
-                          </Badge>
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
+                            <Badge variant="outline">
+                              {minister.branchName || getBranchName(minister.branchId) || 'No Branch'}
+                            </Badge>
+                            {(minister.isDeleted === true || minister.isActive === false) ? (
+                              <Badge variant="destructive">Inactive</Badge>
+                            ) : (
+                              <Badge className="bg-blue-600 text-white">Active</Badge>
+                            )}
+                            </div>
                         </div>
                       </div>
 

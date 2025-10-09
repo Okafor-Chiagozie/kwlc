@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+'use client'
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react'
 import { BookViewModel } from '@/types/book'
 
 export interface CartItem extends BookViewModel {
@@ -7,7 +8,22 @@ export interface CartItem extends BookViewModel {
 
 const CART_STORAGE_KEY = 'kwlc-cart'
 
-export const useCart = () => {
+type CartContextValue = {
+  cartItems: CartItem[]
+  isLoading: boolean
+  addToCart: (book: BookViewModel, quantity?: number) => void
+  removeFromCart: (bookId: string | number) => void
+  updateQuantity: (bookId: string | number, quantity: number) => void
+  clearCart: () => void
+  getItemCount: () => number
+  getSubtotal: () => number
+  isInCart: (bookId: string | number) => boolean
+  getCartItem: (bookId: string | number) => CartItem | undefined
+}
+
+const CartContext = createContext<CartContextValue | undefined>(undefined)
+
+export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -39,59 +55,38 @@ export const useCart = () => {
   const addToCart = (book: BookViewModel, quantity: number = 1) => {
     setCartItems(prev => {
       const existingItem = prev.find(item => item.id === book.id)
-      
       if (existingItem) {
-        // Update quantity if item already exists
         return prev.map(item =>
           item.id === book.id
             ? { ...item, quantity: item.quantity + quantity }
             : item
         )
       } else {
-        // Add new item to cart
         return [...prev, { ...book, quantity }]
       }
     })
   }
 
-  const removeFromCart = (bookId: string) => {
+  const removeFromCart = (bookId: string | number) => {
     setCartItems(prev => prev.filter(item => item.id !== bookId))
   }
 
-  const updateQuantity = (bookId: string, quantity: number) => {
+  const updateQuantity = (bookId: string | number, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(bookId)
       return
     }
-
-    setCartItems(prev =>
-      prev.map(item =>
-        item.id === bookId ? { ...item, quantity } : item
-      )
-    )
+    setCartItems(prev => prev.map(item => (item.id === bookId ? { ...item, quantity } : item)))
   }
 
-  const clearCart = () => {
-    setCartItems([])
-  }
+  const clearCart = () => setCartItems([])
 
-  const getItemCount = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0)
-  }
+  const getItemCount = () => cartItems.reduce((total, item) => total + item.quantity, 0)
+  const getSubtotal = () => cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
+  const isInCart = (bookId: string | number) => cartItems.some(item => item.id === bookId)
+  const getCartItem = (bookId: string | number) => cartItems.find(item => item.id === bookId)
 
-  const getSubtotal = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
-  }
-
-  const isInCart = (bookId: string) => {
-    return cartItems.some(item => item.id === bookId)
-  }
-
-  const getCartItem = (bookId: string) => {
-    return cartItems.find(item => item.id === bookId)
-  }
-
-  return {
+  const value: CartContextValue = {
     cartItems,
     isLoading,
     addToCart,
@@ -101,6 +96,16 @@ export const useCart = () => {
     getItemCount,
     getSubtotal,
     isInCart,
-    getCartItem
+    getCartItem,
   }
-} 
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>
+}
+
+export const useCart = () => {
+  const ctx = useContext(CartContext)
+  if (!ctx) throw new Error('useCart must be used within a CartProvider')
+  return ctx
+}
+
+

@@ -4,9 +4,11 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ChevronLeft, X, Menu } from "lucide-react"
+import { useCart } from "@/hooks/useCart"
 
 export default function ShopNav() {
   const [sideNavOpen, setSideNavOpen] = useState(false)
+  const { getItemCount } = useCart()
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg shadow-sm">
@@ -50,7 +52,7 @@ export default function ShopNav() {
               <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
             </svg>
             <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-              0
+              {getItemCount()}
             </span>
           </button>
 

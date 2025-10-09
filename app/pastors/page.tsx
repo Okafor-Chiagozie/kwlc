@@ -13,9 +13,12 @@ import { getAllMinisters } from "@/services/minister"
 import { getAllBranches } from "@/services/branch"
 import { MinisterViewModel } from "@/types/minister"
 import { Branch } from "@/types/branch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 
 export default function MinistersPage() {
   const [selectedBranch, setSelectedBranch] = useState("All Branches")
+  const [nameQuery, setNameQuery] = useState("")
   const [branches, setBranches] = useState<Branch[]>([])
 
   // Fetch ministers
@@ -38,31 +41,26 @@ export default function MinistersPage() {
   const ministers = ministersResponse?.data || []
   const allBranches = branchesResponse?.data || []
 
-  // Create branch options for filter
+  // Active-only ministers
+  const activeMinisters = Array.isArray(ministers) ? ministers.filter((m: any) => m?.isDeleted !== true && m?.isActive !== false) : []
+
   useEffect(() => {
-    if (allBranches.length > 0) {
-      setBranches(allBranches)
-    }
+    if (allBranches.length > 0) setBranches(allBranches)
   }, [allBranches])
 
-  // Filter ministers by selected branch
-  const filteredMinisters = selectedBranch === "All Branches" 
-    ? ministers 
-    : ministers.filter((minister: MinisterViewModel) => {
-        const ministerBranch = branches.find(branch => branch.id === minister.branchId)
-        return ministerBranch?.name === selectedBranch
-      })
+  // Filter by branch and by name
+  const filteredMinisters = activeMinisters.filter((minister: MinisterViewModel) => {
+    const matchesBranch = selectedBranch === "All Branches" ? true : (branches.find(b => b.id === minister.branchId)?.name === selectedBranch)
+    const fullName = `${minister.firstName || ''} ${minister.lastName || ''}`.toLowerCase()
+    const matchesName = nameQuery.trim() === "" ? true : fullName.includes(nameQuery.trim().toLowerCase())
+    return matchesBranch && matchesName
+  })
 
   // Helper function to check if error is "No Record found."
-  const isNoRecordsError = (error: string | null) => {
-    return error && error.toLowerCase().includes("no record found")
-  }
+  const isNoRecordsError = (error: string | null) => error && error.toLowerCase().includes("no record found")
 
   // Get branch name by ID
-  const getBranchName = (branchId: number) => {
-    const branch = branches.find(b => b.id === branchId)
-    return branch?.name || "Unknown Branch"
-  }
+  const getBranchName = (branchId: number) => branches.find(b => b.id === branchId)?.name || "Unknown Branch"
 
   // Loading state component
   const LoadingState = ({ message }: { message: string }) => (
@@ -72,65 +70,80 @@ export default function MinistersPage() {
     </div>
   )
 
+  const clearFilters = () => {
+    setSelectedBranch("All Branches")
+    setNameQuery("")
+  }
+
   return (
     <MainLayout>
-      {/* Hero Section */}
-      <section className="relative h-[50vh] flex items-center justify-center">
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: "url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg')",
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-blue-600/90" />
+      {/* Hero Section (aligned with shop hero) */}
+      <section className="relative h-[300px] overflow-hidden">
+        <div className="absolute inset-0">
+          <Image
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/previous-sunday-1-mvsBAuZ8fv6sQ9BIEJLOZ7sL3xWqBZ.png"
+            alt="Pastors Hero"
+            fill
+            className="object-cover brightness-[0.4]"
+            priority
+          />
+        </div>
 
-        <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-slide-up">Our Ministers</h1>
-          <p className="text-xl md:text-2xl opacity-90 animate-slide-up animation-delay-200">
-            Meet the dedicated leaders shepherding our community with love, wisdom, and faith
-          </p>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60"></div>
+
+        <div className="relative h-full flex items-center justify-center text-center text-white px-4 pt-20">
+          <div className="max-w-3xl mx-auto">
+            <h1 className="text-3xl md:text-5xl font-bold mb-4 leading-tight">Our Ministers</h1>
+            <p className="text-lg md:text-xl text-white/90">
+              Meet the dedicated leaders shepherding our community
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Branch Filter */}
-      <section className="py-8 bg-white border-b">
+      {/* Filter Bar: Branch dropdown + Name search + Clear */}
+      <section className="py-6 bg-white border-b">
         <div className="container mx-auto px-4">
           {branchesLoading ? (
-            <div className="flex justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
+            <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
           ) : branchesError && !isNoRecordsError(branchesError) ? (
             <div className="text-center">
               <AlertCircle className="h-6 w-6 text-red-500 mx-auto mb-2" />
               <p className="text-red-600 text-sm">Unable to load branch filters</p>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-3 justify-center">
-              <Button
-                variant={selectedBranch === "All Branches" ? "default" : "outline"}
-                onClick={() => setSelectedBranch("All Branches")}
-                className={
-                  selectedBranch === "All Branches" 
-                    ? "bg-primary text-white" 
-                    : "text-gray-600 hover:text-primary"
-                }
-              >
-                All Branches
-              </Button>
-              {branches.map((branch) => (
-                <Button
-                  key={branch.id}
-                  variant={selectedBranch === branch.name ? "default" : "outline"}
-                  onClick={() => setSelectedBranch(branch.name)}
-                  className={
-                    selectedBranch === branch.name 
-                      ? "bg-primary text-white" 
-                      : "text-gray-600 hover:text-primary"
-                  }
-                >
-                  {branch.name}
-                </Button>
-              ))}
+            <div className="w-full lg:w-[95%] mx-auto">
+              <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm text-black mb-1">Branch</label>
+                  <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                    <SelectTrigger className="w-full focus:ring-2 focus:ring-primary/40 focus:border-primary">
+                      <SelectValue placeholder="Select branch" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      <SelectItem value="All Branches">All Branches</SelectItem>
+                      {branches.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.name}>{branch.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm text-black mb-1">Search by name</label>
+                  <Input
+                    placeholder="e.g., John Doe"
+                    value={nameQuery}
+                    onChange={(e) => setNameQuery(e.target.value)}
+                    className="w-full focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                  />
+                </div>
+                <div className="sm:w-auto">
+                  <label className="block text-sm text-transparent mb-1">Clear</label>
+                  <Button variant="outline" onClick={clearFilters} className="w-full sm:w-auto text-primary border-primary hover:bg-primary/5">
+                    Clear filters
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -148,11 +161,11 @@ export default function MinistersPage() {
               <p className="text-gray-600 mb-4">{ministersError}</p>
               <Button onClick={refetchMinisters}>Try Again</Button>
             </div>
-          ) : (!ministersLoading && (ministers.length === 0 || isNoRecordsError(ministersError))) ? (
+          ) : (!ministersLoading && (filteredMinisters.length === 0 || isNoRecordsError(ministersError))) ? (
             <div className="flex flex-col items-center justify-center py-20">
               <Users className="h-12 w-12 text-gray-400 mb-4" />
               <p className="text-gray-600 mb-2">No ministers found</p>
-              <p className="text-sm text-gray-500 text-center">Please check back later or contact us for more information.</p>
+              <p className="text-sm text-gray-500 text-center">Try adjusting your filters above.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

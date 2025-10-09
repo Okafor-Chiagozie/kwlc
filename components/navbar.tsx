@@ -7,12 +7,14 @@ import { Phone, X, Menu, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
 import { useChurchInfo } from "@/components/church-info-provider"
+import { usePathname } from "next/navigation"
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [sideNavOpen, setSideNavOpen] = useState(false)
   const { getItemCount } = useCart()
   const { details } = useChurchInfo()
+  const pathname = usePathname()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -42,6 +44,7 @@ export default function Navbar() {
   ]
 
   return (
+    <>
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         scrolled ? "bg-white/80 backdrop-blur-lg shadow-sm" : "bg-transparent"
@@ -59,17 +62,22 @@ export default function Navbar() {
         </Link>
 
         <nav className="hidden lg:flex items-center gap-8">
-          {navLinks.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`text-sm font-medium transition-colors ${
-                scrolled ? "text-gray-900 hover:text-primary" : "text-white hover:text-primary/90"
-              }`}
-            >
-              {item.name}
-            </Link>
-          ))}
+          {navLinks.map((item) => {
+            const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`relative pb-1 border-b-2 ${
+                  isActive ? "border-primary" : "border-transparent hover:border-primary/60"
+                } text-sm font-medium transition-colors ${
+                  scrolled ? "text-gray-900 hover:text-primary" : "text-white hover:text-primary/90"
+                }`}
+              >
+                {item.name}
+              </Link>
+            )
+          })}
         </nav>
 
         <div className="flex items-center gap-4">          
@@ -155,9 +163,9 @@ export default function Navbar() {
             </button>
           </div> */}
 
-          <Button className="bg-primary hover:bg-primary/90 text-white">
-            <Link href={'/donations'}>Donate</Link>
-          </Button>
+          <Link href={'/donations'}>
+            <Button className="bg-primary hover:bg-primary/90 text-white">Donate</Button>
+          </Link>
 
           <button
             className={`lg:hidden ${scrolled ? "text-gray-900" : "text-white"}`}
@@ -168,64 +176,65 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Side Navigation for mobile */}
-      <div
-        className={`fixed inset-0 bg-black/50 z-50 lg:hidden transition-opacity duration-300 ${
-          sideNavOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
-        onClick={() => setSideNavOpen(false)}
-      >
-        <div
-          className={`absolute top-0 right-0 h-full w-[280px] bg-white shadow-xl transition-transform duration-300 ${
-            sideNavOpen ? "translate-x-0" : "translate-x-full"
-          }`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between p-4 border-b">
-            <div className="flex items-center gap-3">
-              <div className="relative w-8 h-8">
-                <Image
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/KWLC%20Logo%201-aSNedKIy42avfHJjhU8zekfvcwmgKh.png"
-                  alt="Kingdom Ways Living Church Logo"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <span className="font-bold text-gray-900">{details.name || "KWLC"}</span>
-            </div>
-            <button className="p-2 rounded-full hover:bg-gray-100 text-gray-500" onClick={() => setSideNavOpen(false)}>
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          <nav className="p-4">
-            <ul className="space-y-1">
-              {navLinks.map((item) => (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className="flex items-center py-3 px-4 rounded-md text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors"
-                    onClick={() => setSideNavOpen(false)}
-                  >
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-6 pt-6 border-t">
-              <Button className="w-full bg-primary hover:bg-primary/90 text-white mb-3">
-                <Link href={'/donations'}>Donate</Link>
-              </Button>
-              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-md">
-                <Phone className="h-5 w-5 text-primary" />
-                {/* <span className="text-gray-700 text-sm">+234 70 433 2832</span> */}
-                <a href={details.phoneNumber ? `tel:${details.phoneNumber}` : "tel:+234704332832"} className="text-gray-700 text-sm">{details.phoneNumber || "+234 70 433 2832"}</a>
-              </div>
-            </div>
-          </nav>
-        </div>
-      </div>
     </header>
+
+    {/* Side Navigation for mobile - moved outside header */}
+    <div
+      className={`fixed inset-0 bg-black/50 z-[100] lg:hidden transition-opacity duration-300 ${
+        sideNavOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}
+      onClick={() => setSideNavOpen(false)}
+    >
+      <div
+        className={`absolute top-0 right-0 h-full w-[280px] bg-white shadow-xl transition-transform duration-300 ${
+          sideNavOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center gap-3">
+            <div className="relative w-8 h-8">
+              <Image
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/KWLC%20Logo%201-aSNedKIy42avfHJjhU8zekfvcwmgKh.png"
+                alt="Kingdom Ways Living Church Logo"
+                fill
+                className="object-contain"
+              />
+            </div>
+            <span className="font-bold text-gray-900">{details.name || "KWLC"}</span>
+          </div>
+          <button className="p-2 rounded-full hover:bg-gray-100 text-gray-500" onClick={() => setSideNavOpen(false)}>
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <nav className="p-4">
+          <ul className="space-y-1">
+            {navLinks.map((item) => (
+              <li key={item.name}>
+                <Link
+                  href={item.href}
+                  className="flex items-center py-3 px-4 rounded-md text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors"
+                  onClick={() => setSideNavOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-6 pt-6 border-t">
+            <Button className="w-full bg-primary hover:bg-primary/90 text-white mb-3">
+              <Link href={'/donations'}>Donate</Link>
+            </Button>
+            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-md">
+              <Phone className="h-5 w-5 text-primary" />
+              <a href={details.phoneNumber ? `tel:${details.phoneNumber}` : "tel:+234704332832"} className="text-gray-700 text-sm">{details.phoneNumber || "+234 70 433 2832"}</a>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </div>
+    </>
   )
 }

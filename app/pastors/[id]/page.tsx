@@ -184,19 +184,44 @@ export default function PastorDetailPage({ params }: { params: Promise<{ id: str
   return (
     <MainLayout>
       {/* Back Button */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4">
-          <Link href="/pastors">
-            <Button variant="ghost" className="text-primary hover:text-primary/80">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Pastors
-            </Button>
-          </Link>
+      <div className="hidden">
+        <div className="container mx-auto px-4 py-2">
+          <div className="flex justify-end">
+            <Link href="/pastors">
+              <Button variant="ghost" className="text-primary hover:text-primary/80">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Pastors
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
+ 
+      {/* Hero Section (match single branch style) */}
+      <section className="relative bg-gradient-to-r from-gray-900 to-primary/90 pt-28 pb-16 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden opacity-20 z-0">
+          <div className="absolute top-0 left-0 w-full h-full bg-[url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/previous-sunday-1-mvsBAuZ8fv6sQ9BIEJLOZ7sL3xWqBZ.png')] bg-cover bg-center"></div>
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-primary/40"></div>
+
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="flex justify-start mb-3">
+            <Link href="/pastors" className="inline-flex items-center gap-2 text-white/80 hover:text-white">
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Pastors</span>
+            </Link>
+          </div>
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-3">{`${pastor.firstName} ${pastor.lastName}`}</h1>
+          <p className="text-white/80 max-w-2xl">
+            {(pastor.ministerRole || "Pastor")} {pastor.branchName ? `• ${pastor.branchName}` : ""}
+          </p>
+        </div>
+
+        <div className="absolute bottom-0 left-0 w-full h-16 bg-white" style={{ clipPath: "polygon(0 100%, 100% 100%, 100% 0)" }}></div>
+      </section>
 
       {/* Pastor Profile Header */}
-      <section className="py-16 bg-white">
+      <section className="pt-6 pb-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* Pastor Image */}

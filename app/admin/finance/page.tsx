@@ -428,8 +428,8 @@ export default function FinancePage() {
                 </>
               ) : (
                 <>
-                  <Download className="h-4 w-4 mr-2" />
-                  <span className="sm:inline">Export Reports</span>
+              <Download className="h-4 w-4 mr-2" />
+              <span className="sm:inline">Export Reports</span>
                 </>
               )}
             </Button>

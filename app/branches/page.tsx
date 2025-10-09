@@ -58,6 +58,7 @@ export default function BranchesPage() {
   }, [])
 
   const branches = branchesResponse?.data || []
+  const visibleBranches = Array.isArray(branches) ? branches.filter((b: any) => b?.isDeleted !== true) : []
   const totalBranches = branchesResponse?.totalCount || 0
 
   // Helper function to check if error is "No Record found.", so it will use empty state instead of throwing error
@@ -94,22 +95,35 @@ export default function BranchesPage() {
   return (
     <MainLayout>
       <div className="min-h-screen bg-gray-50">
-        {/* Hero Section - Always shown */}
-        <section className="bg-gradient-to-r from-primary to-primary/80 text-white py-20">
-          <div className="container mx-auto px-4 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">Our Branches</h1>
-            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-              Kingdom Ways Living Church has grown to serve communities across Nigeria, spreading the gospel and
-              building strong faith communities.
-            </p>
-            <div className="flex flex-wrap justify-center gap-8 text-center">
-              <div>
-                <div className="text-3xl font-bold">{branchesLoading ? '...' : totalBranches}</div>
-                <div className="text-sm opacity-90">Branches</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold">14</div>
-                <div className="text-sm opacity-90">Years of Service</div>
+        {/* Hero Section (aligned with shop hero) */}
+        <section className="relative h-[300px] overflow-hidden">
+          <div className="absolute inset-0">
+            <Image
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/previous-sunday-1-mvsBAuZ8fv6sQ9BIEJLOZ7sL3xWqBZ.png"
+              alt="Branches Hero"
+              fill
+              className="object-cover brightness-[0.4]"
+              priority
+            />
+          </div>
+
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60"></div>
+
+          <div className="relative h-full flex items-center justify-center text-center text-white px-4 pt-20">
+            <div className="max-w-3xl mx-auto">
+              <h1 className="text-3xl md:text-5xl font-bold mb-4 leading-tight">Our Branches</h1>
+              <p className="text-lg md:text-xl text-white/90">
+                Kingdom Ways Living Church has grown to serve communities across Nigeria, spreading the gospel and building strong faith communities.
+              </p>
+              <div className="mt-6 flex flex-wrap justify-center gap-8 text-center">
+                <div>
+                  <div className="text-3xl font-bold">{branchesLoading ? '...' : totalBranches}</div>
+                  <div className="text-sm text-white/90">Branches</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold">14</div>
+                  <div className="text-sm text-white/90">Years of Service</div>
+                </div>
               </div>
             </div>
           </div>
@@ -133,9 +147,9 @@ export default function BranchesPage() {
             {isEmptyState && <EmptyState />}
 
             {/* Branches Grid - Only show when we have data and no errors (except no records) */}
-            {!branchesLoading && (!branchesError || isNoRecordsError(branchesError)) && branches.length > 0 && (
+            {!branchesLoading && (!branchesError || isNoRecordsError(branchesError)) && visibleBranches.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {branches.map((branch) => (
+                {visibleBranches.map((branch) => (
                   <Card
                     key={branch.id}
                     className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
@@ -213,7 +227,7 @@ export default function BranchesPage() {
               <Button variant="secondary" size="lg">
                 Find Nearest Branch
               </Button>
-              <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary">
+              <Button variant="outline" size="lg" className="bg-white text-primary border-white hover:bg-white hover:text-primary">
                 Contact Us
               </Button>
             </div>

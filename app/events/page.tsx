@@ -10,7 +10,7 @@ import MainLayout from "@/components/main-layout"
 import { useApi } from "@/hooks/useApi"
 import { searchEvent, getFeaturedEvent } from "@/services/event"
 import { getAllBranches } from "@/services/branch"
-import { Event } from "@/types/event"
+import { EventViewModel } from "@/types/event"
 import { Branch } from "@/types/branch"
 
 export default function EventsPage() {
@@ -65,7 +65,7 @@ export default function EventsPage() {
   }, {})
 
   // Filter events based on search and date
-  const filteredEvents = events.filter((event: Event) => {
+  const filteredEvents = events.filter((event: EventViewModel) => {
     const matchesSearch = searchQuery
       ? event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         event.description.toLowerCase().includes(searchQuery.toLowerCase())
@@ -99,7 +99,7 @@ export default function EventsPage() {
 
   return (
     <MainLayout>
-      <div className="min-h-screen pb-16">
+      <div className="min-h-screen pb-0">
         {/* Hero Section */}
         <section className="relative bg-gradient-to-r from-gray-900 to-primary/90 pt-32 pb-20 overflow-hidden">
           <div className="absolute inset-0 overflow-hidden opacity-20 z-0">
@@ -234,7 +234,7 @@ export default function EventsPage() {
             {/* Events List */}
             {!eventsLoading && !shouldShowEventsError && (
               <div className="space-y-8">
-                {filteredEvents.map((event: Event) => (
+                {filteredEvents.map((event: EventViewModel) => (
                   <div
                     key={event.id}
                     className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:translate-y-[-4px] group"
@@ -296,7 +296,7 @@ export default function EventsPage() {
                               <div>
                                 <p className="text-sm text-gray-500 mb-0.5">Location</p>
                                 <p className="font-medium text-gray-900">
-                                  {branchMap[event.branchId] || event.location}
+                                  {(event.branchId != null ? branchMap[event.branchId] : undefined) || event.location}
                                 </p>
                                 <p className="text-sm text-gray-500 mt-1">{event.address}</p>
                               </div>
@@ -451,7 +451,7 @@ export default function EventsPage() {
                       <div>
                         <p className="text-sm text-gray-500">Location</p>
                         <p className="font-medium text-gray-900">
-                          {branchMap[featuredEvent.branchId] || featuredEvent.location}
+                          {(featuredEvent.branchId != null ? branchMap[featuredEvent.branchId] : undefined) || featuredEvent.location}
                         </p>
                         <p className="text-sm text-gray-500 mt-1">{featuredEvent.address}</p>
                       </div>

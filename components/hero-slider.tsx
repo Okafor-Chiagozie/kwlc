@@ -44,7 +44,14 @@ export default function HeroSlider() {
     }
   ]
 
-  // Fallback image when API doesn't return carousel images
+  // Fallback images from public when API doesn't return carousel images
+  const fallbackImages = [
+    "/banner-1.png",
+    "/banner-2.png",
+    "/banner-3.png",
+  ]
+
+  // Absolute fallback image (remote) for any individual missing image
   const fallbackImage = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
 
   // Transform API data to slides format - combine API images with static text
@@ -56,12 +63,12 @@ export default function HeroSlider() {
         subtitle: slideContent[index]?.subtitle || "Visit Your local church and become a part of our flock by contributing to the community in anyway you possibly can",
         label: slideContent[index]?.label || "Living church",
       }))
-    : slideContent.map((content, index) => ({
+    : fallbackImages.map((img, index) => ({
         id: index + 1,
-        image: fallbackImage,
-        title: content.title,
-        subtitle: content.subtitle,
-        label: content.label,
+        image: img,
+        title: slideContent[index]?.title || "Join the prayer today",
+        subtitle: slideContent[index]?.subtitle || "Visit Your local church and become a part of our flock by contributing to the community in anyway you possibly can",
+        label: slideContent[index]?.label || "Living church",
       }))
 
   // Use API slides only - no dummy data fallback
@@ -189,14 +196,14 @@ export default function HeroSlider() {
               <div className="relative h-full flex flex-col items-center justify-center text-center text-white px-4 sm:px-6 md:px-8 w-full mx-auto">
                 <div className="overflow-hidden mb-2 sm:mb-4">
                   <span
-                    className="inline-block text-xs sm:text-sm md:text-base uppercase tracking-wider bg-primary/80 px-2 sm:px-3 py-1 rounded animate-slide-down opacity-0"
+                    className="inline-block text-sm sm:text-base md:text-lg uppercase tracking-wider bg-primary/80 px-2 sm:px-3 py-1 rounded animate-slide-down opacity-0"
                     style={{ animationDelay: "300ms", animationFillMode: "forwards" }}
                   >
                     {slide.label}
                   </span>
                 </div>
 
-                <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight mb-3 sm:mb-6 drop-shadow-lg">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-3 sm:mb-6 drop-shadow-lg">
                   <AnimatedText text={slide.title} wordDelay={80} baseDelay={500} className="leading-tight" />
                 </h1>
 
@@ -205,14 +212,14 @@ export default function HeroSlider() {
                     text={slide.subtitle}
                     wordDelay={40}
                     baseDelay={800}
-                    className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90"
+                    className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90"
                   />
                 </div>
 
                 <div className="overflow-hidden">
                   <Button
                     size="lg"
-                    className="bg-white text-black hover:bg-gray-100 animate-button-reveal opacity-0 text-sm sm:text-base"
+                    className="bg-white text-black hover:bg-gray-100 animate-button-reveal opacity-0 text-base sm:text-lg"
                     style={{ animationDelay: "1200ms", animationFillMode: "forwards" }}
                   >
                     <a href="#experience">See More</a>

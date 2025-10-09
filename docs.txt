@@ -7545,19 +7545,13 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-
-              }
+              "schema": { }
             },
             "text/json": {
-              "schema": {
-
-              }
+              "schema": { }
             },
             "application/*+json": {
-              "schema": {
-
-              }
+              "schema": { }
             }
           }
         },
@@ -9387,10 +9381,6 @@
       "AddBookOrderViewModel": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
           "name": {
             "type": "string",
             "nullable": true
@@ -9601,9 +9591,6 @@
             "type": "string",
             "nullable": true
           },
-          "currencyId": {
-            "$ref": "#/components/schemas/Currency"
-          },
           "donorName": {
             "type": "string",
             "nullable": true
@@ -9615,13 +9602,13 @@
             "type": "string",
             "nullable": true
           },
+          "currencyId": {
+            "$ref": "#/components/schemas/Currency"
+          },
           "churchProjectId": {
             "type": "integer",
             "format": "int32",
             "nullable": true
-          },
-          "purposeCode": {
-            "$ref": "#/components/schemas/PurposeCode"
           },
           "donationTypeId": {
             "$ref": "#/components/schemas/DonationType"
@@ -10976,46 +10963,17 @@
       "ChurchProjectPageViewModel": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "location": {
-            "type": "string",
-            "nullable": true
-          },
-          "targetAmount": {
-            "type": "number",
-            "format": "double"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "imageUrl": {
-            "type": "string",
-            "nullable": true
-          },
-          "amountRaised": {
-            "type": "number",
-            "format": "double"
-          },
-          "isDeleted": {
-            "type": "boolean"
-          },
-          "dateDeleted": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
           "carouselImages": {
             "type": "array",
             "items": {
               "type": "string"
+            },
+            "nullable": true
+          },
+          "porjects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChurchProjectViewModel"
             },
             "nullable": true
           }
@@ -11242,9 +11200,6 @@
             "type": "string",
             "nullable": true
           },
-          "currencyId": {
-            "$ref": "#/components/schemas/Currency"
-          },
           "donorName": {
             "type": "string",
             "nullable": true
@@ -11256,13 +11211,13 @@
             "type": "string",
             "nullable": true
           },
+          "currencyId": {
+            "$ref": "#/components/schemas/Currency"
+          },
           "churchProjectId": {
             "type": "integer",
             "format": "int32",
             "nullable": true
-          },
-          "purposeCode": {
-            "$ref": "#/components/schemas/PurposeCode"
           },
           "donationTypeId": {
             "$ref": "#/components/schemas/DonationType"
@@ -12898,7 +12853,7 @@
             "type": "number",
             "format": "double"
           },
-          "currency": {
+          "currencyId": {
             "$ref": "#/components/schemas/Currency"
           },
           "name": {
@@ -14044,7 +13999,7 @@
   },
   "security": [
     {
-      "bearer": []
+      "bearer": [ ]
     }
   ]
 }

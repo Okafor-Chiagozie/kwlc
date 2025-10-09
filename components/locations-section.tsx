@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { MapPin, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useApi } from "@/hooks/useApi"
@@ -44,9 +45,12 @@ export default function LocationsSection() {
 
 
   // Transform API data to location format
-  const locations = branchesResponse?.isSuccessful && branchesResponse.data
-    ? branchesResponse.data.map(transformBranchToLocation)
+  const allLocations = branchesResponse?.isSuccessful && branchesResponse.data
+    ? branchesResponse.data
+        .filter((b: Branch) => !b.isDeleted)
+        .map(transformBranchToLocation)
     : []
+  const locations = allLocations.slice(0, 3)
 
   const LoadingState = () => (
     <div className="flex flex-col items-center justify-center py-20">
@@ -202,6 +206,14 @@ export default function LocationsSection() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            <div className="mt-12 text-center">
+              <Link href="/branches">
+                <Button className="bg-primary hover:bg-primary/90 text-white">
+                  View more branches
+                </Button>
+              </Link>
             </div>
 
             <div className="mt-16 text-center">

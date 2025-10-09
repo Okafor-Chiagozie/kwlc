@@ -9,7 +9,7 @@ import { getBranchDetails, getWeeklyActivities } from "@/services/branch"
 import { getBranchMinisters } from "@/services/minister"
 import type { Branch, WeeklyActivityViewModel } from "@/types/branch"
 import type { MinisterViewModel } from "@/types/minister"
-import { MapPin, Phone, Mail, Loader2, AlertCircle } from "lucide-react"
+import { MapPin, Phone, Mail, Loader2, AlertCircle, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function BranchDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -114,6 +114,12 @@ export default function BranchDetailPage({ params }: { params: Promise<{ id: str
               <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-primary/40"></div>
 
               <div className="container mx-auto px-4 relative z-10">
+                <div className="flex justify-start mb-3">
+                  <Link href="/branches" className="inline-flex items-center gap-2 text-white/80 hover:text-white">
+                    <ArrowLeft className="h-4 w-4" />
+                    <span>Back to Branches</span>
+                  </Link>
+                </div>
                 <h1 className="text-3xl md:text-5xl font-bold text-white mb-3">{branch.name}</h1>
                 <p className="text-white/80 max-w-2xl">Welcome to our {branch.name} branch — a warm, vibrant family of believers growing together in faith and love. We’d be delighted to have you worship with us.</p>
               </div>

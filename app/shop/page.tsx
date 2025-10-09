@@ -10,8 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider"
 import MainLayout from "@/components/main-layout"
 import { useApi } from "@/hooks/useApi"
-import { getBooks } from "@/services/book"
-import { BookViewModel, BookCategory } from "@/types/book"
+import { getBooks, getBookSummary } from "@/services/book"
+import { BookViewModel, BookCategory, GetBookSummaryResponse } from "@/types/book"
 import { useCart } from "@/hooks/useCart"
 
 
@@ -42,6 +42,14 @@ export default function ShopPage() {
     pageNumber: 1,
     searchParams: searchQuery ? { search: searchQuery } : undefined
   }), [searchQuery])
+
+  // Fetch summary for sidebar (featured, top books, category counts)
+  const {
+    data: summaryResponse,
+    loading: summaryLoading,
+    error: summaryError,
+    refetch: refetchSummary
+  } = useApi<GetBookSummaryResponse>(() => getBookSummary(), [])
 
   const books = booksResponse?.data || []
   const shouldShowError = booksError && !isNoRecordsError(booksError)
@@ -120,27 +128,14 @@ export default function ShopPage() {
           <div className="relative h-full flex items-center justify-center text-center text-white px-4 pt-20">
             <div className="max-w-3xl mx-auto">
               <h1 className="text-3xl md:text-5xl font-bold mb-4 leading-tight">Spiritual Books & Resources</h1>
-              <p className="text-lg md:text-xl text-white/90 mb-6">
+              <p className="text-lg md:text-xl text-white/90">
                 Discover inspiring books that will strengthen your faith and deepen your relationship with God
               </p>
-              <Button className="bg-primary hover:bg-primary/90 text-white px-8 py-3">Explore Collection</Button>
             </div>
           </div>
         </section>
 
-        {/* Breadcrumb */}
-        <section className="bg-white border-b border-gray-200 py-4">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-              <Link href="/" className="hover:text-primary transition-colors">
-                Home
-              </Link>
-              <span>/</span>
-              <span className="text-primary font-medium">Shop</span>
-            </div>
-            <h2 className="text-xl font-semibold text-primary">Shop Now</h2>
-          </div>
-        </section>
+        
 
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -398,36 +393,34 @@ export default function ShopPage() {
                   </div>
                 </div>
 
-                {/* Top Products */}
+                {/* Top Books (from GetBooks) */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <h3 className="font-bold text-gray-900 mb-4 uppercase tracking-wide">Top Product</h3>
-
+                  <h3 className="font-bold text-gray-900 mb-4 uppercase tracking-wide">Top Books</h3>
                   <div className="space-y-4">
                     {books.slice(0, 3).map((book: BookViewModel) => (
-                                              <div key={book.id} className="flex gap-3 group">
-                        <div className="relative w-16 h-20 flex-shrink-0 rounded-md overflow-hidden">
+                      <div key={book.id} className="flex gap-3 group">
+                        <div className="relative w-16 h-20 flex-shrink-0 rounded-md overflow-visible bg-gray-100">
                           <Image
-                              src={book.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
-                              alt={book.title}
+                            src={book.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
+                            alt={book.title}
                             fill
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
                           />
-                            
-                            {/* Small In Cart Badge for Sidebar */}
-                            {isInCart(book.id) && (
-                              <div className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                                {getCartItem(book.id)?.quantity}
-                              </div>
-                            )}
+                          {/* Small In Cart Badge for Sidebar */}
+                          {isInCart(book.id) && (
+                            <div className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                              {getCartItem(book.id)?.quantity}
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-900 group-hover:text-primary transition-colors cursor-pointer">
-                              {book.title}
+                          <h4 className="font-medium text-gray-900 group-hover:text-primary transition-colors cursor-pointer line-clamp-1">
+                            {book.title}
                           </h4>
-                            <p className="text-sm text-gray-600 mb-1">by {book.author}</p>
-                            <p className="text-sm font-semibold text-primary">
-                              {book.priceDisplay || `₦${book.price.toLocaleString()}`}
+                          <p className="text-sm text-gray-600 mb-1 line-clamp-1">by {book.author}</p>
+                          <p className="text-sm font-semibold text-primary">
+                            {book.priceDisplay || `₦${book.price.toLocaleString()}`}
                           </p>
                         </div>
                       </div>
@@ -440,24 +433,25 @@ export default function ShopPage() {
                   <h3 className="font-bold text-gray-900 mb-4 uppercase tracking-wide">Categories</h3>
 
                   <div className="space-y-2">
-                    {categories.map((category) => (
+                    {(summaryResponse?.data?.bookCategoryCount || categories).map((category: any) => (
                       <div
-                        key={category.name}
+                        key={category.group || category.name}
                         className={`cursor-pointer p-2 rounded transition-colors ${
-                          categoryFilter === (category.name === "All" ? "all" : category.name)
+                          categoryFilter === (category.group || (category.name === "All" ? "all" : category.name))
                             ? "bg-primary/10 text-primary"
                             : "hover:bg-gray-50"
                         }`}
                         onClick={() => {
-                          setCategoryFilter(category.name === "All" ? "all" : category.name)
+                          const key = category.group || category.name
+                          setCategoryFilter(key === "All" ? "all" : key)
                           setCurrentPage(1) // Reset to first page when filter changes
                         }}
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-gray-700 hover:text-primary transition-colors">
-                          {category.name}
+                          {category.group || category.name}
                           </span>
-                        <span className="text-sm text-gray-500">({category.count})</span>
+                        <span className="text-sm text-gray-500">({category.numberOfBooks ?? category.count})</span>
                         </div>
                       </div>
                     ))}
@@ -468,10 +462,10 @@ export default function ShopPage() {
                 <div className="bg-gradient-to-br from-primary to-primary/80 rounded-lg p-6 text-white">
                   <h3 className="font-bold mb-2">Featured Book</h3>
                   <p className="text-sm text-white/90 mb-4">
-                    "Listen Believe" - A powerful collection of faith-building messages
+                    {(summaryResponse?.data?.featuredBook?.title) ? summaryResponse.data.featuredBook.title : "Featured title coming soon"}
                   </p>
                   <Link href="/checkout">
-                    <Button className="bg-primary hover:bg-primary/90 text-white">Purchase Now</Button>
+                    <Button className="bg-white text-primary hover:bg-white/90">Purchase Now</Button>
                   </Link>
                 </div>
               </div>

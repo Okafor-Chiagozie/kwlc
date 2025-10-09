@@ -84,12 +84,28 @@ export interface BookViewModel {
   categoryId: BookCategory;
 }
 
+// Enums from API (Swagger components)
+export type Currency =
+  | "NGN"
+  | "USD"
+  | "EUR"
+  | "GBP"
+  | "CAD"
+  | "AUD"
+  | "JPY"
+  | "CNY"
+  | "INR"
+  | "ZAR";
+
+export type PaymentMethod = "card" | "bank_transfer" | "cash";
+
 // AddBookOrderViewModel from API
 export interface AddBookOrderViewModel {
-  customerName: string;
-  customerEmail: string;
-  bookIds: number[];
-  paymentMethodId: string;
+  name?: string | null;
+  customerEmail?: string | null;
+  bookIds?: number[] | null;
+  currency: Currency;
+  paymentMethodId: PaymentMethod;
 }
 
 // OrderItemViewModel from API
@@ -167,7 +183,19 @@ export interface AddBookResponse extends BookViewModelListResult {}
 export interface UpdateBookResponse extends BookViewModelListResult {}
 export interface GetBooksResponse extends BookViewModelListResult {}
 export interface GetBookResponse extends BookViewModelListResult {}
-export interface GetBookSummaryResponse extends BookViewModelListResult {}
+export interface BookCategoryCountItem {
+  group: string;
+  numberOfBooks: number;
+  groupId: string; // e.g., Devotional, SpiritualGrowth
+}
+
+export interface BookSummaryData {
+  featuredBook?: BookViewModel | null;
+  topBooksSummary?: BookViewModel[] | null;
+  bookCategoryCount?: BookCategoryCountItem[] | null;
+}
+
+export interface GetBookSummaryResponse extends StandardApiResponse<BookSummaryData> {}
 export interface DeleteBookResponse extends Int32ListResult {}
 
 export interface InitiateOrderResponse extends StandardApiResponse<any> {}

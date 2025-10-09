@@ -12,6 +12,11 @@ export interface StandardApiResponse<T = any> {
   responseCode: string;
 }
 
+export interface PaginatedApiResponse<T = any> extends StandardApiResponse<T> {
+  totalCount: number;
+  totalPages: number;
+}
+
 export interface SearchFilter {
   pageSize: number;
   pageNumber: number;
@@ -69,6 +74,12 @@ export interface ChurchProjectViewModel {
   galleryImages: string[];
 }
 
+// GetProjects data shape from live API (note: 'porjects' key as returned)
+export interface ChurchProjectGetProjectsData {
+  carouselImages: string[];
+  porjects: ChurchProjectPageViewModel[];
+}
+
 // AddProjectImageViewModel from API
 export interface AddProjectImageViewModel {
   imageTitle: string;
@@ -109,8 +120,8 @@ export interface ProjectImageViewModelResult extends StandardApiResponse<Project
 
 // Response interfaces matching API exactly
 export interface CreateOrUpdateProjectResponse extends Int32ListResult {}
-export interface GetProjectsResponse extends ChurchProjectPageViewModelListResult {}
-export interface SearchProjectsResponse extends ChurchProjectPageViewModelListResult {}
+export interface GetProjectsResponse extends StandardApiResponse<ChurchProjectGetProjectsData> {}
+export interface SearchProjectsResponse extends PaginatedApiResponse<ChurchProjectGetProjectsData> {}
 export interface GetProjectResponse extends ChurchProjectViewModelResult {}
 export interface DeleteProjectResponse extends Int32Result {}
 

@@ -5,26 +5,19 @@ import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ShoppingCart, Minus, Plus, X } from "lucide-react"
+import { ShoppingCart, Minus, Plus, Trash } from "lucide-react"
 import MainLayout from "@/components/main-layout"
 import { useCart } from "@/hooks/useCart"
 import { useChurchInfo } from "@/components/church-info-provider"
+import { initiateOrder } from "@/services/bookPurchase"
+import type { AddBookOrderRequest } from "@/types/book"
 
 export default function CheckoutPage() {
   const { details, socials } = useChurchInfo()
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    country: "Nigeria",
-    streetAddress: "",
-    apartmentNumber: "",
-    townCity: "",
-    state: "",
-    phone: "",
     email: "",
-    orderNote: "",
   })
 
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
@@ -59,7 +52,7 @@ export default function CheckoutPage() {
       return
     }
 
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
+    if (!formData.firstName || !formData.lastName || !formData.email) {
       alert("Please fill in all required fields")
       return
     }
@@ -67,23 +60,27 @@ export default function CheckoutPage() {
     setIsPlacingOrder(true)
     
     try {
-      // Here you would integrate with the book purchase API
-      // For now, we'll just simulate the order
-      console.log("Order placed:", { 
-        customer: formData, 
-        items: cartItems, 
-        total,
-        itemCount: getItemCount()
-      })
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      alert("Order placed successfully! You will receive a confirmation email shortly.")
-      
-      // In a real app, you'd redirect to a success page or order confirmation
-      // and clear the cart after successful payment processing
-      
+      // Build InitiateOrder payload per Swagger (AddBookOrderViewModel)
+      const payload: AddBookOrderRequest = {
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
+        customerEmail: formData.email,
+        // Map cart item ids to numbers if possible
+        bookIds: cartItems
+          .map((i) => Number(i.id))
+          .filter((n) => Number.isFinite(n)) as number[],
+        currency: "NGN",
+        paymentMethodId: "card",
+      }
+
+      const resp = await initiateOrder(payload)
+
+      if (resp?.isSuccessful) {
+        alert(resp.responseMessage || "Order initiated successfully.")
+        // Optionally navigate to a payment/confirmation step if provided by API
+      } else {
+        const msg = resp?.responseMessage || "Failed to initiate order."
+        alert(msg)
+      }
     } catch (error) {
       console.error("Order placement error:", error)
       alert("There was an error placing your order. Please try again.")
@@ -95,8 +92,26 @@ export default function CheckoutPage() {
   return (
     <MainLayout>
       <div className="min-h-screen bg-gray-50">
+        {/* Hero Section (match single pastor style) */}
+        <section className="relative bg-gradient-to-r from-gray-900 to-primary/90 pt-28 pb-16 overflow-hidden">
+          <div className="absolute inset-0 overflow-hidden opacity-20 z-0">
+            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/previous-sunday-1-mvsBAuZ8fv6sQ9BIEJLOZ7sL3xWqBZ.png')] bg-cover bg-center"></div>
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-primary/40"></div>
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="flex justify-start mb-3">
+              <Link href="/shop" className="inline-flex items-center gap-2 text-white/80 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                <span>Back to Shop</span>
+              </Link>
+            </div>
+            <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">Checkout</h1>
+            <p className="text-white/80">Complete your order securely</p>
+          </div>
+          <div className="absolute bottom-0 left-0 w-full h-16 bg-white" style={{ clipPath: "polygon(0 100%, 100% 100%, 100% 0)" }}></div>
+        </section>
         {/* Breadcrumb */}
-        <section className="bg-white border-b border-gray-200 pt-24 pb-6">
+        <section className="bg-white border-b border-gray-200 pt-6 pb-6">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
               <span>Home</span>
@@ -111,11 +126,15 @@ export default function CheckoutPage() {
 
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Billing Details */}
+            {/* Minimal Customer Details */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-8">BILLING DETAILS</h2>
+              <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full text-primary text-sm font-medium">
+                <span className="w-2 h-2 bg-primary rounded-full"></span>
+                <span>Billing</span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">BILLING DETAILS</h2>
 
-              <div className="space-y-6">
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
@@ -136,72 +155,6 @@ export default function CheckoutPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-                  <Select value={formData.country} onValueChange={(value) => handleInputChange("country", value)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Nigeria">Nigeria</SelectItem>
-                      <SelectItem value="Ghana">Ghana</SelectItem>
-                      <SelectItem value="Kenya">Kenya</SelectItem>
-                      <SelectItem value="South Africa">South Africa</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Street Address</label>
-                  <Input
-                    placeholder="House Number and Street name"
-                    value={formData.streetAddress}
-                    onChange={(e) => handleInputChange("streetAddress", e.target.value)}
-                    className="w-full mb-3"
-                  />
-                  <Input
-                    placeholder="Apartment Number"
-                    value={formData.apartmentNumber}
-                    onChange={(e) => handleInputChange("apartmentNumber", e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Town/City</label>
-                  <Input
-                    value={formData.townCity}
-                    onChange={(e) => handleInputChange("townCity", e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
-                  <Select value={formData.state} onValueChange={(value) => handleInputChange("state", value)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select an option" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Lagos">Lagos</SelectItem>
-                      <SelectItem value="Abuja">Abuja</SelectItem>
-                      <SelectItem value="Rivers">Rivers</SelectItem>
-                      <SelectItem value="Kano">Kano</SelectItem>
-                      <SelectItem value="Ogun">Ogun</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                  <Input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-
-                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                   <Input
                     type="email"
@@ -209,36 +162,22 @@ export default function CheckoutPage() {
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     className="w-full"
                   />
+                  <p className="text-xs text-gray-500 mt-2">We’ll send your receipt and download link to this email.</p>
                 </div>
               </div>
             </div>
 
-            {/* Ship to Different Address & Order Summary */}
+            {/* Order Summary */}
             <div className="space-y-8">
-              {/* Ship to Different Address */}
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-8">SHIP TO A DIFFERENT ADDRESS</h2>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Order Note (Optional)</label>
-                  <Textarea
-                    placeholder="Note about your order, e.g. Special note for a delivery"
-                    value={formData.orderNote}
-                    onChange={(e) => handleInputChange("orderNote", e.target.value)}
-                    className="w-full min-h-[120px]"
-                  />
-                </div>
-              </div>
+              <div className="lg:sticky lg:top-24">
+                <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                  <h3 className="text-xl font-bold text-gray-900 mb-6">Your Order</h3>
 
-              {/* Order Summary */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Your Order</h3>
-
-                <div className="space-y-4">
-                  {/* Header */}
-                  <div className="flex justify-between items-center pb-4 border-b border-gray-200">
-                    <span className="font-bold text-gray-900">PRODUCT</span>
-                    <span className="font-bold text-gray-900">PRODUCT</span>
-                  </div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+                      <span className="font-bold text-gray-900">PRODUCT</span>
+                      <span className="font-bold text-gray-900">TOTAL</span>
+                    </div>
 
                   {/* Cart Items */}
                   {cartItems.length === 0 ? (
@@ -265,7 +204,7 @@ export default function CheckoutPage() {
                           </div>
                           
                           <div className="flex-1">
-                            <h4 className="font-medium text-gray-900 mb-1">{item.title}</h4>
+                            <h4 className="font-medium text-gray-900 mb-1 line-clamp-1">{item.title}</h4>
                             <p className="text-sm text-gray-600 mb-2">by {item.author}</p>
                             <p className="text-sm font-semibold text-primary">
                               {item.priceDisplay || `₦${item.price.toLocaleString()}`}
@@ -296,7 +235,7 @@ export default function CheckoutPage() {
                               onClick={() => removeFromCart(item.id)}
                               className="w-8 h-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                             >
-                              <X className="h-4 w-4" />
+                              <Trash className="h-4 w-4" />
                             </Button>
                           </div>
                           
@@ -340,15 +279,16 @@ export default function CheckoutPage() {
                     <span className="font-bold text-xl text-gray-900">Total</span>
                     <span className="font-bold text-xl text-gray-900">{formatCurrency(total)}</span>
                   </div>
-                </div>
+                  </div>
 
-                <Button 
-                  onClick={handlePlaceOrder} 
-                  disabled={cartItems.length === 0 || isPlacingOrder}
-                  className="w-full bg-black hover:bg-gray-800 text-white h-12 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isPlacingOrder ? "Processing..." : `Place Order (${getItemCount()} ${getItemCount() === 1 ? 'item' : 'items'})`}
-                </Button>
+                  <Button 
+                    onClick={handlePlaceOrder} 
+                    disabled={cartItems.length === 0 || isPlacingOrder}
+                    className="w-full bg-black hover:bg-gray-800 text-white h-12 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isPlacingOrder ? "Processing..." : `Place Order (${getItemCount()} ${getItemCount() === 1 ? 'item' : 'items'})`}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

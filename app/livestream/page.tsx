@@ -61,6 +61,7 @@ export default function LivestreamPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [showFallback, setShowFallback] = useState(false)
   const [selectedVideo, setSelectedVideo] = useState<LivestreamViewModel | null>(null)
+  const [hasJoined, setHasJoined] = useState(false)
 
   // Fallback timer to prevent infinite loading
   React.useEffect(() => {
@@ -151,65 +152,84 @@ export default function LivestreamPage() {
     })
   }
 
-  // Convert YouTube URL to embeddable format
+  // Convert YouTube URL to embeddable format (no autoplay by default)
   const getEmbeddableUrl = (url: string) => {
     if (!url) return null
     
     // Extract video ID from various YouTube URL formats
     const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/)
     if (videoIdMatch && videoIdMatch[1]) {
-      return `https://www.youtube.com/embed/${videoIdMatch[1]}?autoplay=0&rel=0&modestbranding=1`
+      return `https://www.youtube.com/embed/${videoIdMatch[1]}?autoplay=0&mute=1&rel=0&modestbranding=1`
     }
     
     return url // Return original URL if not YouTube
   }
 
+  // Build a YouTube embed URL with explicit autoplay/mute options
+  const getYoutubeEmbedWithOptions = (url: string, autoplay: boolean, mute: boolean) => {
+    if (!url) return null
+    const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/)
+    if (videoIdMatch && videoIdMatch[1]) {
+      const auto = autoplay ? 1 : 0
+      const m = mute ? 1 : 0
+      return `https://www.youtube.com/embed/${videoIdMatch[1]}?autoplay=${auto}&mute=${m}&rel=0&modestbranding=1`
+    }
+    return null
+  }
+
+  // Determine hero iframe source (use fallback video when error/no data)
+  const isErrorShowFallback = Boolean(livestreamError && !isNoRecordsError(livestreamError))
+  const isNoDataShowFallback = Boolean(!livestreamData || isNoRecordsError(livestreamError))
+  const fallbackYoutubeUrl = 'https://youtu.be/zbKXkpiLcfk?si=1UEiA4eahO62YnnW'
+  const liveEmbedSrc = livestreamData ? getYoutubeEmbedWithOptions(livestreamData.streamUrl, hasJoined, !hasJoined) : null
+  const fallbackEmbedSrc = getYoutubeEmbedWithOptions(fallbackYoutubeUrl, hasJoined, !hasJoined)
+  const heroIframeSrc = (isErrorShowFallback || isNoDataShowFallback) ? fallbackEmbedSrc : liveEmbedSrc
+
   return (
     <div className="min-h-screen bg-gray-900 text-white pb-16 pt-16">
       {/* Live Stream Section */}
       <div className="relative aspect-video w-full max-h-[80vh] bg-black">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+        
         
         {livestreamLoading && !showFallback ? (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
             <LoadingState message="Loading livestream..." />
           </div>
-        ) : livestreamError && !isNoRecordsError(livestreamError) ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-            <ErrorState 
-              error={livestreamError} 
-              onRetry={refetchLivestream}
-              title="Unable to Load Livestream"
-            />
-          </div>
-        ) : !livestreamData || isNoRecordsError(livestreamError) ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-            <EmptyState message="No live stream available at the moment" icon={Play} />
-          </div>
-        ) : (
+        ) : heroIframeSrc ? (
           <>
-            {getEmbeddableUrl(livestreamData.streamUrl) ? (
+            <iframe
+              src={heroIframeSrc}
+              title={livestreamData?.title || 'Live Stream'}
+              className="w-full h-full"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </>
+        ) : livestreamData ? (
+          <>
+            {getEmbeddableUrl(livestreamData?.streamUrl || '') ? (
               <iframe
-                src={getEmbeddableUrl(livestreamData.streamUrl)!}
+                src={getEmbeddableUrl(livestreamData?.streamUrl || '')!}
                 title="Live Stream"
                 className="w-full h-full"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
-        ) : (
-          <>
-            <Image
-                  src={livestreamData.thumbnailUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
-              alt="Live Stream"
-              fill
-              className="object-cover"
-              priority
-            />
-            <div className="absolute inset-0 flex items-center justify-center z-20">
-              <button
+            ) : (
+              <>
+                <Image
+                  src={livestreamData?.thumbnailUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
+                  alt="Live Stream"
+                  fill
+                  className="object-cover"
+                  priority
+                />
+                <div className="absolute inset-0 flex items-center justify-center z-20">
+                  <button
                     className="group relative"
-                    onClick={() => window.open(livestreamData.streamUrl, '_blank')}
+                    onClick={() => window.open(livestreamData?.streamUrl || '#', '_blank')}
                   >
                     <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 transition-all duration-300 group-hover:scale-110 group-hover:bg-white/30">
                       <Play className="w-8 h-8 md:w-10 md:h-10 text-white ml-1" fill="white" />
@@ -217,11 +237,29 @@ export default function LivestreamPage() {
                     <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                       Watch Live
                     </div>
-              </button>
-            </div>
+                  </button>
+                </div>
               </>
             )}
           </>
+        ) : null}
+
+        {/* Full overlay with animated Join Stream button */}
+        {heroIframeSrc && !hasJoined && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <button
+              onClick={() => setHasJoined(true)}
+              className="relative px-7 py-3 rounded-full bg-primary text-white font-semibold shadow-xl transition-all hover:bg-primary/90 focus:outline-none"
+            >
+              <span className="absolute inset-0 rounded-full bg-primary/60 blur-md animate-ping" aria-hidden="true"></span>
+              <span className="relative flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Join Stream
+              </span>
+            </button>
+          </div>
         )}
 
         {/* Live Stream Info Overlay */}
