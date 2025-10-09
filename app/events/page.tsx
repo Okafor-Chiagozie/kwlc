@@ -434,8 +434,8 @@ export default function EventsPage() {
                 </div>
 
                 <div>
-                  {Number(featuredEvent.maxAttendance) > 0 && Number(featuredEvent.attendanceCount) > 0 && 
-                   featuredEvent.attendanceCount / featuredEvent.maxAttendance > 0.8 && (
+                  {((featuredEvent?.maxAttendance ?? 0) > 0) && ((featuredEvent?.attendanceCount ?? 0) > 0) &&
+                   ((featuredEvent.attendanceCount ?? 0) / (featuredEvent.maxAttendance ?? 1) > 0.8) && (
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 rounded-full text-red-600 font-medium text-sm mb-6">
                       <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                       <span>Limited Seats Available</span>
