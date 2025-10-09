@@ -255,13 +255,14 @@ export interface CreateOrUpdateEventResponse extends EventViewModel {}
 export interface GetEventDetailResponse extends EventViewModelListResult {}
 export interface GetEventResponse extends EventResponseViewModelListResult {}
 export type UpcomingEventsResponse = EventViewModel[];
-export type FeaturedEventResponse = EventViewModel[];
+export interface FeaturedEventResponse extends StandardApiResponse<EventViewModel> {}
 export interface UpdateAttendeesResponse extends EventViewModelListResult {}
 export interface DeleteEventResponse extends Int32Result {}
 
 export interface AddOrUpdateEventSpeakerResponse extends Int32Result {}
 export interface GetEventSpeakerResponse extends EventSpeakerViewModelListResult {}
-export interface GetEventSpeakersResponse extends EventViewModelPaginationResult {}
+export interface EventSpeakerViewModelListPaginationResult extends PaginatedApiResponse<EventSpeakerViewModel[]> {}
+export interface GetEventSpeakersResponse extends EventSpeakerViewModelListPaginationResult {}
 export interface DeleteEventSpeakerResponse extends Int32Result {}
 
 export interface CreateOrUpdateEventImageResponse extends EventImageViewModelResult {}

@@ -7,7 +7,7 @@ import { Calendar, Clock, MapPin, Share2, ChevronLeft, Users, Heart, AlertCircle
 import { Button } from "@/components/ui/button"
 import MainLayout from "@/components/main-layout"
 import { useApi } from "@/hooks/useApi"
-import { getEvent, getUpcomingEvents, getEventDetail, searchEvent } from "@/services/event"
+import { getEvent, getUpcomingEvents, getEventDetail, searchEvent, getEventSpeakers } from "@/services/event"
 import type { EventResponseViewModel, EventViewModel, TimeOnly, SearchEventRequest } from "@/types/event"
 
 const isNoRecordsError = (error: string | null) => {
@@ -124,6 +124,42 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   }
   const event = extractEvent(eventResponse)
 
+  // Build unified image list like donations for auto-scroll carousel
+  const images: string[] = React.useMemo(() => {
+    const list: string[] = []
+    if (event?.imageUrl) list.push(event.imageUrl)
+    if (event?.carouselImages?.length) list.push(...event.carouselImages)
+    if (event?.previewImages?.length) list.push(...event.previewImages)
+    if (event?.galleryImages?.length) list.push(...event.galleryImages)
+    const seen = new Set<string>()
+    return list.filter((url) => {
+      if (!url) return false
+      if (seen.has(url)) return false
+      seen.add(url)
+      return true
+    })
+  }, [event])
+  const [activeIndex, setActiveIndex] = React.useState(0)
+  const [isPaused, setIsPaused] = React.useState(false)
+  const thumbsRef = React.useRef<HTMLDivElement | null>(null)
+  React.useEffect(() => { setActiveIndex(0) }, [eventId])
+  React.useEffect(() => {
+    if (images.length <= 1) return
+    const timer = setInterval(() => {
+      if (!isPaused) setActiveIndex((i) => (i + 1) % images.length)
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [images.length, isPaused])
+  React.useEffect(() => {
+    const cont = thumbsRef.current
+    if (!cont) return
+    const el = cont.children?.[activeIndex] as HTMLElement | undefined
+    if (el) {
+      const targetLeft = el.offsetLeft - cont.clientWidth / 2 + el.clientWidth / 2
+      cont.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' })
+    }
+  }, [activeIndex])
+
   // Set default selected image when event data loads
   useEffect(() => {
     if (event?.previewImages?.[0]) {
@@ -175,22 +211,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   // Use the first available image as default if selectedImage is not set
   const displayImage = selectedImage || galleryImages[0] || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
 
-  // Format date and time
-  const formatDate = (input: any) => {
-    if (!input) return 'TBD'
-    try {
-      // Accept either date-only string or ISO datetime string
-      const date = new Date(String(input))
-      if (isNaN(date.getTime())) return 'TBD'
-      return date.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      }).replace(/\//g, '. ')
-    } catch {
-      return 'TBD'
-    }
-  }
+  // Date should be displayed as provided from API (no formatting)
+  const formatDate = (input: any) => String(input || 'TBD')
 
   const toHhMm = (time: TimeOnly | string): string => {
     if (typeof time === 'string') {
@@ -220,6 +242,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   // Price display
   const priceDisplay = Number(event.price) > 0 ? `₦${event.price}` : 'Free'
 
+  // Determine if register should be shown: hide when free and no attendance limit
+  const shouldShowRegister = !(((String(event.price || '').trim().toLowerCase() === 'free') || Number(event.price) === 0) && (!event.maxAttendance || Number(event.maxAttendance) === 0))
+
   // Directions link and map embed
   const directionsHref = event.location && String(event.location).startsWith('http')
     ? event.location
@@ -234,7 +259,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         {/* Hero Section */}
         <section className="relative bg-gradient-to-r from-gray-900 to-primary/90 pt-32 pb-16 overflow-hidden">
           <div className="absolute inset-0 overflow-hidden opacity-20 z-0">
-            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-04-05%20at%2015.18.44-mJzZTwiXSxvcHMxaFJMDRgkP5inAAO.png')] bg-cover bg-center"></div>
+            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/previous-sunday-1-mvsBAuZ8fv6sQ9BIEJLOZ7sL3xWqBZ.png')] bg-cover bg-center"></div>
           </div>
           <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/90 to-primary/40"></div>
 
@@ -287,7 +312,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button className="bg-white text-primary hover:bg-white/90">Register Now</Button>
+                {shouldShowRegister && (
+                  <Button className="bg-white text-primary hover:bg-white/90">Register Now</Button>
+                )}
                 <Button variant="outline" className="border-white/30 text-white bg-white/10">
                   <Share2 className="h-4 w-4 mr-2" />
                   Share Event
@@ -351,32 +378,44 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="mb-12">
                   {activeTab === "details" && (
                     <div>
-                      {galleryImages.length > 0 && (
+                      {images.length > 0 && (
                         <div className="mb-8">
-                          <div className="relative aspect-video rounded-2xl overflow-hidden shadow-lg mb-6">
+                          <div className="relative aspect-video rounded-2xl overflow-hidden shadow-lg mb-6" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
                             <Image
-                              src={displayImage || "/placeholder.svg"}
+                              src={images[activeIndex] || "/placeholder.svg"}
                               alt={event.name}
                               fill
                               className="object-cover"
                             />
+                            {images.length > 1 && (
+                              <>
+                                <button aria-label="Previous" onClick={() => setActiveIndex((i) => (i - 1 + images.length) % images.length)} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow">
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                                </button>
+                                <button aria-label="Next" onClick={() => setActiveIndex((i) => (i + 1) % images.length)} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow">
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                                </button>
+                              </>
+                            )}
                           </div>
 
-                          {galleryImages.length > 1 && (
-                            <div className="grid grid-cols-4 gap-3">
-                              {galleryImages.slice(0, 4).map((image, index) => (
-                                <div
+                          {images.length > 1 && (
+                            <div ref={thumbsRef} className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+                              {images.map((img, index) => (
+                                <button
                                   key={index}
-                                  className={`relative aspect-video rounded-lg overflow-hidden cursor-pointer border-2 ${selectedImage === image ? "border-primary" : "border-transparent"}`}
-                                  onClick={() => setSelectedImage(image)}
+                                  onClick={() => setActiveIndex(index)}
+                                  className={`relative h-16 md:h-20 w-24 md:w-28 rounded-md overflow-hidden flex-shrink-0 border ${index === activeIndex ? 'border-primary ring-2 ring-primary/40' : 'border-gray-200'}`}
+                                  aria-current={index === activeIndex ? 'true' : undefined}
+                                  aria-label={`Thumbnail ${index + 1}`}
                                 >
                                   <Image
-                                    src={image || "/placeholder.svg"}
+                                    src={img || "/placeholder.svg"}
                                     alt={`Gallery image ${index + 1}`}
                                     fill
                                     className="object-cover"
                                   />
-                                </div>
+                                </button>
                               ))}
                             </div>
                           )}
@@ -607,9 +646,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
                   </div>
 
-                  <Button className="w-full bg-primary hover:bg-primary/90 text-white mb-3">
-                    Register Now
-                  </Button>
+                  {shouldShowRegister && (
+                    <Button className="w-full bg-primary hover:bg-primary/90 text-white mb-3">
+                      Register Now
+                    </Button>
+                  )}
 
                   {Number(event.price) > 0 ? (
                     <p className="text-center text-sm text-gray-500">

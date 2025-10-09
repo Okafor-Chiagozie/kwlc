@@ -144,12 +144,10 @@ export const getEventSpeakers = async (
   eventId: number,
   payload: SearchEventRequest
 ): Promise<GetEventSpeakersResponse> => {
-  // Note: API shows GET with requestBody, which is unusual but following the spec
-  const response = await api.get<GetEventSpeakersResponse>(
+  // API documentation indicates POST with body for this endpoint
+  const response = await api.post<GetEventSpeakersResponse>(
     `${BASE_URL}/GetEventSpeakers?eventId=${eventId}`,
-    {
-      data: payload
-    }
+    payload
   );
   return response.data;
 };

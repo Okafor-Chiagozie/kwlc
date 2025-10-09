@@ -17,6 +17,8 @@ export default function EventsPage() {
   const [viewMode, setViewMode] = useState("list") // list, calendar, day
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedDate, setSelectedDate] = useState("")
+  const [pageNumber, setPageNumber] = useState(1)
+  const pageSize = 3
 
   // Helper function to check if error is "No Record found."
   const isNoRecordsError = (error: string | null) => {
@@ -30,10 +32,10 @@ export default function EventsPage() {
     error: eventsError,
     refetch: refetchEvents
   } = useApi(() => searchEvent({
-    pageSize: 10,
-    pageNumber: 1,
+    pageSize,
+    pageNumber,
     searchParams: searchQuery ? { search: searchQuery } : undefined
-  }), [searchQuery])
+  }), [searchQuery, pageNumber])
 
   const {
     data: branchesResponse,
@@ -56,7 +58,7 @@ export default function EventsPage() {
   // Extract data from API responses
   const events = eventsResponse?.data || []
   const branches = branchesResponse?.data || []
-  const featuredEvents = featuredEventsResponse || []
+  const featuredEventData = featuredEventsResponse?.data || null
 
   // Create a map of branch ID to branch name for easy lookup
   const branchMap = branches.reduce((acc: Record<number, string>, branch: Branch) => {
@@ -66,6 +68,7 @@ export default function EventsPage() {
 
   // Filter events based on search and date
   const filteredEvents = events.filter((event: EventViewModel) => {
+    if (event.isDeleted) return false
     const matchesSearch = searchQuery
       ? event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         event.description.toLowerCase().includes(searchQuery.toLowerCase())
@@ -78,12 +81,24 @@ export default function EventsPage() {
     return matchesSearch && matchesDate
   })
 
+  // Reset to first page when filters change
+  useEffect(() => {
+    setPageNumber(1)
+  }, [searchQuery, selectedDate])
+
+  // Derive pagination locally to enforce exactly 3 per page even if API returns more
+  const totalPages = Math.max(
+    Number(eventsResponse?.totalPages) || 0,
+    Math.ceil(filteredEvents.length / pageSize) || 1
+  )
+  const pagedEvents = filteredEvents.slice((pageNumber - 1) * pageSize, pageNumber * pageSize)
+
   const handleSearch = () => {
     refetchEvents()
   }
 
   // Get the first featured event (or null if none available)
-  const featuredEvent = featuredEvents.length > 0 ? featuredEvents[0] : null
+  const featuredEvent = featuredEventData
 
   // Check if we should show empty state instead of error
   const shouldShowEventsError = eventsError && !isNoRecordsError(eventsError)
@@ -212,7 +227,7 @@ export default function EventsPage() {
             <div className="flex items-center justify-between mb-12">
               <h2 className="text-3xl font-bold text-gray-900">Upcoming Events</h2>
               <div className="text-sm text-gray-500">
-                {eventsLoading ? "Loading..." : `Showing ${filteredEvents.length} events`}
+                {eventsLoading ? "Loading..." : `Page ${pageNumber} of ${totalPages} (${eventsResponse?.totalCount ?? filteredEvents.length} total)`}
               </div>
             </div>
 
@@ -234,7 +249,7 @@ export default function EventsPage() {
             {/* Events List */}
             {!eventsLoading && !shouldShowEventsError && (
               <div className="space-y-8">
-                {filteredEvents.map((event: EventViewModel) => (
+                {pagedEvents.map((event: EventViewModel) => (
                   <div
                     key={event.id}
                     className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:translate-y-[-4px] group"
@@ -271,9 +286,7 @@ export default function EventsPage() {
                               </div>
                               <div>
                                 <p className="text-sm text-gray-500 mb-0.5">Date</p>
-                                <p className="font-medium text-gray-900">
-                                  {new Date(event.date).toLocaleDateString()}
-                                </p>
+                                <p className="font-medium text-gray-900">{event.date}</p>
                               </div>
                             </div>
 
@@ -303,7 +316,7 @@ export default function EventsPage() {
                             </div>
                           </div>
 
-                          <p className="text-gray-600 mb-6">{event.description}</p>
+                          <p className="text-gray-600 mb-6 line-clamp-3">{event.description}</p>
                         </div>
 
                         <div className="flex items-center justify-between">
@@ -314,10 +327,14 @@ export default function EventsPage() {
                             READ MORE
                             <ChevronRight className="h-4 w-4" />
                           </Link>
-
-                          <Button className="bg-primary hover:bg-primary/90 text-white">
-                            Register Now
-                          </Button>
+                          {!(
+                            ((String(event.price || "").trim().toLowerCase() === "free") || Number(event.price) === 0 || Number(event.fee) === 0) &&
+                            (!event.maxAttendance || Number(event.maxAttendance) === 0)
+                          ) && (
+                            <Button className="bg-primary hover:bg-primary/90 text-white">
+                              Register Now
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -339,10 +356,24 @@ export default function EventsPage() {
               </div>
             )}
 
-            {!eventsLoading && !shouldShowEventsError && filteredEvents.length > 0 && (
-              <div className="mt-12 flex justify-center">
-                <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-100">
-                  Load More Events
+            {!eventsLoading && !shouldShowEventsError && totalPages > 1 && (
+              <div className="mt-12 flex items-center justify-center gap-2">
+                <Button
+                  variant="outline"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                  disabled={pageNumber <= 1}
+                  onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-gray-600 px-2">Page {pageNumber} of {totalPages}</span>
+                <Button
+                  variant="outline"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                  disabled={pageNumber >= totalPages}
+                  onClick={() => setPageNumber((p) => p + 1)}
+                >
+                  Next
                 </Button>
               </div>
             )}
@@ -357,7 +388,6 @@ export default function EventsPage() {
           <div className="container mx-auto px-4 relative z-10">
             <div className="text-center mb-16">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary font-medium text-sm mb-6">
-                <span className="w-2 h-2 bg-primary rounded-full"></span>
                 <span>Don't Miss Out</span>
               </div>
               <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
@@ -387,7 +417,7 @@ export default function EventsPage() {
             )}
 
             {/* Featured Event Content */}
-            {!featuredEventsLoading && !shouldShowFeaturedError && featuredEvent && (
+            {!featuredEventsLoading && !shouldShowFeaturedError && featuredEvent && !featuredEvent.isDeleted && (
               <div className="grid md:grid-cols-2 gap-12 items-center">
                 <div className="relative">
                   <div className="absolute -top-6 -left-6 w-32 h-32 bg-primary/10 rounded-full mix-blend-multiply"></div>
@@ -404,7 +434,7 @@ export default function EventsPage() {
                 </div>
 
                 <div>
-                  {featuredEvent.maxAttendance && featuredEvent.attendanceCount && 
+                  {Number(featuredEvent.maxAttendance) > 0 && Number(featuredEvent.attendanceCount) > 0 && 
                    featuredEvent.attendanceCount / featuredEvent.maxAttendance > 0.8 && (
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 rounded-full text-red-600 font-medium text-sm mb-6">
                       <span className="w-2 h-2 bg-red-500 rounded-full"></span>
@@ -421,14 +451,7 @@ export default function EventsPage() {
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Date</p>
-                        <p className="font-medium text-gray-900">
-                          {new Date(featuredEvent.date).toLocaleDateString('en-US', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </p>
+                        <p className="font-medium text-gray-900">{featuredEvent.date}</p>
                       </div>
                     </div>
 
@@ -458,12 +481,17 @@ export default function EventsPage() {
                     </div>
                   </div>
 
-                  <p className="text-gray-600 mb-8">{featuredEvent.description}</p>
+                  <p className="text-gray-600 mb-8 line-clamp-4">{featuredEvent.description}</p>
 
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <Button className="bg-primary hover:bg-primary/90 text-white">
-                      Register Now
-                    </Button>
+                    {!(
+                      ((String(featuredEvent.price || "").trim().toLowerCase() === "free") || Number(featuredEvent.price) === 0 || Number((featuredEvent as any).fee) === 0) &&
+                      (!featuredEvent.maxAttendance || Number(featuredEvent.maxAttendance) === 0)
+                    ) && (
+                      <Button className="bg-primary hover:bg-primary/90 text-white">
+                        Register Now
+                      </Button>
+                    )}
                     <Link href={`/events/${featuredEvent.id}`}>
                       <Button variant="outline" className="border-primary text-primary hover:bg-primary/5 w-full">
                         Learn More
