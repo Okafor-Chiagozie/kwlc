@@ -49,6 +49,8 @@ export default function HeroSlider() {
     "/banner-1.png",
     "/banner-2.png",
     "/banner-3.png",
+    "/banner-4.jpg",
+    "/banner-5.jpg",
   ]
 
   // Absolute fallback image (remote) for any individual missing image
@@ -71,8 +73,8 @@ export default function HeroSlider() {
         label: slideContent[index]?.label || "Living church",
       }))
 
-  // Use API slides only - no dummy data fallback
-  const slides = apiSlides
+  // Use up to five slides even if more images are available
+  const slides = apiSlides.slice(0, 5)
   const [currentSlide, setCurrentSlide] = useState(0)
   const [prevSlideIndex, setPrevSlideIndex] = useState<number | null>(null)
   const [slideDirection, setSlideDirection] = useState<"next" | "prev">("next")
