@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Clock, Calendar, Loader2 } from "lucide-reac
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useApi } from "@/hooks/useApi"
-import { getChurchImages } from "@/services/homepage"
+import { getHomePage } from "@/services/homepage"
 
 // No more dummy data - using real API data only
 
@@ -19,9 +19,9 @@ interface Slide {
 }
 
 export default function HeroSlider() {
-  // Fetch church images from API
-  const { data: churchImagesResponse, loading: imagesLoading, error: imagesError } = useApi(
-    () => getChurchImages(),
+  // Fetch homepage data (carousel images)
+  const { data: homeResponse, loading: imagesLoading, error: imagesError } = useApi(
+    () => getHomePage(),
     []
   )
 
@@ -56,22 +56,22 @@ export default function HeroSlider() {
   // Absolute fallback image (remote) for any individual missing image
   const fallbackImage = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
 
-  // Transform API data to slides format - combine API images with static text
-  const apiSlides = churchImagesResponse?.isSuccessful && churchImagesResponse.data?.[0]?.carouselImages?.length > 0
-    ? churchImagesResponse.data[0].carouselImages.map((image, index) => ({
-        id: image.id || index + 1,
-        image: image.imageUrl || fallbackImage,
-        title: slideContent[index]?.title || "Join the prayer today",
-        subtitle: slideContent[index]?.subtitle || "Visit Your local church and become a part of our flock by contributing to the community in anyway you possibly can",
-        label: slideContent[index]?.label || "Living church",
-      }))
-    : fallbackImages.map((img, index) => ({
-        id: index + 1,
-        image: img,
-        title: slideContent[index]?.title || "Join the prayer today",
-        subtitle: slideContent[index]?.subtitle || "Visit Your local church and become a part of our flock by contributing to the community in anyway you possibly can",
-        label: slideContent[index]?.label || "Living church",
-      }))
+  // Transform API data to slides format using GetHomePage().data.carouselImage (array of URLs)
+  const homepageCarousel: string[] =
+    homeResponse?.isSuccessful && (homeResponse as any)?.data?.carouselImage?.length > 0
+      ? ((homeResponse as any).data.carouselImage as string[])
+      : []
+
+  const apiSlides = (homepageCarousel.length > 0
+    ? homepageCarousel
+    : fallbackImages
+  ).map((img, index) => ({
+    id: index + 1,
+    image: img || fallbackImage,
+    title: slideContent[index]?.title || "Join the prayer today",
+    subtitle: slideContent[index]?.subtitle || "Visit Your local church and become a part of our flock by contributing to the community in anyway you possibly can",
+    label: slideContent[index]?.label || "Living church",
+  }))
 
   // Use up to five slides even if more images are available
   const slides = apiSlides.slice(0, 5)
