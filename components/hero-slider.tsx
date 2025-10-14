@@ -49,8 +49,6 @@ export default function HeroSlider() {
     "/banner-1.png",
     "/banner-2.png",
     "/banner-3.png",
-    "/banner-4.jpg",
-    "/banner-5.jpg",
   ]
 
   // Absolute fallback image (remote) for any individual missing image
@@ -62,10 +60,7 @@ export default function HeroSlider() {
       ? ((homeResponse as any).data.carouselImage as string[])
       : []
 
-  const apiSlides = (homepageCarousel.length > 0
-    ? homepageCarousel
-    : fallbackImages
-  ).map((img, index) => ({
+  const apiSlides = (homepageCarousel.length > 0 ? homepageCarousel : fallbackImages).map((img, index) => ({
     id: index + 1,
     image: img || fallbackImage,
     title: slideContent[index]?.title || "Join the prayer today",
@@ -73,8 +68,10 @@ export default function HeroSlider() {
     label: slideContent[index]?.label || "Living church",
   }))
 
-  // Use up to five slides even if more images are available
-  const slides = apiSlides.slice(0, 5)
+  // Use up to 5 slides when API provides images; otherwise default to 3 fallback slides
+  const slides = (homepageCarousel.length > 0 ? apiSlides.slice(0, 5) : apiSlides.slice(0, 3))
+
+  
   const [currentSlide, setCurrentSlide] = useState(0)
   const [prevSlideIndex, setPrevSlideIndex] = useState<number | null>(null)
   const [slideDirection, setSlideDirection] = useState<"next" | "prev">("next")
