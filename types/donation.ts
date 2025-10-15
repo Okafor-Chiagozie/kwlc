@@ -76,6 +76,8 @@ export interface CustomerInfo {
 
 // FincraCheckoutData from API
 export interface FincraCheckoutData {
+  status: boolean;
+  message: string;
   data: FincraCheckoutURL;
 }
 
@@ -85,8 +87,6 @@ export interface FincraCheckoutURL {
 
 // CheckoutResponse from API
 export interface CheckoutResponse {
-  status: boolean;
-  message: string;
   data: FincraCheckoutData;
 }
 

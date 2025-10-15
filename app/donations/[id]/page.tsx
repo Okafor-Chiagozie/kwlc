@@ -108,7 +108,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         paymenMethodId: PaymentMethod.Card
       }
       const response = await initiateDonation(donationData)
-      if (response.status && response.data?.data?.checkoutUrl) {
+      if (response.data?.status && response.data?.data?.checkoutUrl) {
         window.location.href = response.data.data.checkoutUrl
       } else {
         alert("Unable to process donation. Please try again.")
