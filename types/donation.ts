@@ -76,6 +76,10 @@ export interface CustomerInfo {
 
 // FincraCheckoutData from API
 export interface FincraCheckoutData {
+  data: FincraCheckoutURL;
+}
+
+export interface FincraCheckoutURL {
   checkoutUrl: string;
 }
 
