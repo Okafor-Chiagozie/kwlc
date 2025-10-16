@@ -4,6 +4,7 @@ import React, { use } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import MainLayout from "@/components/main-layout"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { useApi } from "@/hooks/useApi"
 import { getProject } from "@/services/churchProject"
 import { initiateDonation } from "@/services/donation"
@@ -39,6 +40,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     amount: ""
   })
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [dialogOpen, setDialogOpen] = React.useState(false)
+  const [dialogTitle, setDialogTitle] = React.useState("")
+  const [dialogMessage, setDialogMessage] = React.useState("")
+  const [dialogIsDestructive, setDialogIsDestructive] = React.useState(false)
 
   // Build unified image list and active index
   const images: string[] = React.useMemo(() => {
@@ -88,7 +93,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     if (isSubmitting || !project) return
     const amount = parseFloat(formData.amount)
     if (!formData.email.trim() || isNaN(amount) || amount <= 0) {
-      alert("Please enter a valid amount and email")
+      setDialogTitle("Invalid input")
+      setDialogMessage("Please enter a valid amount and email")
+      setDialogIsDestructive(true)
+      setDialogOpen(true)
       return
     }
 
@@ -111,7 +119,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       if (response.data?.status && response.data?.data?.checkoutUrl) {
         window.location.href = response.data.data.checkoutUrl
       } else {
-        alert("Unable to process donation. Please try again.")
+        setDialogTitle("Donation not processed")
+        setDialogMessage("Unable to process donation. Please try again.")
+        setDialogIsDestructive(true)
+        setDialogOpen(true)
       }
     } catch (err: any) {
       let errorMessage = "An error occurred while processing your donation. Please try again."
@@ -119,7 +130,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       else if (err?.response?.data?.message) errorMessage = err.response.data.message
       else if (err?.response?.data?.errors && Array.isArray(err.response.data.errors)) errorMessage = err.response.data.errors.map((e: any) => e.description || e.message).join(', ')
       else if (err?.message) errorMessage = err.message
-      alert(errorMessage)
+      setDialogTitle("Donation failed")
+      setDialogMessage(errorMessage)
+      setDialogIsDestructive(true)
+      setDialogOpen(true)
     } finally {
       setIsSubmitting(false)
     }
@@ -316,6 +330,28 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           </>
         )}
       </div>
+      {dialogOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4 !mt-0" onClick={() => setDialogOpen(false)}>
+          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle className={dialogIsDestructive ? "text-red-600" : "text-primary"}>{dialogTitle}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">{dialogMessage}</p>
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDialogOpen(false)
+                  }}
+                >
+                  Close
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </MainLayout>
   )
 }
