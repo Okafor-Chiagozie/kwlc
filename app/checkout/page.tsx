@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ShoppingCart, Minus, Plus, Trash } from "lucide-react"
 import MainLayout from "@/components/main-layout"
 import { useCart } from "@/hooks/useCart"
@@ -21,11 +22,14 @@ export default function CheckoutPage() {
   })
 
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogTitle, setDialogTitle] = useState("")
+  const [dialogMessage, setDialogMessage] = useState("")
 
   const { cartItems, updateQuantity, removeFromCart, getSubtotal, getItemCount } = useCart()
 
   const subtotal = getSubtotal()
-  const shippingCost = subtotal > 0 ? (subtotal >= 5000 ? 0 : 1000) : 0 // Free shipping over ₦5,000
+  const shippingCost = 0
   const total = subtotal + shippingCost
 
   // Redirect to shop if cart is empty
@@ -48,12 +52,16 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) {
-      alert("Your cart is empty")
+      setDialogTitle("Cart is empty")
+      setDialogMessage("Please add at least one item to your cart to proceed.")
+      setDialogOpen(true)
       return
     }
 
     if (!formData.firstName || !formData.lastName || !formData.email) {
-      alert("Please fill in all required fields")
+      setDialogTitle("Missing information")
+      setDialogMessage("Please provide your first name, last name, and email to continue.")
+      setDialogOpen(true)
       return
     }
 
@@ -75,15 +83,34 @@ export default function CheckoutPage() {
       const resp = await initiateOrder(payload)
 
       if (resp?.isSuccessful) {
-        alert(resp.responseMessage || "Order initiated successfully.")
-        // Optionally navigate to a payment/confirmation step if provided by API
+        const checkoutUrl = (resp as any)?.data?.data?.checkoutUrl
+          || (resp as any)?.data?.checkoutUrl
+          || (resp as any)?.checkoutUrl
+          || (resp as any)?.data?.redirectUrl
+          || (resp as any)?.data?.data?.redirectUrl
+
+        if (total === 0) {
+          setDialogTitle("Order received – no payment needed")
+          setDialogMessage("Thank you! Your order total is ₦0. Please check your email for access and next steps.")
+          setDialogOpen(true)
+        } else if (checkoutUrl && typeof window !== 'undefined') {
+          window.open(checkoutUrl, '_blank', 'noopener,noreferrer')
+        } else {
+          setDialogTitle("Order initiated")
+          setDialogMessage(resp.responseMessage || "Your order has been initiated successfully. Proceed to payment to complete your purchase.")
+          setDialogOpen(true)
+        }
       } else {
         const msg = resp?.responseMessage || "Failed to initiate order."
-        alert(msg)
+        setDialogTitle("Order failed")
+        setDialogMessage(msg)
+        setDialogOpen(true)
       }
     } catch (error) {
       console.error("Order placement error:", error)
-      alert("There was an error placing your order. Please try again.")
+      setDialogTitle("An error occurred")
+      setDialogMessage("There was an error placing your order. Please try again.")
+      setDialogOpen(true)
     } finally {
       setIsPlacingOrder(false)
     }
@@ -267,12 +294,7 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                   
-                  {/* Free shipping message */}
-                  {subtotal > 0 && subtotal < 5000 && (
-                    <div className="text-sm text-primary bg-primary/5 p-2 rounded">
-                      Add {formatCurrency(5000 - subtotal)} more for free shipping!
-                    </div>
-                  )}
+                  {/* Free shipping message removed since shipping is always free */}
 
                   {/* Total */}
                   <div className="flex justify-between items-center py-4 border-t border-gray-200">
@@ -370,6 +392,26 @@ export default function CheckoutPage() {
           </div>
         </footer>
       </div>
+
+      {/* Modal styled like Admin Delete Branch */}
+      {dialogOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4 !mt-0"
+          onClick={() => setDialogOpen(false)}
+        >
+          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle>{dialogTitle}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">{dialogMessage}</p>
+              <div className="flex gap-3 justify-end">
+                <Button variant="outline" onClick={() => setDialogOpen(false)}>Close</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </MainLayout>
   )
 }
