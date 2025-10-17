@@ -1,9 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { 
   DollarSign,
   Copy,
@@ -14,12 +24,17 @@ import {
   Info,
   CreditCard,
   ArrowRight,
-  Heart
+  Heart,
+  Loader2,
+  Wallet,
+  ShieldCheck
 } from "lucide-react"
 import MainLayout from "@/components/main-layout"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import { initiatePayment } from "@/services/payment"
+import { Currency, PurposeCode, PaymentMethod } from "@/types/payment"
 
 interface BankAccount {
   id: string
@@ -36,6 +51,33 @@ interface BankAccount {
 
 export default function PaymentsPage() {
   const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  
+  // Online payment form state
+  const [paymentForm, setPaymentForm] = useState({
+    firstName: "",
+    email: "",
+    amount: ""
+  })
+
+  // Check for payment success/failure in URL on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const paymentStatus = urlParams.get('payment')
+      
+      if (paymentStatus === 'success') {
+        toast.success('Payment completed! Thank you for your contribution.')
+        // Clean up URL
+        window.history.replaceState({}, '', '/payments')
+      } else if (paymentStatus === 'failed') {
+        toast.error('Payment was not completed. Please try again.')
+        // Clean up URL
+        window.history.replaceState({}, '', '/payments')
+      }
+    }
+  }, [])
 
   // Bank Accounts Data
   const bankAccounts: BankAccount[] = [
@@ -87,6 +129,98 @@ export default function PaymentsPage() {
     }, 2000)
   }
 
+  const handleInputChange = (field: keyof typeof paymentForm, value: string) => {
+    setPaymentForm(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const validateForm = () => {
+    if (!paymentForm.firstName.trim()) {
+      toast.error("Please enter your first name")
+      return false
+    }
+    if (!paymentForm.email.trim()) {
+      toast.error("Please enter your email address")
+      return false
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paymentForm.email)) {
+      toast.error("Please enter a valid email address")
+      return false
+    }
+    if (!paymentForm.amount.trim()) {
+      toast.error("Please enter an amount")
+      return false
+    }
+    const amount = parseFloat(paymentForm.amount)
+    if (isNaN(amount) || amount <= 0) {
+      toast.error("Please enter a valid amount")
+      return false
+    }
+    if (amount < 100) {
+      toast.error("Minimum payment amount is ₦100")
+      return false
+    }
+    return true
+  }
+
+  const handlePaymentSubmit = async () => {
+    if (!validateForm()) return
+
+    setIsProcessing(true)
+
+    try {
+      const amount = parseFloat(paymentForm.amount)
+      const reference = `TITHE-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+      
+      const payload = {
+        entryId: 0, // Default entry ID for general payments
+        amount: amount,
+        currencyId: Currency.NGN,
+        name: paymentForm.firstName,
+        email: paymentForm.email,
+        phoneNumber: "", // Optional
+        reference: reference,
+        purpose: PurposeCode.DON, // Donation purpose code
+        paymentMethod: PaymentMethod.Card,
+        callbackUrl: `${window.location.origin}/payments?payment=success`
+      }
+
+      const response = await initiatePayment(payload)
+
+      if (response.status && response.data?.checkoutUrl) {
+        // Redirect to Fincra checkout
+        toast.success("Redirecting to payment gateway...")
+        setTimeout(() => {
+          window.location.href = response.data.checkoutUrl
+        }, 1000)
+      } else {
+        toast.error(response.message || "Failed to initiate payment")
+        setIsProcessing(false)
+      }
+    } catch (error: any) {
+      console.error("Payment initiation error:", error)
+      toast.error("An error occurred. Please try again.")
+      setIsProcessing(false)
+    }
+  }
+
+  const resetForm = () => {
+    setPaymentForm({
+      firstName: "",
+      email: "",
+      amount: ""
+    })
+  }
+
+  const handleDialogClose = () => {
+    if (!isProcessing) {
+      setIsDialogOpen(false)
+      resetForm()
+    }
+  }
+
   return (
     <MainLayout>
       <div className="min-h-screen">
@@ -123,6 +257,87 @@ export default function PaymentsPage() {
         {/* Main Content */}
         <section className="py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white">
           <div className="container mx-auto px-4">
+            {/* Online Payment Section */}
+            <div className="max-w-5xl mx-auto mb-12">
+              <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-white shadow-xl overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10"></div>
+                <CardHeader className="text-center pb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mx-auto mb-4">
+                    <Wallet className="h-8 w-8 text-primary" />
+                  </div>
+                  <CardTitle className="text-3xl md:text-4xl font-bold mb-3">
+                    Pay Online Now
+                  </CardTitle>
+                  <CardDescription className="text-base md:text-lg">
+                    Make your tithe, offering, or donation securely through our online payment system
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid sm:grid-cols-3 gap-4 py-6">
+                    <div className="flex items-center gap-3 justify-center sm:justify-start">
+                      <div className="p-2 rounded-lg bg-green-50">
+                        <ShieldCheck className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div className="text-sm">
+                        <div className="font-semibold text-gray-900">Secure</div>
+                        <div className="text-gray-600">SSL Encrypted</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 justify-center sm:justify-start">
+                      <div className="p-2 rounded-lg bg-blue-50">
+                        <CreditCard className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div className="text-sm">
+                        <div className="font-semibold text-gray-900">Fast</div>
+                        <div className="text-gray-600">Instant Process</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 justify-center sm:justify-start">
+                      <div className="p-2 rounded-lg bg-purple-50">
+                        <CheckCircle className="h-5 w-5 text-purple-600" />
+                      </div>
+                      <div className="text-sm">
+                        <div className="font-semibold text-gray-900">Reliable</div>
+                        <div className="text-gray-600">Powered by Fincra</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-center pt-2">
+                    <Button 
+                      size="lg" 
+                      className="gap-2 text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all"
+                      onClick={() => setIsDialogOpen(true)}
+                    >
+                      <Wallet className="h-5 w-5" />
+                      Make Payment
+                      <ArrowRight className="h-5 w-5" />
+                    </Button>
+                  </div>
+
+                  <div className="text-center pt-4 border-t border-gray-200">
+                    <p className="text-sm text-gray-600">
+                      💳 We accept all major cards and bank transfers
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Divider */}
+            <div className="max-w-5xl mx-auto mb-12">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-gradient-to-b from-gray-50 to-white px-4 text-sm text-gray-600 font-medium">
+                    or use bank transfer
+                  </span>
+                </div>
+              </div>
+            </div>
+
             {/* Info Banner */}
             <div className="max-w-5xl mx-auto mb-12">
               <Card className="border-blue-200 bg-blue-50/80 shadow-sm">
@@ -399,6 +614,145 @@ export default function PaymentsPage() {
             </div>
           </div>
         </section>
+
+        {/* Payment Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Wallet className="h-6 w-6 text-primary" />
+                </div>
+                <DialogTitle className="text-2xl">Online Payment</DialogTitle>
+              </div>
+              <DialogDescription className="text-base">
+                Enter your details below to make a secure online payment via Fincra payment gateway.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-5 py-4">
+              {/* Info Alert */}
+              <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
+                <div className="flex items-start gap-2">
+                  <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-blue-900">
+                    <p className="font-semibold mb-1">Secure Online Payment</p>
+                    <p className="text-blue-800">
+                      You will be redirected to Fincra's secure payment page to complete your transaction.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* First Name */}
+              <div className="space-y-2">
+                <Label htmlFor="firstName" className="text-base font-semibold">
+                  First Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="firstName"
+                  placeholder="Enter your first name"
+                  value={paymentForm.firstName}
+                  onChange={(e) => handleInputChange("firstName", e.target.value)}
+                  disabled={isProcessing}
+                  className="h-11"
+                />
+              </div>
+
+              {/* Email */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-base font-semibold">
+                  Email Address <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="your.email@example.com"
+                  value={paymentForm.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  disabled={isProcessing}
+                  className="h-11"
+                />
+                <p className="text-xs text-gray-500">
+                  We'll send your payment receipt to this email
+                </p>
+              </div>
+
+              {/* Amount */}
+              <div className="space-y-2">
+                <Label htmlFor="amount" className="text-base font-semibold">
+                  Amount (₦) <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">
+                    ₦
+                  </span>
+                  <Input
+                    id="amount"
+                    type="number"
+                    placeholder="0.00"
+                    value={paymentForm.amount}
+                    onChange={(e) => handleInputChange("amount", e.target.value)}
+                    disabled={isProcessing}
+                    className="h-11 pl-8 text-lg font-semibold"
+                    min="100"
+                    step="100"
+                  />
+                </div>
+                <p className="text-xs text-gray-500">
+                  Minimum amount: ₦100
+                </p>
+              </div>
+
+              {/* Quick Amount Buttons */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700">Quick Select:</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {[1000, 5000, 10000, 20000].map((amount) => (
+                    <Button
+                      key={amount}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleInputChange("amount", amount.toString())}
+                      disabled={isProcessing}
+                      className="font-semibold"
+                    >
+                      ₦{amount.toLocaleString()}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={handleDialogClose}
+                disabled={isProcessing}
+                className="w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handlePaymentSubmit}
+                disabled={isProcessing}
+                className="w-full sm:w-auto gap-2"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="h-4 w-4" />
+                    Proceed to Payment
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   )
