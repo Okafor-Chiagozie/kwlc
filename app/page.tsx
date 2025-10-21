@@ -33,17 +33,27 @@ export default function Home() {
     return { day, month }
   }
 
-  // Format time for display
+  // Format time for display (supports "9:00 AM" or "HH:mm[:ss]")
   const formatEventTime = (startTime: string, closeTime: string) => {
-    const formatTime = (timeStr: string) => {
-      const time = new Date(`2000-01-01T${timeStr}`)
-      return time.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
-      }).toLowerCase()
+    const toHuman = (timeStr: string) => {
+      const raw = String(timeStr || '').trim()
+      if (!raw) return 'tbd'
+      if (/am|pm/i.test(raw)) return raw.toLowerCase()
+      const hm = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/)
+      if (hm) {
+        const h = Number(hm[1])
+        const m = Number(hm[2])
+        const d = new Date()
+        d.setHours(h || 0, m || 0, 0, 0)
+        return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()
+      }
+      const parsed = new Date(raw)
+      if (!isNaN(parsed.getTime())) {
+        return parsed.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()
+      }
+      return raw
     }
-    return `${formatTime(startTime)} - ${formatTime(closeTime)}`
+    return `${toHuman(startTime)} - ${toHuman(closeTime)}`
   }
   return (
     <MainLayout>
@@ -52,6 +62,7 @@ export default function Home() {
         <section className="relative h-[700px] overflow-hidden">
           <HeroSlider />
         </section>
+        {/* Live CTA moved into hero slider button (replaces See More) */}
 
         {/* Services Grid Section */}
         <ServicesGrid />
@@ -587,8 +598,8 @@ export default function Home() {
                       <AlertCircle className="h-5 w-5 mr-2" />
                       <span>Unable to load events</span>
                     </div>
-                  ) : upcomingEvents && upcomingEvents.length > 0 ? (
-                    upcomingEvents.slice(0, 3).map((event) => {
+                  ) : (() => { const upcomingList = Array.isArray(upcomingEvents) ? upcomingEvents : (upcomingEvents?.data || []); return upcomingList; })().length > 0 ? (
+                    (() => { const upcomingList = Array.isArray(upcomingEvents) ? upcomingEvents : (upcomingEvents?.data || []); return upcomingList.slice(0, 3); })().map((event) => {
                       const { day, month } = formatEventDate(event.date)
                       return (
                         <div key={event.id} className="group flex gap-4 p-3 transition-colors">

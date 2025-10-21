@@ -11,9 +11,13 @@ import { useApi } from "@/hooks/useApi"
 import { searchEvent, getFeaturedEvent } from "@/services/event"
 import { getAllBranches } from "@/services/branch"
 import { EventViewModel } from "@/types/event"
+import EventRegistrationModal from "@/components/events/event-registration-modal"
 import { Branch } from "@/types/branch"
 
 export default function EventsPage() {
+  const [registerOpen, setRegisterOpen] = useState(false)
+  const [registerEventId, setRegisterEventId] = useState<number | null>(null)
+  const [registerEventName, setRegisterEventName] = useState("")
   const [viewMode, setViewMode] = useState("list") // list, calendar, day
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedDate, setSelectedDate] = useState("")
@@ -331,9 +335,9 @@ export default function EventsPage() {
                             ((String(event.price || "").trim().toLowerCase() === "free") || Number(event.price) === 0 || Number(event.fee) === 0) &&
                             (!event.maxAttendance || Number(event.maxAttendance) === 0)
                           ) && (
-                            <Button className="bg-primary hover:bg-primary/90 text-white">
-                              Register Now
-                            </Button>
+                            <Button className="bg-primary hover:bg-primary/90 text-white" onClick={() => { setRegisterEventId(event.id); setRegisterEventName(event.name); setRegisterOpen(true) }}>
+                            Register Now
+                          </Button>
                           )}
                         </div>
                       </div>
@@ -488,9 +492,9 @@ export default function EventsPage() {
                       ((String(featuredEvent.price || "").trim().toLowerCase() === "free") || Number(featuredEvent.price) === 0 || Number((featuredEvent as any).fee) === 0) &&
                       (!featuredEvent.maxAttendance || Number(featuredEvent.maxAttendance) === 0)
                     ) && (
-                      <Button className="bg-primary hover:bg-primary/90 text-white">
-                        Register Now
-                      </Button>
+                    <Button className="bg-primary hover:bg-primary/90 text-white">
+                      Register Now
+                    </Button>
                     )}
                     <Link href={`/events/${featuredEvent.id}`}>
                       <Button variant="outline" className="border-primary text-primary hover:bg-primary/5 w-full">
@@ -542,6 +546,16 @@ export default function EventsPage() {
           </div>
         </section>
       </div>
+
+      {/* Registration Modal (general list) */}
+      {registerOpen && registerEventId != null && (
+        <EventRegistrationModal
+          open={registerOpen}
+          onOpenChange={setRegisterOpen}
+          eventId={registerEventId}
+          eventName={registerEventName}
+        />
+      )}
     </MainLayout>
   )
 }

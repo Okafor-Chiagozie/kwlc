@@ -9,6 +9,7 @@ import MainLayout from "@/components/main-layout"
 import { useApi } from "@/hooks/useApi"
 import { getEvent, getUpcomingEvents, getEventDetail, searchEvent, getEventSpeakers } from "@/services/event"
 import type { EventResponseViewModel, EventViewModel, TimeOnly, SearchEventRequest } from "@/types/event"
+import EventRegistrationModal from "@/components/events/event-registration-modal"
 
 const isNoRecordsError = (error: string | null) => {
   return error && error.toLowerCase().includes("no record found")
@@ -50,6 +51,7 @@ const EmptyState = () => (
 export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const [activeTab, setActiveTab] = useState("details")
   const [selectedImage, setSelectedImage] = useState<string>("")
+  const [registerOpen, setRegisterOpen] = useState(false)
 
   const { id } = use(params)
   const eventId = Number(id)
@@ -313,7 +315,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
               <div className="flex flex-col sm:flex-row gap-4">
                 {shouldShowRegister && (
-                  <Button className="bg-white text-primary hover:bg-white/90">Register Now</Button>
+                  <Button className="bg-white text-primary hover:bg-white/90" onClick={() => setRegisterOpen(true)}>Register Now</Button>
                 )}
                 <Button variant="outline" className="border-white/30 text-white bg-white/10">
                   <Share2 className="h-4 w-4 mr-2" />
@@ -647,7 +649,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
 
                   {shouldShowRegister && (
-                    <Button className="w-full bg-primary hover:bg-primary/90 text-white mb-3">
+                    <Button className="w-full bg-primary hover:bg-primary/90 text-white mb-3" onClick={() => setRegisterOpen(true)}>
                       Register Now
                     </Button>
                   )}
@@ -721,6 +723,15 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         </section>
       </div>
+      {/* Registration Modal (single event) */}
+      {registerOpen && event && (
+        <EventRegistrationModal
+          open={registerOpen}
+          onOpenChange={setRegisterOpen}
+          eventId={Number(event.id)}
+          eventName={String(event.name)}
+        />
+      )}
     </MainLayout>
   )
 }

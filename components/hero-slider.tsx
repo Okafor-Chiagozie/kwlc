@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { ChevronLeft, ChevronRight, Clock, Calendar, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useApi } from "@/hooks/useApi"
 import { getHomePage } from "@/services/homepage"
+import { getLivestreamUrl } from "@/services/livestream"
 
 // No more dummy data - using real API data only
 
@@ -144,6 +146,14 @@ export default function HeroSlider() {
     )
   }
 
+  // Fetch current livestream availability; show CTA only when live exists
+  const { data: liveResponse } = useApi(() => getLivestreamUrl(), [])
+  const liveDataRaw: any = liveResponse as any
+  const liveArray: any[] = Array.isArray(liveDataRaw?.data)
+    ? liveDataRaw.data
+    : (liveDataRaw?.data ? [liveDataRaw.data] : [])
+  const hasLive = Array.isArray(liveArray) && liveArray.length > 0
+
   // Show loading state while fetching images
   if (imagesLoading) {
     return (
@@ -215,14 +225,33 @@ export default function HeroSlider() {
                   />
                 </div>
 
-                <div className="overflow-hidden">
-                  <Button
-                    size="lg"
-                    className="bg-white text-black hover:bg-gray-100 animate-button-reveal opacity-0 text-base sm:text-lg"
-                    style={{ animationDelay: "1200ms", animationFillMode: "forwards" }}
-                  >
-                    <a href="#experience">See More</a>
-                  </Button>
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <div className="overflow-hidden">
+                    <Button
+                      size="lg"
+                      className="bg-white text-black hover:bg-gray-100 animate-button-reveal opacity-0 text-base sm:text-lg"
+                      style={{ animationDelay: "1200ms", animationFillMode: "forwards" }}
+                    >
+                      <a href="#experience">See More</a>
+                    </Button>
+                  </div>
+
+                  {hasLive && (
+                    <div className="overflow-hidden">
+                      <Button
+                        size="lg"
+                        className="relative group bg-red-600 text-white hover:bg-red-700 animate-button-reveal opacity-0 text-base sm:text-lg rounded-full px-6 py-6 overflow-hidden"
+                        style={{ animationDelay: "1300ms", animationFillMode: "forwards" }}
+                      >
+                        <span className="pointer-events-none absolute -inset-1 rounded-full bg-red-500/30 blur opacity-60 group-hover:opacity-80"></span>
+                        <Link href={'/livestream'} className="relative flex items-center">
+                          <span className="inline-block w-2 h-2 rounded-full bg-white animate-ping mr-2"></span>
+                          <span className="inline-block w-2 h-2 rounded-full bg-white mr-2"></span>
+                          Watch Live Now
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

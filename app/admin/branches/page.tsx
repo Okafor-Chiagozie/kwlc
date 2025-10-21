@@ -1117,28 +1117,68 @@ export default function BranchesPage() {
                     />
                   </div>
                   <div>
-                    <Label>State ID</Label>
-                    <Input
-                      type="number"
-                      value={editingBranch.stateId}
-                      onChange={(e) => setEditingBranch({ ...editingBranch, stateId: Number(e.target.value) || 1 })}
-                    />
+                    <Label>Country</Label>
+                    <Select 
+                      value={editingBranch.countryId ? editingBranch.countryId.toString() : ""}
+                      onValueChange={async (value) => {
+                        const cid = Number(value)
+                        setEditingBranch({ ...editingBranch, countryId: cid, stateId: 0, lgaId: 0 })
+                        await loadStates(cid)
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {countries.map(country => (
+                          <SelectItem key={country.id} value={country.id.toString()}>
+                            {country.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
-                    <Label>LGA ID</Label>
-                    <Input
-                      type="number"
-                      value={editingBranch.lgaId}
-                      onChange={(e) => setEditingBranch({ ...editingBranch, lgaId: Number(e.target.value) || 1 })}
-                    />
+                    <Label>State</Label>
+                    <Select 
+                      value={editingBranch.stateId ? editingBranch.stateId.toString() : ""}
+                      onValueChange={async (value) => {
+                        const sid = Number(value)
+                        setEditingBranch({ ...editingBranch, stateId: sid, lgaId: 0 })
+                        await loadLGAs(editingBranch.countryId, sid)
+                      }}
+                      disabled={!editingBranch.countryId || states.length === 0}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={states.length === 0 ? "Select country first" : "Select state"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {states.map(state => (
+                          <SelectItem key={state.id} value={state.id.toString()}>
+                            {state.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
-                    <Label>Country ID</Label>
-                    <Input
-                      type="number"
-                      value={editingBranch.countryId}
-                      onChange={(e) => setEditingBranch({ ...editingBranch, countryId: Number(e.target.value) || 1 })}
-                    />
+                    <Label>Local Government Area</Label>
+                    <Select 
+                      value={editingBranch.lgaId ? editingBranch.lgaId.toString() : ""}
+                      onValueChange={(value) => setEditingBranch({ ...editingBranch, lgaId: Number(value) })}
+                      disabled={!editingBranch.stateId || lgas.length === 0}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={lgas.length === 0 ? "Select state first" : "Select LGA"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {lgas.map(lga => (
+                          <SelectItem key={lga.id} value={lga.id.toString()}>
+                            {lga.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div>

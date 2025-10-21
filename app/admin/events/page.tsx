@@ -156,7 +156,8 @@ export default function EventsPage() {
 
       // Handle upcoming events
       if (upcomingData.status === 'fulfilled') {
-        const upcomingEventsArray = Array.isArray(upcomingData.value) ? upcomingData.value : []
+        const upRaw: any = upcomingData.value
+        const upcomingEventsArray = Array.isArray(upRaw?.data) ? upRaw.data : (Array.isArray(upRaw) ? upRaw : [])
         setUpcomingEvents(upcomingEventsArray)
         console.log('Upcoming events loaded:', upcomingEventsArray)
       } else {
@@ -164,10 +165,12 @@ export default function EventsPage() {
         setUpcomingEvents([])
       }
 
-      // Handle featured events
+      // Handle featured events (single item)
       if (featuredData.status === 'fulfilled') {
-        setFeaturedEvents(featuredData.value || [])
-        console.log('Featured events loaded:', featuredData.value)
+        const feRaw: any = featuredData.value
+        const feList = feRaw?.data ? [feRaw.data] : []
+        setFeaturedEvents(feList)
+        console.log('Featured events loaded:', feList)
       } else {
         console.error('Failed to load featured events:', featuredData)
       }
@@ -445,12 +448,12 @@ export default function EventsPage() {
         dayOfYear: 1,
         dayNumber: 1
       },
-      startTime: parseTime(event.startTime),
-      closeTime: parseTime(event.closeTime),
-      branchId: event.branchId,
-      eventTypeId: event.eventTypeId,
-      fee: event.fee,
-      maxAttendance: event.maxAttendance,
+      startTime: parseTime(String(event.startTime || '00:00')),
+      closeTime: parseTime(String(event.closeTime || '00:00')),
+      branchId: (event.branchId ?? null) as number | null,
+      eventTypeId: Number(event.eventTypeId ?? 1),
+      fee: (event.fee ?? null) as number | null,
+      maxAttendance: (event.maxAttendance ?? null) as number | null,
       description: event.description,
       location: event.location,
       address: event.address
@@ -686,23 +689,23 @@ export default function EventsPage() {
                 {events.length > 0 ? (
                   <div className="space-y-4">
                     {events.map((event) => (
-                      <div key={event.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-4">
-                          <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <div key={event.id} className="flex items-start justify-between gap-4 p-4 border rounded-lg w-full max-w-full overflow-hidden">
+                        <div className="flex items-start gap-4 min-w-0 flex-1">
+                          <div className="w-20 h-14 md:w-28 md:h-16 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0">
                             {event.imageUrl ? (
                               <img 
                                 src={event.imageUrl} 
                                 alt={event.name}
-                                className="w-full h-full object-cover rounded-lg"
+                                className="w-full h-full object-cover"
                               />
                             ) : (
                               <Calendar className="h-6 w-6 text-primary" />
                             )}
                           </div>
-                          <div className="space-y-1">
-                            <h3 className="font-semibold">{event.name}</h3>
-                            <p className="text-sm text-muted-foreground line-clamp-1">{event.description}</p>
-                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-muted-foreground">
+                          <div className="space-y-1 min-w-0 flex-1 overflow-hidden">
+                            <h3 className="font-semibold break-words whitespace-normal">{event.name}</h3>
+                            <p className="text-sm text-muted-foreground line-clamp-2 max-w-[70ch] break-words whitespace-normal">{event.description}</p>
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-muted-foreground min-w-0 overflow-hidden">
                               <div className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
                                 {formatDate(event.date)}
@@ -711,14 +714,16 @@ export default function EventsPage() {
                                 <Clock className="h-3 w-3" />
                                 {event.startTime} - {event.closeTime}
                               </div>
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1 min-w-0">
                                 <MapPin className="h-3 w-3" />
+                                <span className="truncate max-w-[40ch] break-words whitespace-normal">
                                 {event.address
                                   ? event.address
                                   : (event.location && !isLikelyUrl(event.location) ? event.location : 'No location')}
+                                </span>
                               </div>
                               <div className="flex items-center gap-2 min-w-0">
-                                <span>{getBranchName(event.branchId)}</span>
+                                <span className="truncate max-w-[32ch]">{getBranchName(event.branchId)}</span>
                                 {(() => {
                                   const branch = getBranchById(event.branchId)
                                   if (!branch) return null
@@ -735,7 +740,7 @@ export default function EventsPage() {
                             </div>
                           </div>
                         </div>
-                        <div className="text-right space-y-2">
+                        <div className="text-right space-y-2 flex-shrink-0 w-40 md:w-48">
                           <div className="flex items-center gap-2">
                             <Badge variant={event.isDeleted ? "secondary" : "default"}>
                               {event.isDeleted ? "Inactive" : "Active"}
@@ -989,20 +994,80 @@ export default function EventsPage() {
                 {upcomingEvents.length > 0 ? (
                   <div className="space-y-4">
                     {upcomingEvents.map((event) => (
-                      <div key={event.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <h3 className="font-semibold">{event.name}</h3>
-                          <p className="text-sm text-muted-foreground">{event.description}</p>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                            <span>📅 {formatDate(event.date)}</span>
-                            <span>🕐 {event.startTime}</span>
-                            <span>📍 {event.location || 'TBD'}</span>
+                      <div key={event.id} className="flex items-start justify-between gap-4 p-4 border rounded-lg w-full max-w-full overflow-hidden">
+                        <div className="flex items-start gap-4 min-w-0 flex-1">
+                          <div className="w-20 h-14 md:w-28 md:h-16 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0">
+                            {event.imageUrl ? (
+                              <img
+                                src={event.imageUrl}
+                                alt={event.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <Calendar className="h-6 w-6 text-primary" />
+                            )}
+                          </div>
+                          <div className="space-y-1 min-w-0 flex-1 overflow-hidden">
+                            <h3 className="font-semibold break-words whitespace-normal">{event.name}</h3>
+                            <p className="text-sm text-muted-foreground line-clamp-2 max-w-[70ch] break-words whitespace-normal">{event.description}</p>
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-muted-foreground min-w-0 overflow-hidden">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {formatDate(event.date)}
+                        </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {event.startTime} - {event.closeTime}
+                              </div>
+                              <div className="flex items-center gap-1 min-w-0">
+                                <MapPin className="h-3 w-3" />
+                                <span className="truncate max-w-[40ch] break-words whitespace-normal">
+                                  {event.address
+                                    ? event.address
+                                    : (event.location && !isLikelyUrl(event.location) ? event.location : 'No location')}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="truncate max-w-[32ch]">{getBranchName(event.branchId)}</span>
+                                {(() => {
+                                  const branch = getBranchById(event.branchId)
+                                  if (!branch) return null
+                                  const eventDisplayedAddress = event.address || (event.location && !isLikelyUrl(event.location) ? event.location : '')
+                                  const showBranchAddress = branch.address && !addressesEqual(branch.address, eventDisplayedAddress)
+                                  return showBranchAddress ? (
+                                    <span className="text-muted-foreground truncate max-w-[260px]">• {branch.address}</span>
+                                  ) : null
+                                })()}
+                                {(() => { const branch = getBranchById(event.branchId); return branch && branch.location ? (
+                                  <a href={branch.location} target="_blank" rel="noopener noreferrer" className="text-primary underline">Get directions</a>
+                                ) : null })()}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right space-y-2 flex-shrink-0 w-40 md:w-48">
+                          <div className="flex items-center gap-2">
                           <Badge variant="outline">Upcoming</Badge>
-                          <div className="text-sm font-semibold mt-1">
+                            <span className="text-sm font-semibold">
                             {event.fee ? `₦${event.fee.toLocaleString()}` : "Free"}
+                            </span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {event.attendanceCount || 0} attendees
+                            {event.maxAttendance && ` / ${event.maxAttendance} max`}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={() => startEditEvent(event)}>
+                              <Edit className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => loadEventImages(event.id)}>
+                              <Image className="h-3 w-3 mr-1" />
+                              Images
+                            </Button>
+                            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700" onClick={() => handleDeleteEvent(event.id)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -1028,20 +1093,80 @@ export default function EventsPage() {
                 {featuredEvents.length > 0 ? (
                   <div className="space-y-4">
                     {featuredEvents.map((event) => (
-                      <div key={event.id} className="flex items-center justify-between p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
-                        <div>
-                          <h3 className="font-semibold">{event.name}</h3>
-                          <p className="text-sm text-muted-foreground">{event.description}</p>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                            <span>📅 {formatDate(event.date)}</span>
-                            <span>🕐 {event.startTime}</span>
-                            <span>📍 {event.location || 'TBD'}</span>
+                      <div key={event.id} className="flex items-start justify-between gap-4 p-4 border rounded-lg w-full max-w-full overflow-hidden">
+                        <div className="flex items-start gap-4 min-w-0 flex-1">
+                          <div className="w-20 h-14 md:w-28 md:h-16 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0">
+                            {event.imageUrl ? (
+                              <img
+                                src={event.imageUrl}
+                                alt={event.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <Calendar className="h-6 w-6 text-primary" />
+                            )}
+                          </div>
+                          <div className="space-y-1 min-w-0 flex-1 overflow-hidden">
+                            <h3 className="font-semibold break-words whitespace-normal">{event.name}</h3>
+                            <p className="text-sm text-muted-foreground line-clamp-2 max-w-[70ch] break-words whitespace-normal">{event.description}</p>
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-muted-foreground min-w-0 overflow-hidden">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {formatDate(event.date)}
+                        </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {event.startTime} - {event.closeTime}
+                              </div>
+                              <div className="flex items-center gap-1 min-w-0">
+                                <MapPin className="h-3 w-3" />
+                                <span className="truncate max-w-[40ch] break-words whitespace-normal">
+                                  {event.address
+                                    ? event.address
+                                    : (event.location && !isLikelyUrl(event.location) ? event.location : 'No location')}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="truncate max-w-[32ch]">{getBranchName(event.branchId)}</span>
+                                {(() => {
+                                  const branch = getBranchById(event.branchId)
+                                  if (!branch) return null
+                                  const eventDisplayedAddress = event.address || (event.location && !isLikelyUrl(event.location) ? event.location : '')
+                                  const showBranchAddress = branch.address && !addressesEqual(branch.address, eventDisplayedAddress)
+                                  return showBranchAddress ? (
+                                    <span className="text-muted-foreground truncate max-w-[260px]">• {branch.address}</span>
+                                  ) : null
+                                })()}
+                                {(() => { const branch = getBranchById(event.branchId); return branch && branch.location ? (
+                                  <a href={branch.location} target="_blank" rel="noopener noreferrer" className="text-primary underline">Get directions</a>
+                                ) : null })()}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right space-y-2 flex-shrink-0 w-40 md:w-48">
+                          <div className="flex items-center gap-2">
                           <Badge variant="default">Featured</Badge>
-                          <div className="text-sm font-semibold mt-1">
+                            <span className="text-sm font-semibold">
                             {event.fee ? `₦${event.fee.toLocaleString()}` : "Free"}
+                            </span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {event.attendanceCount || 0} attendees
+                            {event.maxAttendance && ` / ${event.maxAttendance} max`}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={() => startEditEvent(event)}>
+                              <Edit className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => loadEventImages(event.id)}>
+                              <Image className="h-3 w-3 mr-1" />
+                              Images
+                            </Button>
+                            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700" onClick={() => handleDeleteEvent(event.id)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
                       </div>

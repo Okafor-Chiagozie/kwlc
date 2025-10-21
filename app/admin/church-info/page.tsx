@@ -109,8 +109,20 @@ export default function ChurchInfoPage() {
   const [branches, setBranches] = useState<any[]>([])
 
   // Images State
-  const [churchImages, setChurchImages] = useState<any[]>([])
+  const [churchImages, setChurchImages] = useState<any>({})
   const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [selectedImageCategory, setSelectedImageCategory] = useState<ChurchImageCategory>(ChurchImageCategory.CarouselImage)
+
+  const categoryLabels: Record<number, string> = {
+    [ChurchImageCategory.CarouselImage]: 'Carousel Images',
+    [ChurchImageCategory.FellowshipImage]: 'Fellowship Image',
+    [ChurchImageCategory.BibleStudyImage]: 'Bible Study Image',
+    [ChurchImageCategory.CommunityImage]: 'Community Image',
+    [ChurchImageCategory.ChurchEventImage]: 'Church Event Image',
+    [ChurchImageCategory.ChurchServiceImage]: 'Church Service Image',
+    [ChurchImageCategory.ChurchWeddingImage]: 'Church Wedding Image',
+    [ChurchImageCategory.ChurchLiveStreamImage]: 'Church Livestream Image'
+  }
 
   // Load initial data
   useEffect(() => {
@@ -177,10 +189,10 @@ export default function ChurchInfoPage() {
       if (imagesData.status === 'fulfilled' && imagesData.value.isSuccessful) {
         console.log('Church images API response:', imagesData.value)
         console.log('Church images data:', imagesData.value.data)
-        setChurchImages(imagesData.value.data || [])
+        setChurchImages(imagesData.value.data || {})
       } else {
         console.log('Church images API failed:', imagesData)
-        setChurchImages([]) // Ensure it's always an array
+        setChurchImages({}) // Ensure it's always an object
       }
 
       // Load social media data from localStorage
@@ -290,16 +302,12 @@ export default function ChurchInfoPage() {
         churchDays: (newServiceSchedule.churchDays.length > 0 
           ? newServiceSchedule.churchDays 
           : [{ id: null, day: DayOfWeek.Sunday, startTime: { hour: 9, minute: 0 }, closeTime: { hour: 12, minute: 0 } }]
-        ).map(d => ({
-          ...d,
-          startTime: `${String((d as any).startTime.hour ?? 0).padStart(2,'0')}:${String((d as any).startTime.minute ?? 0).padStart(2,'0')}:00`,
-          closeTime: `${String((d as any).closeTime.hour ?? 0).padStart(2,'0')}:${String((d as any).closeTime.minute ?? 0).padStart(2,'0')}:00`
-        }))
+        )
       }
 
       console.log('Creating service schedule with payload:', scheduleToSave)
       setIsSaving(true)
-      const response = await createOrUpdateServiceScheduleDetails(scheduleToSave)
+      const response = await createOrUpdateServiceScheduleDetails(scheduleToSave as any)
 
       if (response.isSuccessful) {
         toast.success("Service schedule added successfully!" + 
@@ -379,7 +387,7 @@ export default function ChurchInfoPage() {
     }
   }
 
-  const handleImageUpload = async (file: File, category: ChurchImageCategory) => {
+  const handleImagesUpload = async (files: File[], category: ChurchImageCategory) => {
     try {
       setIsUploadingImage(true)
       
@@ -410,7 +418,7 @@ export default function ChurchInfoPage() {
       console.log('Final categoryId being sent:', categoryId)
 
       const response = await createChurchImage({
-        File: [file],
+        File: files,
         ImageCategoryId: categoryId
       })
       
@@ -982,98 +990,150 @@ export default function ChurchInfoPage() {
                       <p className="text-sm text-gray-600 mb-2">
                         Add high-quality images to showcase your church and activities
                       </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end mb-4 text-left">
+                        <div className="sm:col-span-2">
+                          <Label htmlFor="imageCategory">Category</Label>
+                          <select
+                            id="imageCategory"
+                            value={selectedImageCategory}
+                            onChange={(e) => setSelectedImageCategory(Number(e.target.value) as ChurchImageCategory)}
+                            className="w-full px-3 py-2 border rounded-md mt-1"
+                          >
+                            <option value={ChurchImageCategory.CarouselImage}>{categoryLabels[ChurchImageCategory.CarouselImage]}</option>
+                            <option value={ChurchImageCategory.FellowshipImage}>{categoryLabels[ChurchImageCategory.FellowshipImage]}</option>
+                            <option value={ChurchImageCategory.BibleStudyImage}>{categoryLabels[ChurchImageCategory.BibleStudyImage]}</option>
+                            <option value={ChurchImageCategory.CommunityImage}>{categoryLabels[ChurchImageCategory.CommunityImage]}</option>
+                            <option value={ChurchImageCategory.ChurchEventImage}>{categoryLabels[ChurchImageCategory.ChurchEventImage]}</option>
+                            <option value={ChurchImageCategory.ChurchServiceImage}>{categoryLabels[ChurchImageCategory.ChurchServiceImage]}</option>
+                            <option value={ChurchImageCategory.ChurchWeddingImage}>{categoryLabels[ChurchImageCategory.ChurchWeddingImage]}</option>
+                            <option value={ChurchImageCategory.ChurchLiveStreamImage}>{categoryLabels[ChurchImageCategory.ChurchLiveStreamImage]}</option>
+                          </select>
+                        </div>
+                        <div>
+                          <Button
+                            onClick={() => document.getElementById('image-upload')?.click()}
+                            disabled={isUploadingImage}
+                            variant="outline"
+                            className="w-full"
+                          >
+                            {isUploadingImage ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Uploading...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-4 w-4 mr-2" />
+                                Choose Images
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
                       <p className="text-xs text-blue-600 mb-4">
-                        📷 Images will be uploaded as "Carousel Images"
+                        {selectedImageCategory === ChurchImageCategory.CarouselImage
+                          ? '📷 You can select multiple files for Carousel Images'
+                          : `📷 Uploading to "${categoryLabels[selectedImageCategory]}" (single image)`}
                       </p>
-                      <Button
-                        onClick={() => document.getElementById('image-upload')?.click()}
-                        disabled={isUploadingImage}
-                        variant="outline"
-                      >
-                        {isUploadingImage ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="h-4 w-4 mr-2" />
-                            Choose Images
-                          </>
-                        )}
-                      </Button>
                       <input
                         id="image-upload"
                         type="file"
                         accept="image/*"
-                        multiple
+                        multiple={selectedImageCategory === ChurchImageCategory.CarouselImage}
                         className="hidden"
                         onChange={(e) => {
                           const files = e.target.files
                           if (files && files.length > 0) {
-                            // Debug the category value
-                            console.log('ChurchImageCategory enum:', ChurchImageCategory)
-                            console.log('CarouselImage value:', ChurchImageCategory.CarouselImage)
-                            console.log('typeof CarouselImage:', typeof ChurchImageCategory.CarouselImage)
-                            
-                            // Explicitly pass numeric value for carousel category (1)
-                            const categoryValue = ChurchImageCategory.CarouselImage || 1
-                            console.log('Using category value:', categoryValue)
-                            handleImageUpload(files[0], categoryValue)
+                            const selectedCategory = selectedImageCategory
+                            const filesArray = selectedCategory === ChurchImageCategory.CarouselImage
+                              ? Array.from(files)
+                              : [files[0]]
+                            handleImagesUpload(filesArray, selectedCategory)
                           }
                         }}
                       />
                     </div>
 
-                    {/* Existing Images */}
-                    {churchImages.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {churchImages.map((image, index) => (
-                          <div key={image.id || index} className="relative group border rounded-lg overflow-hidden">
-                            {/* Image Number Badge */}
-                            <div className="absolute top-2 left-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded z-10">
-                              #{index + 1}
+                    {/* Existing Images (by category) */}
+                    {churchImages && (churchImages.carouselImages?.length > 0 || churchImages.bibleStudyImage || churchImages.communityImage || churchImages.fellowshipImage || churchImages.weddingImage || churchImages.churchLivestreamImage || churchImages.churchEventImage) ? (
+                      <div className="space-y-8">
+                        {/* Carousel Images */}
+                        {Array.isArray(churchImages.carouselImages) && churchImages.carouselImages.length > 0 && (
+                          <div>
+                            <h4 className="font-semibold mb-3">Carousel Images</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {churchImages.carouselImages.map((image: any, index: number) => (
+                                <div key={image.id || index} className="relative group border rounded-lg overflow-hidden">
+                                  <div className="absolute top-2 left-2 bg-black/75 text-white text-xs px-2 py-1 rounded z-10">#{index + 1}</div>
+                                  <img
+                                    src={image.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
+                                    alt={image.imageName || `Carousel image ${index + 1}`}
+                                    className="w-full h-48 object-cover"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => image.id && handleDeleteImage(image.id)}
+                                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
+                                    <p className="text-white text-xs truncate">{image.imageName || `Carousel Image ${index + 1}`}</p>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                            
-                            <img
-                              src={image.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
-                              alt={`Church image ${index + 1}`}
-                              className="w-full h-48 object-cover"
-                              onError={(e) => {
-                                console.log('Image load error:', e)
-                                e.currentTarget.src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
-                              }}
-                            />
-                            
-                            {/* Hover Actions */}
-                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-center justify-center">
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => {
-                                  console.log('Delete image clicked:', image.id)
-                                  if (image.id) {
-                                    handleDeleteImage(image.id)
-                                  } else {
-                                    toast.error('Unable to delete image: No ID found')
-                                  }
-                                }}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                            
-                            {/* Image Info Overlay */}
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
-                              <p className="text-white text-xs truncate">
-                                {image.imageName || `Church Image ${index + 1}`}
-                              </p>
+                          </div>
+                        )}
+
+                        {/* Single Images */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {[
+                            { key: 'bibleStudyImage', label: 'Bible Study Image' },
+                            { key: 'communityImage', label: 'Community Image' },
+                            { key: 'fellowshipImage', label: 'Fellowship Image' },
+                            { key: 'weddingImage', label: 'Wedding Image' },
+                            { key: 'churchLivestreamImage', label: 'Church Livestream Image' },
+                            { key: 'churchEventImage', label: 'Church Event Image' },
+                          ].map(({ key, label }) => {
+                            const img = churchImages?.[key]
+                            if (!img) return null
+                            return (
+                              <div key={key} className="relative group border rounded-lg overflow-hidden">
+                                <div className="absolute top-2 left-2 bg-black/75 text-white text-xs px-2 py-1 rounded z-10">{label}</div>
+                                <img
+                                  src={img.imageUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
+                                  alt={img.imageName || label}
+                                  className="w-full h-48 object-cover"
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
+                                  }}
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => img.id && handleDeleteImage(img.id)}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
+                                  <p className="text-white text-xs truncate">{img.imageName || label}</p>
+                                </div>
+                              </div>
+                            )
+                          })}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
+                    ) : (
                       <div className="text-center py-8 text-muted-foreground">
                         <ImageIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                         <p>No images uploaded yet</p>

@@ -536,75 +536,6 @@
         }
       }
     },
-    "/api/v1/BookPurchase/VerifyBookPurchase": {
-      "post": {
-        "tags": [
-          "BookPurchase"
-        ],
-        "operationId": "VerifyBookPurchase",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "string"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "type": "string"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/BookPurchaseViewModelResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BookPurchaseViewModelResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BookPurchaseViewModelResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/BookPurchaseViewModelResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BookPurchaseViewModelResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BookPurchaseViewModelResult"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/BookPurchase/GetBookPurchases": {
       "post": {
         "tags": [
@@ -3412,75 +3343,6 @@
         }
       }
     },
-    "/api/v1/Donation/VerifyDonation": {
-      "post": {
-        "tags": [
-          "Donation"
-        ],
-        "operationId": "VerifyDonation",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "string"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "type": "string"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaymentDetailsResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/Donation/GetChurchProjectDonations": {
       "post": {
         "tags": [
@@ -5157,7 +5019,7 @@
       }
     },
     "/api/v1/Event/GetEventSchedules": {
-      "get": {
+      "post": {
         "tags": [
           "Event"
         ],
@@ -6679,6 +6541,144 @@
         }
       }
     },
+    "/api/v1/Livestream/GetNormalUploadsAsync": {
+      "post": {
+        "tags": [
+          "Livestream"
+        ],
+        "operationId": "GetNormalUploadsAsync",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketViewModelListResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketViewModelListResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketViewModelListResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketViewModelListResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketViewModelListResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketViewModelListResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Livestream/GetShortVideosAsync": {
+      "post": {
+        "tags": [
+          "Livestream"
+        ],
+        "operationId": "GetShortVideosAsync",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketViewModelListResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketViewModelListResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketViewModelListResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketViewModelListResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketViewModelListResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketViewModelListResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/Livestream/GetAllAvailableStreams": {
       "post": {
         "tags": [
@@ -7740,65 +7740,6 @@
             "schema": {
               "type": "integer",
               "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketViewModelListResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketViewModelListResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketViewModelListResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketViewModelListResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketViewModelListResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketViewModelListResult"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/Ticket/VerifyTicketPayment": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "operationId": "VerifyTicketPayment",
-        "parameters": [
-          {
-            "name": "ticketNumber",
-            "in": "query",
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -9964,7 +9905,7 @@
         "enum": [
           "ChristianLiving",
           "Devotional",
-          "Theology",
+          "TheologyOrDoctrine",
           "BibleStudy",
           "ChristianFiction",
           "BiographyOrTestimony",
@@ -12385,15 +12326,15 @@
           },
           "liveStreams": {
             "type": "integer",
-            "format": "int32"
+            "format": "int64"
           },
           "totalStreams": {
             "type": "integer",
-            "format": "int32"
+            "format": "int64"
           },
           "upcomingStreams": {
             "type": "integer",
-            "format": "int32"
+            "format": "int64"
           }
         },
         "additionalProperties": false
@@ -12673,6 +12614,14 @@
             "nullable": true
           },
           "downloadUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileName": {
             "type": "string",
             "nullable": true
           },
@@ -13008,8 +12957,9 @@
             "type": "string",
             "nullable": true
           },
-          "userTypeId": {
-            "$ref": "#/components/schemas/UserType"
+          "roleId": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -13048,7 +12998,8 @@
           "searchParams": {
             "type": "object",
             "additionalProperties": {
-              "type": "string"
+              "type": "string",
+              "nullable": true
             },
             "nullable": true
           }
@@ -13990,16 +13941,16 @@
       }
     },
     "securitySchemes": {
-      "bearer": {
+      "Bearer": {
         "type": "http",
         "description": "JWT Authorization header using the Bearer scheme.",
-        "scheme": "bearer"
+        "scheme": "Bearer"
       }
     }
   },
   "security": [
     {
-      "bearer": [ ]
+      "Bearer": [ ]
     }
   ]
 }

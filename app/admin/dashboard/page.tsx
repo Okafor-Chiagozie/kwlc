@@ -190,17 +190,20 @@ export default function AdminDashboard() {
 
       // Process upcoming events
       let upcomingEvents: any[] = []
-      if (upcomingEventsData.status === 'fulfilled' && Array.isArray(upcomingEventsData.value)) {
-        upcomingEvents = upcomingEventsData.value
+      if (upcomingEventsData.status === 'fulfilled') {
+        const upRaw: any = (upcomingEventsData as any).value
+        upcomingEvents = Array.isArray(upRaw?.data) ? upRaw.data : (Array.isArray(upRaw) ? upRaw : [])
         console.log('Upcoming events loaded for dashboard:', upcomingEvents.length)
       } else {
         console.error('Failed to load upcoming events:', upcomingEventsData)
       }
 
-      // Process featured events
+      // Process featured events (single item endpoint)
       let featuredEvents: any[] = []
-      if (featuredEventsData.status === 'fulfilled' && Array.isArray(featuredEventsData.value)) {
-        featuredEvents = featuredEventsData.value
+      if (featuredEventsData.status === 'fulfilled') {
+        const feRaw: any = (featuredEventsData as any).value
+        const fe = feRaw?.data ? [feRaw.data] : []
+        featuredEvents = fe
         console.log('Featured events loaded for dashboard:', featuredEvents.length)
       } else {
         console.error('Failed to load featured events:', featuredEventsData)

@@ -48,11 +48,14 @@ export default function BranchDetailPage({ params }: { params: Promise<{ id: str
 
   const formatTime = (time: any) => {
     if (!time) return ''
+    // Match single pastor page: show HH:mm (24-hour)
+    if (typeof time === 'string') {
+      // Expect formats like "HH:mm[:ss]" – take first 5 chars
+      return time.slice(0, 5)
+    }
     const hh = String(time.hour ?? 0).padStart(2, '0')
     const mm = String(time.minute ?? 0).padStart(2, '0')
-    const d = new Date()
-    d.setHours(Number(hh), Number(mm), 0, 0)
-    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()
+    return `${hh}:${mm}`
   }
 
   const directionsHref = branch?.location && String(branch.location).startsWith('http')

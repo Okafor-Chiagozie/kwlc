@@ -220,13 +220,15 @@ export default function LocationsSection() {
               <p className="text-gray-600 mb-6 animate-fade-in" style={{ animationDelay: "1400ms" }}>
                 Can't find a location near you? Join our online services every Sunday.
               </p>
-              <Button
-                variant="outline"
-                className="border-primary text-primary hover:bg-primary hover:text-white transition-colors animate-fade-in"
-                style={{ animationDelay: "1600ms" }}
-              >
-                Join Online Service
-              </Button>
+              <Link href="/livestream">
+                <Button
+                  variant="outline"
+                  className="border-primary text-primary hover:bg-primary hover:text-white transition-colors animate-fade-in"
+                  style={{ animationDelay: "1600ms" }}
+                >
+                  Join Online Service
+                </Button>
+              </Link>
             </div>
           </>
         )}
@@ -240,14 +242,7 @@ export default function LocationsSection() {
           </div>
         )}
 
-        {/* Show count of branches loaded */}
-        {branchesResponse?.isSuccessful && branchesResponse.data && (
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-500">
-              Showing {branchesResponse.data.length} of {branchesResponse.totalCount} branches
-            </p>
-          </div>
-        )}
+        {/* Removed branch count display */}
       </div>
     </section>
   )

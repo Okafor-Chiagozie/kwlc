@@ -116,9 +116,12 @@ export const createChurchImage = async (
   payload.File.forEach((file) => {
     formData.append('File', file);
   });
-
+  // Append category as form field using enum name to match API curl example
+  const categoryName = ChurchImageCategory[payload.ImageCategoryId] as string;
+  formData.append('ImageCategoryId', categoryName ?? String(Number(payload.ImageCategoryId)));
+  
   const response = await api.post<CreateChurchImageResponse>(
-    `${BASE_URL}/CreateChurchImage?ImageCategoryId=${Number(payload.ImageCategoryId)}`,
+    `http://musharealestate-001-site4.jtempurl.com/api/v1/HomePage/CreateChurchImage`,
     formData,
     {
       headers: {
