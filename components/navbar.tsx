@@ -37,6 +37,7 @@ export default function Navbar() {
     { name: "Home", href: "/" },
     { name: "Pastors", href: "/pastors" },
     { name: "Donations", href: "/donations" },
+    { name: "Payments", href: "/payments" },
     { name: "Events", href: "/events" },
     { name: "Branches", href: "/branches" },
     { name: "Shop", href: "/shop" },

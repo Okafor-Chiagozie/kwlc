@@ -38,6 +38,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                   <Link href={'/donations'} className="text-gray-400 hover:text-white transition-colors">Donate</Link>
                 </li>
                 <li>
+                  <Link href={'/payments'} className="text-gray-400 hover:text-white transition-colors">Payments</Link>
+                </li>
+                <li>
                   <Link href={'/events'} className="text-gray-400 hover:text-white transition-colors">Events</Link>
                 </li>
               </ul>
