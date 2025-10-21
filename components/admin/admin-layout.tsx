@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
+import { Toaster } from "sonner"
 
 const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -229,6 +230,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {/* Page content */}
         <main className="p-6">{children}</main>
       </div>
+      <Toaster position="top-right" richColors />
     </div>
   )
 }
