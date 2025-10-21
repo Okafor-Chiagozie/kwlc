@@ -617,7 +617,7 @@ export default function PaymentsPage() {
 
         {/* Payment Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="max-w-lg sm:max-w-xl lg:max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 rounded-lg bg-primary/10">

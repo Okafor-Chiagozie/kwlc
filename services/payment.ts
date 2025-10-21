@@ -15,9 +15,28 @@ const BASE_URL = '/api/v1/Payment';
 export const initiatePayment = async (
   payload: InitiatePaymentRequest
 ): Promise<InitiatePaymentResponse> => {
+  // Map to API's expected payload keys (paymenMethod typo per API schema)
+  const apiPayload: any = {
+    entryId: payload.entryId,
+    amount: payload.amount,
+    currencyId: payload.currencyId,
+    name: payload.name,
+    email: payload.email,
+    phoneNumber: payload.phoneNumber,
+    reference: payload.reference,
+    purpose: payload.purpose,
+    paymenMethod: (payload as any).paymentMethod ?? (payload as any).paymenMethod, // ensure API key
+    callbackUrl: payload.callbackUrl,
+  };
+
   const response = await api.post<InitiatePaymentResponse>(
-    `${BASE_URL}/InitiatePayment`,
-    payload
+    `http://musharealestate-001-site4.jtempurl.com/api/v1/Payment/InitiatePayment`,
+    apiPayload,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
   );
   return response.data;
 };
