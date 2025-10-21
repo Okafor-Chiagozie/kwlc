@@ -5,9 +5,6 @@ const api = axios.create({
   // baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://kwlc-e6dhgtd9bvg6bkea.canadacentral-01.azurewebsites.net',
   baseURL: process.env.NEXT_PUBLIC_API_URL || '',
   // withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
   timeout: 30000, // 30 seconds timeout
 })
 

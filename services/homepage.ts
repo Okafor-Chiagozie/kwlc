@@ -122,12 +122,7 @@ export const createChurchImage = async (
   
   const response = await api.post<CreateChurchImageResponse>(
     `http://musharealestate-001-site4.jtempurl.com/api/v1/HomePage/CreateChurchImage`,
-    formData,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }
+    formData
   );
   return response.data;
 };
@@ -141,12 +136,7 @@ export const updateChurchImage = async (
 
   const response = await api.put<UpdateChurchImageResponse>(
     `${BASE_URL}/UpdateChurchImage?Id=${payload.Id}`,
-    formData,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }
+    formData
   );
   return response.data;
 };

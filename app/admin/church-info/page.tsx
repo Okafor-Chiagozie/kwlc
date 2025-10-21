@@ -111,6 +111,7 @@ export default function ChurchInfoPage() {
   // Images State
   const [churchImages, setChurchImages] = useState<any>({})
   const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [deletingImageIds, setDeletingImageIds] = useState<number[]>([])
   const [selectedImageCategory, setSelectedImageCategory] = useState<ChurchImageCategory>(ChurchImageCategory.CarouselImage)
 
   const categoryLabels: Record<number, string> = {
@@ -451,16 +452,41 @@ export default function ChurchInfoPage() {
 
   const handleDeleteImage = async (imageId: number) => {
     try {
+      setDeletingImageIds(prev => Array.from(new Set([ ...prev, imageId ])))
       const response = await deleteChurchImage(imageId)
       if (response.isSuccessful) {
-        toast.success("Image deleted successfully!")
-        loadChurchData()
+        // Optimistically update UI without full reload
+        setChurchImages((prev: any) => {
+          const updated: any = { ...prev }
+          if (Array.isArray(prev?.carouselImages)) {
+            updated.carouselImages = prev.carouselImages.filter((img: any) => img?.id !== imageId)
+          }
+          const singleKeys = [
+            'bibleStudyImage',
+            'communityImage',
+            'fellowshipImage',
+            'weddingImage',
+            'churchLivestreamImage',
+            'churchEventImage',
+            'churchServiceImage',
+            'churchLiveStreamImage'
+          ]
+          singleKeys.forEach((key) => {
+            if (prev?.[key]?.id === imageId) {
+              updated[key] = null
+            }
+          })
+          return updated
+        })
+        toast.success("Image deleted successfully!", { position: "top-right" })
       } else {
         throw new Error(response.responseMessage || 'Failed to delete image')
       }
     } catch (err: any) {
       console.error('Error deleting image:', err)
       toast.error(err.message || 'Failed to delete image')
+    } finally {
+      setDeletingImageIds(prev => prev.filter(id => id !== imageId))
     }
   }
 
@@ -1079,8 +1105,13 @@ export default function ChurchInfoPage() {
                                       size="sm"
                                       onClick={() => image.id && handleDeleteImage(image.id)}
                                       className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                      disabled={!!(image.id && deletingImageIds.includes(image.id))}
                                     >
-                                      <Trash2 className="h-4 w-4" />
+                                      {image.id && deletingImageIds.includes(image.id) ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                      )}
                                     </Button>
                                   </div>
                                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
@@ -1121,8 +1152,13 @@ export default function ChurchInfoPage() {
                                     size="sm"
                                     onClick={() => img.id && handleDeleteImage(img.id)}
                                     className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                    disabled={!!(img.id && deletingImageIds.includes(img.id))}
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    {img.id && deletingImageIds.includes(img.id) ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-4 w-4" />
+                                    )}
                                   </Button>
                                 </div>
                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
