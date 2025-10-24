@@ -7,6 +7,8 @@ import {
   GetUpcomingStreamsResponse,
   GetAllAvailableStreamsRequest,
   GetAllAvailableStreamsResponse,
+  GetNormalUploadsRequest,
+  GetNormalUploadsResponse,
   GetStreamDetailsByURLRequest,
   GetStreamDetailsByURLResponse,
   GetStreamDetailsByIdRequest,
@@ -31,7 +33,7 @@ export const getCompletedStreams = async (
   payload: GetCompletedStreamsRequest
 ): Promise<GetCompletedStreamsResponse> => {
   const response = await api.post<GetCompletedStreamsResponse>(
-    `${BASE_URL}/GetCompletedStreams`,
+    `http://musharealestate-001-site4.jtempurl.com/api/v1/Livestream/GetCompletedStreams`,
     payload
   );
   return response.data;
@@ -42,6 +44,16 @@ export const getUpcomingStreams = async (
 ): Promise<GetUpcomingStreamsResponse> => {
   const response = await api.post<GetUpcomingStreamsResponse>(
     `${BASE_URL}/GetUpcomingStreams`,
+    payload
+  );
+  return response.data;
+};
+
+export const getNormalUploads = async (
+  payload: GetNormalUploadsRequest
+): Promise<GetNormalUploadsResponse> => {
+  const response = await api.post<GetNormalUploadsResponse>(
+    `http://musharealestate-001-site4.jtempurl.com/api/v1/Livestream/GetNormalUploadsAsync`,
     payload
   );
   return response.data;

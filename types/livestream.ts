@@ -42,6 +42,7 @@ export type GetAllAvailableStreamsRequest = SearchFilter;
 export type GetStreamDetailsByURLRequest = string; // URL string
 export type GetStreamDetailsByIdRequest = string; // Video ID string
 export type DeleteStreamRequest = number; // ID number
+export type GetNormalUploadsRequest = SearchFilter; // Uploaded videos pagination
 
 // Response types based on actual API testing
 export interface LivestreamViewModelListResult extends StandardApiResponse<LivestreamViewModel[]> {}
@@ -54,6 +55,7 @@ export interface GetAllAvailableStreamsResponse extends LivestreamViewModelListR
 export interface GetStreamDetailsByURLResponse extends LivestreamViewModelListResult {}
 export interface GetStreamDetailsByIdResponse extends LivestreamViewModelListResult {}
 export interface DeleteStreamResponse extends LivestreamViewModelListResult {}
+export interface GetNormalUploadsResponse extends LivestreamViewModelListResult {}
 
 // TODO: These custom types should be used once backend fixes the response types
 // Currently commented out because API returns TicketViewModelListResult instead

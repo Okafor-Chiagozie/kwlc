@@ -2059,12 +2059,150 @@
         }
       }
     },
+    "/api/v1/BranchReport/GetOnlinePaymentReports": {
+      "post": {
+        "tags": [
+          "BranchReport"
+        ],
+        "operationId": "GetOnlinePaymentReports",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchReportViewModelListResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchReportViewModelListResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchReportViewModelListResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchReportViewModelListResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchReportViewModelListResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchReportViewModelListResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/BranchReport/DownloadBranchReport": {
       "post": {
         "tags": [
           "BranchReport"
         ],
         "operationId": "DownloadBranchReport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFilter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStreamResponseResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/BranchReport/DownloadOnlinePaymentReport": {
+      "post": {
+        "tags": [
+          "BranchReport"
+        ],
+        "operationId": "DownloadOnlinePaymentReport",
         "requestBody": {
           "content": {
             "application/json": {
@@ -6233,6 +6371,75 @@
         }
       }
     },
+    "/api/v1/HomePage/ContactUs": {
+      "post": {
+        "tags": [
+          "HomePage"
+        ],
+        "operationId": "ContactUs",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactUsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactUsRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactUsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BooleanResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BooleanResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BooleanResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BooleanResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BooleanResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BooleanResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/HomePage/GetChurchImage": {
       "get": {
         "tags": [
@@ -7599,6 +7806,75 @@
         }
       }
     },
+    "/api/v1/Payment/InitiateOnlinePayment": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "InitiateOnlinePayment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnlinePaymentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnlinePaymentRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnlinePaymentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/Ticket/CreateOrUpdateTicket": {
       "post": {
         "tags": [
@@ -8519,6 +8795,56 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StringResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/User/Roles": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "Roles",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleResponseListResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleResponseListResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleResponseListResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleResponseListResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleResponseListResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleResponseListResult"
                 }
               }
             }
@@ -11043,6 +11369,24 @@
         },
         "additionalProperties": false
       },
+      "ContactUsRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "Currency": {
         "enum": [
           "NGN",
@@ -12590,6 +12934,37 @@
         },
         "additionalProperties": false
       },
+      "OnlinePaymentRequest": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "currencyId": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "branchId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "paymentType": {
+            "$ref": "#/components/schemas/PaymentType"
+          },
+          "paymenMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          }
+        },
+        "additionalProperties": false
+      },
       "OrderItemViewModel": {
         "type": "object",
         "properties": {
@@ -12787,7 +13162,8 @@
         "enum": [
           "card",
           "bank_transfer",
-          "cash"
+          "cash",
+          "payAttitude"
         ],
         "type": "string"
       },
@@ -12833,6 +13209,18 @@
           }
         },
         "additionalProperties": false
+      },
+      "PaymentType": {
+        "enum": [
+          "NormalOffering",
+          "TestimonyOffering",
+          "TitheOffering",
+          "SeedFaith",
+          "SpecialThanksgiving",
+          "ChildDedication",
+          "Others"
+        ],
+        "type": "string"
       },
       "ProjectImageViewModel": {
         "type": "object",
@@ -12926,7 +13314,13 @@
           "DON",
           "EVT",
           "CDON",
-          "BKPUR"
+          "BKPUR",
+          "OFF",
+          "TIT",
+          "TES",
+          "CHD",
+          "STH",
+          "SED"
         ],
         "type": "string"
       },
@@ -12979,6 +13373,54 @@
           "confirmPassword": {
             "type": "string",
             "format": "password",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RoleResponse": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "nullable": true
+          },
+          "roleId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isDeleted": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RoleResponseListResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoleResponse"
+            },
+            "nullable": true
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "nullable": true
+          },
+          "responseMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "responseCode": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -13282,6 +13724,11 @@
           "ticketNumber": {
             "type": "string",
             "nullable": true
+          },
+          "dateVerified": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -13474,16 +13921,19 @@
             "type": "string",
             "nullable": true
           },
-          "userTypeId": {
-            "$ref": "#/components/schemas/UserType"
+          "roleId": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
       },
       "UserType": {
         "enum": [
-          "Admin",
-          "User"
+          "SuperAdmin",
+          "BranchAdmin",
+          "FinanceAdmin",
+          "Partner"
         ],
         "type": "string"
       },

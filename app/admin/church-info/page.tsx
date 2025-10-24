@@ -1036,24 +1036,24 @@ export default function ChurchInfoPage() {
                           </select>
                         </div>
                         <div>
-                          <Button
-                            onClick={() => document.getElementById('image-upload')?.click()}
-                            disabled={isUploadingImage}
-                            variant="outline"
+                      <Button
+                        onClick={() => document.getElementById('image-upload')?.click()}
+                        disabled={isUploadingImage}
+                        variant="outline"
                             className="w-full"
-                          >
-                            {isUploadingImage ? (
-                              <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Uploading...
-                              </>
-                            ) : (
-                              <>
-                                <Upload className="h-4 w-4 mr-2" />
-                                Choose Images
-                              </>
-                            )}
-                          </Button>
+                      >
+                        {isUploadingImage ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Choose Images
+                          </>
+                        )}
+                      </Button>
                         </div>
                       </div>
                       <p className="text-xs text-blue-600 mb-4">
@@ -1110,7 +1110,7 @@ export default function ChurchInfoPage() {
                                       {image.id && deletingImageIds.includes(image.id) ? (
                                         <Loader2 className="h-4 w-4 animate-spin" />
                                       ) : (
-                                        <Trash2 className="h-4 w-4" />
+                                      <Trash2 className="h-4 w-4" />
                                       )}
                                     </Button>
                                   </div>
@@ -1157,7 +1157,7 @@ export default function ChurchInfoPage() {
                                     {img.id && deletingImageIds.includes(img.id) ? (
                                       <Loader2 className="h-4 w-4 animate-spin" />
                                     ) : (
-                                      <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-4 w-4" />
                                     )}
                                   </Button>
                                 </div>

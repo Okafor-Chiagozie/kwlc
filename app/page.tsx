@@ -587,7 +587,7 @@ export default function Home() {
                   <h3 className="text-xl font-bold">UPCOMING EVENTS</h3>
                 </div>
 
-                <div className="space-y-6">
+                <div>
                   {eventsLoading ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
@@ -598,8 +598,8 @@ export default function Home() {
                       <AlertCircle className="h-5 w-5 mr-2" />
                       <span>Unable to load events</span>
                     </div>
-                  ) : (() => { const upcomingList = Array.isArray(upcomingEvents) ? upcomingEvents : (upcomingEvents?.data || []); return upcomingList; })().length > 0 ? (
-                    (() => { const upcomingList = Array.isArray(upcomingEvents) ? upcomingEvents : (upcomingEvents?.data || []); return upcomingList.slice(0, 3); })().map((event) => {
+                  ) : (() => { const upcomingList: any[] = Array.isArray(upcomingEvents) ? (upcomingEvents as any[]) : ((upcomingEvents as any)?.data || []); return upcomingList; })().length > 0 ? (
+                    (() => { const upcomingList: any[] = Array.isArray(upcomingEvents) ? (upcomingEvents as any[]) : ((upcomingEvents as any)?.data || []); return upcomingList.slice(0, 3); })().map((event: any) => {
                       const { day, month } = formatEventDate(event.date)
                       return (
                         <div key={event.id} className="group flex gap-4 p-3 transition-colors">
@@ -607,10 +607,13 @@ export default function Home() {
                             <span className="text-lg font-bold">{day}</span>
                             <span className="text-xs font-medium">{month}</span>
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <h4 className="font-bold group-hover:text-primary transition-colors">{event.name}</h4>
                             <p className="text-gray-600 text-sm">{formatEventTime(event.startTime, event.closeTime)}</p>
-                            <p className="text-gray-500 text-sm mt-1">{event.venue || event.location}</p>
+                            <div className="flex items-start gap-2 mt-1">
+                              <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                              <p className="text-gray-500 text-sm truncate max-w-[260px] md:max-w-[320px] lg:max-w-[380px]">{event.address || event.venue || event.location}</p>
+                            </div>
                           </div>
                         </div>
                       )

@@ -6,8 +6,14 @@ import { Plus, Minus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import ShopNav from "@/components/shop-nav"
+import MainLayout from "@/components/main-layout"
 import Link from "next/link"
 import { useChurchInfo } from "@/components/church-info-provider"
+import { useApi } from "@/hooks/useApi"
+import { getBook, getBooks } from "@/services/book"
+import type { BookViewModel } from "@/types/book"
+import { useCart } from "@/hooks/useCart"
+import { useParams } from "next/navigation"
 
 const product = {
   id: 1,
@@ -52,57 +58,62 @@ const relatedProducts = [
   },
 ]
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
+export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState("description")
   const { details, socials } = useChurchInfo()
+  const { addToCart } = useCart()
+  const params = useParams() as { id?: string }
+  const idNum = Number(params?.id || 0)
+
+  // Fetch book details
+  const { data: bookResp } = useApi(() => getBook(idNum), [idNum])
+  const book: BookViewModel | undefined = Array.isArray(bookResp?.data) ? (bookResp as any)?.data?.[0] : undefined
+  const { data: latestBooksResp } = useApi(() => getBooks({ pageSize: 4, pageNumber: 1, searchParams: {} }), [])
+  const latestBooks: BookViewModel[] = Array.isArray((latestBooksResp as any)?.data) ? (latestBooksResp as any).data : []
 
   const formatCurrency = (amount: number) => {
     return `₦${amount}`
   }
 
   return (
-    <>
+    <MainLayout>
       <ShopNav />
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="container mx-auto px-4 py-8">
-          {/* Shop Now Breadcrumb */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-primary">Shop Now</h2>
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-r from-gray-900 to-primary/90 pt-28 pb-16 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden opacity-20 z-0">
+          <div className="absolute top-0 left-0 w-full h-full bg-[url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/previous-sunday-1-mvsBAuZ8fv6sQ9BIEJLOZ7sL3xWqBZ.png')] bg-cover bg-center"></div>
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-primary/40"></div>
+        <div className="container mx-auto px-4 relative z-10 text-white">
+          <div className="flex justify-start mb-3">
+            <Link href="/shop" className="inline-flex items-center gap-2 text-white/80 hover:text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+              <span>Back to Shop</span>
+            </Link>
           </div>
+          <h1 className="text-3xl md:text-5xl font-bold mb-2">{book?.title || product.title}</h1>
+          {book?.author && (
+            <p className="text-white/90">by {book.author}</p>
+          )}
+          <p className="text-white/80 max-w-2xl mt-2">A thoughtful read to inspire growth and strengthen your faith.</p>
+        </div>
+        <div className="absolute bottom-0 left-0 w-full h-16 bg-white" style={{ clipPath: "polygon(0 100%, 100% 100%, 100% 0)" }}></div>
+      </section>
+
+      <div className="min-h-screen bg-gray-50">
+        <div className="w-full pt-0 pb-8">
 
           {/* Product Detail Section */}
-          <div className="bg-white rounded-lg p-8 mb-12">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Left - Thumbnail Images */}
-              <div className="lg:col-span-1 order-1 lg:order-1">
-                <div className="space-y-4">
-                  {product.images.map((image, index) => (
-                    <div
-                      key={index}
-                      className={`relative w-20 h-24 rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${
-                        selectedImage === index ? "border-primary" : "border-gray-200 hover:border-gray-300"
-                      }`}
-                      onClick={() => setSelectedImage(index)}
-                    >
-                      <Image
-                        src={image || "/placeholder.svg"}
-                        alt={`${product.title} view ${index + 1}`}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Center - Main Product Image */}
-              <div className="lg:col-span-1 order-2 lg:order-2">
-                <div className="relative aspect-[3/4] rounded-lg overflow-hidden shadow-lg">
+          <div className="bg-white p-8 mb-12">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+              {/* Main Product Image */}
+              <div className="lg:col-span-1">
+                <div className="relative aspect-[3/4] overflow-hidden shadow-2xl">
                   <Image
-                    src={product.images[selectedImage] || "/placeholder.svg"}
-                    alt={product.title}
+                    src={book?.imageUrl || product.images[0] || "/placeholder.svg"}
+                    alt={book?.title || product.title}
                     fill
                     className="object-cover"
                   />
@@ -110,15 +121,17 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
               </div>
 
               {/* Right - Product Info */}
-              <div className="lg:col-span-1 order-3 lg:order-3">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">{product.title}</h1>
+              <div className="lg:col-span-2">
+                <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-3">{book?.title || product.title}</h1>
+                {book?.author && (
+                  <p className="text-gray-600 mb-4 text-lg">by {book.author}</p>
+                )}
 
                 <div className="mb-6">
-                  <span className="text-lg text-gray-600">Price: </span>
-                  <span className="text-lg font-bold text-primary">{formatCurrency(product.price)}</span>
+                  <span className="text-2xl font-bold text-primary">{book?.priceDisplay || formatCurrency(book?.price ?? product.price)}</span>
                 </div>
 
-                <p className="text-gray-600 mb-6 leading-relaxed">{product.description}</p>
+                <p className="text-gray-700 mb-6 leading-relaxed text-xl">{book?.description || product.description}</p>
 
                 <div className="mb-6">
                   <span className="text-sm text-gray-600 italic">{product.stockCount} Copies Available</span>
@@ -151,9 +164,23 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                     </div>
                   </div>
 
-                  <Link href="/checkout" className="w-full">
-                    <Button className="w-full bg-black hover:bg-gray-800 text-white h-12 text-lg">Purchase</Button>
-                  </Link>
+                  {book && (book.price === 0 || (book.priceDisplay && book.priceDisplay.toLowerCase() === 'free')) ? (
+                    <a href={book.bookUrl} target="_blank" rel="noopener noreferrer" className="w-full">
+                      <Button className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-lg">Download</Button>
+                    </a>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        className="w-full bg-primary hover:bg-primary/90 text-white h-12 text-lg"
+                        onClick={() => book && addToCart(book, quantity)}
+                      >
+                        Add to Cart
+                      </Button>
+                      <Link href="/checkout" className="w-full">
+                        <Button className="w-full bg-black hover:bg-gray-800 text-white h-12 text-lg">Buy Now</Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -187,7 +214,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
             </div>
 
             <div className="text-gray-700 leading-relaxed">
-              {activeTab === "description" && <p>{product.longDescription}</p>}
+              {activeTab === "description" && <p>{book?.description || product.longDescription}</p>}
               {activeTab === "additional" && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -213,113 +240,46 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
             </div>
           </div>
 
-          {/* Related Products */}
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-8">Related Product</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {relatedProducts.map((relatedProduct) => (
-                <div
-                  key={relatedProduct.id}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden group hover:shadow-md transition-all duration-300"
-                >
-                  <div className="relative aspect-[3/4] overflow-hidden">
-                    <Image
-                      src={relatedProduct.image || "/placeholder.svg"}
-                      alt={relatedProduct.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <div className="p-4 text-center">
-                    <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-primary transition-colors">
-                      {relatedProduct.title}
-                    </h3>
-                    <div className="text-sm text-gray-600 mb-1">
-                      Price: <span className="font-bold text-primary">{formatCurrency(relatedProduct.price)}</span>
+          {/* Latest Books */}
+          <section className="px-4 md:px-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-8">Latest Books</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+              {latestBooks.map((b) => (
+                <Link key={b.id} href={`/shop/${b.id}`} className="block">
+                  <div
+                    className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden group hover:shadow-md transition-all duration-300 h-full flex flex-col"
+                  >
+                    <div className="relative aspect-[3/4] overflow-hidden">
+                      <Image
+                        src={b.imageUrl || "/placeholder.svg"}
+                        alt={b.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-4 flex-1 flex flex-col">
+                      <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-primary transition-colors line-clamp-2">
+                        {b.title}
+                      </h3>
+                      {b.author && (
+                        <p className="text-sm text-gray-500 mb-2">by {b.author}</p>
+                      )}
+                      <div className="flex items-center justify-between text-sm mt-auto">
+                        <span className="font-bold text-primary">{b.priceDisplay || formatCurrency(b.price)}</span>
+                        {b.category && (
+                          <span className="px-2 py-1 rounded bg-primary/10 text-primary text-xs font-medium">
+                            {b.category}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </section>
         </div>
-
-        {/* Footer */}
-        <footer className="bg-gray-900 text-white py-12 mt-16">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="relative w-10 h-10">
-                    <Image
-                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/KWLC%20Logo%201-aSNedKIy42avfHJjhU8zekfvcwmgKh.png"
-                      alt="Kingdom Ways Living Church Logo"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-white">KINGDOM WAYS</h3>
-                    <p className="text-xs text-gray-400">LIVING CHURCH</p>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm">{details.phoneNumber || "+234 70 433 2832"}</span>
-                  </div>
-                  <div className="text-sm">
-                    {details.address || "24 Prince Ibrahim Eletu Avenue, Shoprite Circle Mall Road Jakande Bus Stop, Osapa London,Lagos"}
-                  </div>
-                  <div className="text-sm">{details.email || "info@kwlchq.org"}</div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-bold text-lg mb-6">CONTACT US</h3>
-                <div className="space-y-4">
-                  <Input placeholder="Name" className="bg-gray-800 border-gray-700 text-white" />
-                  <Input placeholder="Email" className="bg-gray-800 border-gray-700 text-white" />
-                  <textarea
-                    placeholder="Message"
-                    className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md text-white placeholder:text-gray-400 min-h-[100px]"
-                  />
-                  <Button className="w-full bg-black hover:bg-gray-800 text-white">Send</Button>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-bold text-lg mb-6">UP COMING EVENT</h3>
-                <div className="space-y-4">
-                  {[1, 2, 3].map((event) => (
-                    <div key={event}>
-                      <h4 className="font-medium">Wedding</h4>
-                      <p className="text-sm text-gray-400">July 7 @ 8:00 am - 10:30 am</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-bold text-lg mb-6">FOLLOW US</h3>
-                <div className="flex gap-3">
-                  {socials.linkedin && (
-                    <a href={socials.linkedin} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors"><span className="text-xs">L</span></a>
-                  )}
-                  {socials.twitter && (
-                    <a href={socials.twitter} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors"><span className="text-xs">T</span></a>
-                  )}
-                  {socials.facebook && (
-                    <a href={socials.facebook} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors"><span className="text-xs">F</span></a>
-                  )}
-                  {socials.instagram && (
-                    <a href={socials.instagram} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors"><span className="text-xs">I</span></a>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </footer>
       </div>
-    </>
+    </MainLayout>
   )
 }

@@ -6,7 +6,7 @@ import { Play, Search, Share2, Users, AlertCircle, Loader2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useApi } from "@/hooks/useApi"
-import { getLivestreamUrl, getCompletedStreams, getUpcomingStreams } from "@/services/livestream"
+import { getLivestreamUrl, getCompletedStreams, getUpcomingStreams, getNormalUploads } from "@/services/livestream"
 import { LivestreamViewModel } from "@/types/livestream"
 
 const isNoRecordsError = (error: string | null) => {
@@ -62,6 +62,7 @@ export default function LivestreamPage() {
   const [showFallback, setShowFallback] = useState(false)
   const [selectedVideo, setSelectedVideo] = useState<LivestreamViewModel | null>(null)
   const [hasJoined, setHasJoined] = useState(false)
+  const [pageNumber, setPageNumber] = useState(1)
 
   // Fallback timer to prevent infinite loading
   React.useEffect(() => {
@@ -101,36 +102,52 @@ export default function LivestreamPage() {
     refetch: refetchLivestream 
   } = useApi(() => getLivestreamUrl(), [])
 
-  // Fetch completed streams for Previous Sundays
+  // Fetch latest completed stream (for hero)
+  const {
+    data: latestCompletedResponse,
+    loading: latestCompletedLoading,
+    error: latestCompletedError,
+    refetch: refetchLatestCompleted
+  } = useApi(() => getCompletedStreams({
+    pageSize: 1,
+    pageNumber: 1,
+    searchParams: {}
+  }), [])
+
+  // Fetch completed streams list (Previous Services) with pagination
   const { 
     data: completedStreamsResponse, 
     loading: completedLoading, 
     error: completedError, 
     refetch: refetchCompleted 
   } = useApi(() => getCompletedStreams({
-    pageSize: 8,
-    pageNumber: 1,
+    pageSize: 9,
+    pageNumber,
     searchParams: {}
-  }), [])
+  }), [pageNumber])
 
   // Fetch upcoming streams
+  const [uploadsPageNumber, setUploadsPageNumber] = useState(1)
   const { 
-    data: upcomingStreamsResponse, 
-    loading: upcomingLoading, 
-    error: upcomingError, 
-    refetch: refetchUpcoming 
-  } = useApi(() => getUpcomingStreams({
-    pageSize: 6,
-    pageNumber: 1,
+    data: uploadsResponse, 
+    loading: uploadsLoading, 
+    error: uploadsError, 
+    refetch: refetchUploads 
+  } = useApi(() => getNormalUploads({
+    pageSize: 9,
+    pageNumber: uploadsPageNumber,
     searchParams: {}
-  }), [])
+  }), [uploadsPageNumber])
 
   const livestreamData = livestreamResponse?.data?.[0]
   const completedStreams = Array.isArray(completedStreamsResponse?.data) 
     ? completedStreamsResponse.data 
     : []
-  const upcomingStreams = Array.isArray(upcomingStreamsResponse?.data) 
-    ? upcomingStreamsResponse.data 
+  const latestCompleted = Array.isArray(latestCompletedResponse?.data)
+    ? latestCompletedResponse.data[0]
+    : null
+  const uploads = Array.isArray(uploadsResponse?.data) 
+    ? uploadsResponse.data 
     : []
 
   // Check if all main data is loaded
@@ -179,9 +196,8 @@ export default function LivestreamPage() {
 
   // Determine hero video: live if available, otherwise latest completed
   const isLive = Boolean(livestreamData)
-  const completedFirst = completedStreams[0]
-  const heroVideo = isLive ? livestreamData : completedFirst
-  const heroLoading = isLive ? livestreamLoading : (livestreamLoading || completedLoading)
+  const heroVideo = isLive ? livestreamData : latestCompleted
+  const heroLoading = isLive ? livestreamLoading : (livestreamLoading || latestCompletedLoading)
   const heroIframeSrc = heroVideo ? getYoutubeEmbedWithOptions(
     heroVideo.streamUrl,
     isLive && hasJoined, // autoplay only after joining when live
@@ -190,8 +206,9 @@ export default function LivestreamPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white pb-16 pt-16">
-      {/* Live Stream Section */}
-      <div className="relative aspect-video w-full max-h-[80vh] bg-black">
+      {/* Live Stream Section (constrained width with side padding) */}
+      <div className="container mx-auto px-6 md:px-12 lg:px-24 xl:px-40">
+        <div className="relative aspect-video w-full max-h-[80vh] bg-black rounded-lg overflow-hidden">
         
         
         {heroLoading && !showFallback ? (
@@ -341,13 +358,14 @@ export default function LivestreamPage() {
             </div>
           </div>
           )}
+        </div>
       </div>
 
-      {/* Previous Sundays Section */}
+      {/* Previous Services Section */}
       <div className="container mx-auto px-6 py-16">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-bold mb-2">Previous Sundays</h2>
+            <h2 className="text-3xl font-bold mb-2">Previous Services</h2>
             <p className="text-gray-400">Catch up on services you might have missed</p>
           </div>
           <div className="mt-4 md:mt-0 md:w-80">
@@ -415,30 +433,52 @@ export default function LivestreamPage() {
               </Card>
             ))}
           </div>
-                      )}
-                    </div>
+        )}
 
-      {/* Upcoming Streams Section */}
+        {/* Pagination */}
+        {filteredStreams.length > 0 && (
+          <div className="flex items-center justify-center gap-3 mt-10">
+            <button
+              className="px-4 py-2 rounded-md bg-gray-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+              disabled={pageNumber === 1 || completedLoading}
+            >
+              Previous
+            </button>
+            <span className="text-gray-400 text-sm">Page {pageNumber}</span>
+            <button
+              className="px-4 py-2 rounded-md bg-gray-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setPageNumber((p) => p + 1)}
+              disabled={completedLoading}
+            >
+              Next
+            </button>
+          </div>
+                      )}
+      </div>
+
+      {/* Uploaded Videos Section */
+      }
       <div className="container mx-auto px-6 py-16 border-t border-gray-800">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Upcoming Streams</h2>
-          <p className="text-gray-400">Don't miss our upcoming services and events</p>
+          <h2 className="text-3xl font-bold mb-2">Uploaded Videos</h2>
+          <p className="text-gray-400">Explore recent uploads on our channel</p>
         </div>
 
-        {upcomingLoading ? (
-          <LoadingState message="Loading upcoming streams..." />
-        ) : upcomingError && !isNoRecordsError(upcomingError) ? (
+        {uploadsLoading ? (
+          <LoadingState message="Loading uploaded videos..." />
+        ) : uploadsError && !isNoRecordsError(uploadsError) ? (
           <ErrorState 
-            error={upcomingError} 
-            onRetry={refetchUpcoming}
-            title="Unable to Load Upcoming Streams"
+            error={uploadsError} 
+            onRetry={refetchUploads}
+            title="Unable to Load Uploaded Videos"
           />
-        ) : upcomingStreams.length === 0 ? (
-          <EmptyState message="No upcoming streams scheduled" icon={Play} />
+        ) : uploads.length === 0 ? (
+          <EmptyState message="No uploaded videos found" icon={Play} />
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {upcomingStreams.map((stream, index) => (
-              <Card key={stream.streamId || index} className="bg-gray-800 border-gray-700 overflow-hidden">
+            {uploads.map((stream, index) => (
+              <Card key={stream.streamId || index} className="bg-gray-800 border-gray-700 overflow-hidden group hover:bg-gray-750 transition-colors">
                 <div className="relative aspect-video">
                   <Image
                     src={stream.thumbnailUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
@@ -446,8 +486,16 @@ export default function LivestreamPage() {
                     fill
                     className="object-cover"
                   />
-                  <div className="absolute top-2 left-2 px-2 py-1 bg-blue-600 text-white text-xs rounded font-medium">
-                    UPCOMING
+                  {/* Subtle overlay */}
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
+                  {/* Center play button opens modal */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <button 
+                      className="w-12 h-12 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center border-2 border-white/50 hover:scale-110 hover:bg-white/40 transition-all"
+                      onClick={() => setSelectedVideo(stream)}
+                    >
+                      <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
+                    </button>
                   </div>
                 </div>
                 <CardContent className="p-4">
@@ -457,17 +505,35 @@ export default function LivestreamPage() {
                   <p className="text-sm text-gray-400 mb-3 line-clamp-2">
                     {stream.description || "No description available"}
                   </p>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-400">{formatDate(stream.streamDate)}</span>
-                    <span className="text-sm text-primary font-medium">{stream.startTime}</span>
+                    <span className="text-sm text-gray-400">{stream.viewCount} views</span>
                   </div>
-                  <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm">
-                    Set Reminder
-                  </button>
                 </CardContent>
               </Card>
-              ))}
-            </div>
+            ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {uploads.length > 0 && (
+          <div className="flex items-center justify-center gap-3 mt-10">
+            <button
+              className="px-4 py-2 rounded-md bg-gray-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setUploadsPageNumber((p) => Math.max(1, p - 1))}
+              disabled={uploadsPageNumber === 1 || uploadsLoading}
+            >
+              Previous
+            </button>
+            <span className="text-gray-400 text-sm">Page {uploadsPageNumber}</span>
+            <button
+              className="px-4 py-2 rounded-md bg-gray-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setUploadsPageNumber((p) => p + 1)}
+              disabled={uploadsLoading}
+            >
+              Next
+            </button>
+          </div>
         )}
       </div>
 
