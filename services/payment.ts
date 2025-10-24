@@ -30,7 +30,7 @@ export const initiatePayment = async (
   };
 
   const response = await api.post<InitiatePaymentResponse>(
-    `https://musharealestate-001-site4.jtempurl.com/api/v1/Payment/InitiatePayment`,
+    `http://musharealestate-001-site4.jtempurl.com/api/v1/Payment/InitiatePayment`,
     apiPayload,
     {
       headers: {

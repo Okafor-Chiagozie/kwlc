@@ -1,4 +1,5 @@
 import api from '@/lib/axios';
+import axios from 'axios';
 import {
   GetLivestreamUrlResponse,
   GetCompletedStreamsRequest,
@@ -32,9 +33,10 @@ export const getLivestreamUrl = async (): Promise<GetLivestreamUrlResponse> => {
 export const getCompletedStreams = async (
   payload: GetCompletedStreamsRequest
 ): Promise<GetCompletedStreamsResponse> => {
-  const response = await api.post<GetCompletedStreamsResponse>(
-    `https://musharealestate-001-site4.jtempurl.com/api/v1/Livestream/GetCompletedStreams`,
-    payload
+  const response = await axios.post<GetCompletedStreamsResponse>(
+    `http://musharealestate-001-site4.jtempurl.com/api/v1/Livestream/GetCompletedStreams`,
+    payload,
+    { headers: { 'Content-Type': 'application/json', accept: 'text/plain' } }
   );
   return response.data;
 };
@@ -52,9 +54,10 @@ export const getUpcomingStreams = async (
 export const getNormalUploads = async (
   payload: GetNormalUploadsRequest
 ): Promise<GetNormalUploadsResponse> => {
-  const response = await api.post<GetNormalUploadsResponse>(
-    `https://musharealestate-001-site4.jtempurl.com/api/v1/Livestream/GetNormalUploadsAsync`,
-    payload
+  const response = await axios.post<GetNormalUploadsResponse>(
+    `http://musharealestate-001-site4.jtempurl.com/api/v1/Livestream/GetNormalUploadsAsync`,
+    payload,
+    { headers: { 'Content-Type': 'application/json', accept: 'text/plain' } }
   );
   return response.data;
 };
