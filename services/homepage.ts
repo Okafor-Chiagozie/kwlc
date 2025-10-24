@@ -121,7 +121,7 @@ export const createChurchImage = async (
   formData.append('ImageCategoryId', categoryName ?? String(Number(payload.ImageCategoryId)));
   
   const response = await api.post<CreateChurchImageResponse>(
-    `http://musharealestate-001-site4.jtempurl.com/api/v1/HomePage/CreateChurchImage`,
+    `${BASE_URL}/CreateChurchImage`,
     formData
   );
   return response.data;
