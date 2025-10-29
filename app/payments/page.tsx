@@ -33,8 +33,9 @@ import MainLayout from "@/components/main-layout"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
-import { initiatePayment } from "@/services/payment"
-import { Currency, PurposeCode, PaymentMethod } from "@/types/payment"
+import { initiateOnlinePayment } from "@/services/payment"
+import { getCurrencies, getPaymentTypes, type SelectOption } from "@/services/select"
+import { Currency, PaymentMethod, PaymentType } from "@/types/payment"
 
 interface BankAccount {
   id: string
@@ -53,12 +54,16 @@ export default function PaymentsPage() {
   const [copiedField, setCopiedField] = useState<string | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [currencies, setCurrencies] = useState<SelectOption[]>([])
+  const [paymentTypes, setPaymentTypes] = useState<SelectOption[]>([])
   
   // Online payment form state
   const [paymentForm, setPaymentForm] = useState({
-    firstName: "",
+    fullName: "",
     email: "",
-    amount: ""
+    amount: "",
+    paymentTypeId: 1,
+    currencyId: 1,
   })
 
   // Check for payment success/failure in URL on mount
@@ -77,6 +82,26 @@ export default function PaymentsPage() {
         window.history.replaceState({}, '', '/payments')
       }
     }
+  }, [])
+
+  // Load dropdowns
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [cur, types] = await Promise.all([getCurrencies(), getPaymentTypes()])
+        if (cur?.isSuccessful && Array.isArray(cur.data)) {
+          setCurrencies(cur.data)
+          const naira = cur.data.find(c => c.name.toLowerCase().includes('naira'))
+          if (naira) setPaymentForm(prev => ({ ...prev, currencyId: naira.id }))
+        }
+        if (types?.isSuccessful && Array.isArray(types.data)) {
+          setPaymentTypes(types.data)
+          const normal = types.data.find(t => t.name.toLowerCase().includes('normal'))
+          if (normal) setPaymentForm(prev => ({ ...prev, paymentTypeId: normal.id }))
+        }
+      } catch {}
+    }
+    load()
   }, [])
 
   // Bank Accounts Data
@@ -137,8 +162,8 @@ export default function PaymentsPage() {
   }
 
   const validateForm = () => {
-    if (!paymentForm.firstName.trim()) {
-      toast.error("Please enter your first name")
+    if (!paymentForm.fullName.trim()) {
+      toast.error("Please enter your full name")
       return false
     }
     if (!paymentForm.email.trim()) {
@@ -172,28 +197,22 @@ export default function PaymentsPage() {
 
     try {
       const amount = parseFloat(paymentForm.amount)
-      const reference = `TITHE-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
-      
       const payload = {
-        entryId: 0, // Default entry ID for general payments
-        amount: amount,
-        currencyId: Currency.NGN,
-        name: paymentForm.firstName,
+        amount,
+        currencyId: paymentForm.currencyId,
+        name: paymentForm.fullName,
         email: paymentForm.email,
-        phoneNumber: "", // Optional
-        reference: reference,
-        purpose: PurposeCode.DON, // Donation purpose code
-        paymentMethod: PaymentMethod.Card,
-        callbackUrl: `${window.location.origin}/payments?payment=success`
+        paymentType: paymentForm.paymentTypeId,
+        paymenMethod: PaymentMethod.Card,
       }
 
-      const response = await initiatePayment(payload)
+      const response = await initiateOnlinePayment(payload)
 
       if (response.status && response.data?.checkoutUrl) {
         // Redirect to Fincra checkout
         toast.success("Redirecting to payment gateway...")
         setTimeout(() => {
-          window.location.href = response.data.checkoutUrl
+        window.open(response.data.checkoutUrl, '_blank', 'noopener,noreferrer')
         }, 1000)
       } else {
         toast.error(response.message || "Failed to initiate payment")
@@ -208,9 +227,11 @@ export default function PaymentsPage() {
 
   const resetForm = () => {
     setPaymentForm({
-      firstName: "",
+      fullName: "",
       email: "",
-      amount: ""
+      amount: "",
+      paymentTypeId: 1,
+      currencyId: 1,
     })
   }
 
@@ -644,19 +665,57 @@ export default function PaymentsPage() {
                 </div>
               </div>
 
-              {/* First Name */}
+              {/* Full Name */}
               <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-base font-semibold">
-                  First Name <span className="text-red-500">*</span>
+                <Label htmlFor="fullName" className="text-base font-semibold">
+                  Full Name <span className="text-red-500">*</span>
                 </Label>
                 <Input
-                  id="firstName"
-                  placeholder="Enter your first name"
-                  value={paymentForm.firstName}
-                  onChange={(e) => handleInputChange("firstName", e.target.value)}
+                  id="fullName"
+                  placeholder="Enter your full name"
+                  value={paymentForm.fullName}
+                  onChange={(e) => handleInputChange("fullName", e.target.value)}
                   disabled={isProcessing}
                   className="h-11"
                 />
+              </div>
+
+              {/* Category (PaymentType from API) */}
+              <div className="space-y-2">
+                <Label htmlFor="paymentType" className="text-base font-semibold">
+                  Category
+                </Label>
+                <select
+                  id="paymentType"
+                  className="w-full px-3 py-2 border rounded-md h-11"
+                  value={paymentForm.paymentTypeId}
+                  onChange={(e) => handleInputChange("paymentTypeId", String(parseInt(e.target.value, 10)))}
+                  disabled={isProcessing}
+                >
+                  {paymentTypes.map((type) => (
+                    <option key={type.id} value={type.id}>{type.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Currency (from API) */}
+              <div className="space-y-2">
+                <Label htmlFor="currency" className="text-base font-semibold">
+                  Currency
+                </Label>
+                <select
+                  id="currency"
+                  className="w-full px-3 py-2 border rounded-md h-11"
+                  value={paymentForm.currencyId}
+                  onChange={(e) => handleInputChange("currencyId", String(parseInt(e.target.value, 10)))}
+                  disabled={isProcessing}
+                >
+                  {currencies.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Email */}

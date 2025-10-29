@@ -149,10 +149,9 @@ export default function HeroSlider() {
   // Fetch current livestream availability; show CTA only when live exists
   const { data: liveResponse } = useApi(() => getLivestreamUrl(), [])
   const liveDataRaw: any = liveResponse as any
-  const liveArray: any[] = Array.isArray(liveDataRaw?.data)
-    ? liveDataRaw.data
-    : (liveDataRaw?.data ? [liveDataRaw.data] : [])
-  const hasLive = Array.isArray(liveArray) && liveArray.length > 0
+  const liveStreamUrl: string | null | undefined = liveDataRaw?.data?.liveStreamUrl
+  const lastStreamUrl: string | null | undefined = liveDataRaw?.data?.lastStreamUrl
+  const hasLive = !!liveStreamUrl
 
   // Show loading state while fetching images
   if (imagesLoading) {

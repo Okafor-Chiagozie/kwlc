@@ -39,6 +39,16 @@ export enum PaymentMethod {
   Cash = "cash"
 }
 
+export enum PaymentType {
+  NormalOffering = "NormalOffering",
+  TestimonyOffering = "TestimonyOffering",
+  TitheOffering = "TitheOffering",
+  SeedFaith = "SeedFaith",
+  SpecialThanksgiving = "SpecialThanksgiving",
+  ChildDedication = "ChildDedication",
+  Others = "Others"
+}
+
 // Request/Response schemas exactly as defined in API documentation
 
 // PaymentRequest from API
@@ -115,6 +125,14 @@ export interface PaymentDetailsResponse {
 
 // Request types
 export type InitiatePaymentRequest = PaymentRequest;
+export interface InitiateOnlinePaymentRequest {
+  amount: number;
+  currencyId: number | Currency; // API select returns id; backend also accepts enum
+  name: string;
+  email: string;
+  paymentType: number | PaymentType; // pass id from Select endpoint
+  paymenMethod: PaymentMethod;
+}
 export type VerifyPaymentRequest = string; // Reference string
 export type ProcessPaymentWebHookRequest = {
   signature: string; // Header parameter
@@ -125,3 +143,4 @@ export type ProcessPaymentWebHookRequest = {
 export interface InitiatePaymentResponse extends CheckoutResponse {}
 export interface VerifyPaymentResponse extends PaymentDetailsResponse {}
 export interface ProcessPaymentWebHookResponse extends PaymentDetailsResponse {}
+export interface InitiateOnlinePaymentResponse extends CheckoutResponse {}

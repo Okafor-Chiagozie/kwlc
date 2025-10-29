@@ -26,7 +26,7 @@ export default function CheckoutPage() {
   const [dialogTitle, setDialogTitle] = useState("")
   const [dialogMessage, setDialogMessage] = useState("")
 
-  const { cartItems, updateQuantity, removeFromCart, getSubtotal, getItemCount } = useCart()
+  const { cartItems, removeFromCart, getSubtotal, getItemCount } = useCart()
 
   const subtotal = getSubtotal()
   const shippingCost = 0
@@ -240,23 +240,6 @@ export default function CheckoutPage() {
                           
                           <div className="flex items-center gap-2">
                             <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="w-8 h-8 p-0"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                            <span className="w-8 text-center text-sm">{item.quantity}</span>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="w-8 h-8 p-0"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                            <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => removeFromCart(item.id)}
@@ -276,25 +259,7 @@ export default function CheckoutPage() {
                     </div>
                   )}
 
-                  {/* Subtotal */}
-                  <div className="flex justify-between items-center py-2 border-t border-gray-200">
-                    <span className="font-bold text-gray-900">SUBTOTAL</span>
-                    <span className="text-gray-900">{formatCurrency(subtotal)}</span>
-                  </div>
-
-                  {/* Shipping */}
-                  <div className="flex justify-between items-center py-2">
-                    <span className="font-bold text-gray-900">SHIPPING</span>
-                    <span className="text-gray-700">
-                      {shippingCost === 0 ? (
-                        <span className="text-green-600">Free shipping</span>
-                      ) : (
-                        `Flat Rate: ${formatCurrency(shippingCost)}`
-                      )}
-                    </span>
-                  </div>
-                  
-                  {/* Free shipping message removed since shipping is always free */}
+                  {/* Subtotal & Shipping removed for ebooks */}
 
                   {/* Total */}
                   <div className="flex justify-between items-center py-4 border-t border-gray-200">

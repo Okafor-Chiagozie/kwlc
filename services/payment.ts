@@ -2,6 +2,8 @@ import api from '@/lib/axios';
 import {
   InitiatePaymentRequest,
   InitiatePaymentResponse,
+  InitiateOnlinePaymentRequest,
+  InitiateOnlinePaymentResponse,
   VerifyPaymentRequest,
   VerifyPaymentResponse,
   ProcessPaymentWebHookRequest,
@@ -30,12 +32,25 @@ export const initiatePayment = async (
   };
 
   const response = await api.post<InitiatePaymentResponse>(
-    `http://musharealestate-001-site4.jtempurl.com/api/v1/Payment/InitiatePayment`,
+    `${BASE_URL}/InitiatePayment`,
     apiPayload,
     {
       headers: {
         'Content-Type': 'application/json',
       },
+    }
+  );
+  return response.data;
+};
+
+export const initiateOnlinePayment = async (
+  payload: InitiateOnlinePaymentRequest
+): Promise<InitiateOnlinePaymentResponse> => {
+  const response = await api.post<InitiateOnlinePaymentResponse>(
+    `${BASE_URL}/InitiateOnlinePayment`,
+    payload,
+    {
+      headers: { 'Content-Type': 'application/json' },
     }
   );
   return response.data;

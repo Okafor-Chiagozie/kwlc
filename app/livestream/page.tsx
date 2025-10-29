@@ -139,7 +139,9 @@ export default function LivestreamPage() {
     searchParams: {}
   }), [uploadsPageNumber])
 
-  const livestreamData = livestreamResponse?.data?.[0]
+  const liveUrls: any = (livestreamResponse as any)?.data
+  const liveStreamUrl: string | null | undefined = liveUrls?.liveStreamUrl
+  const lastStreamUrl: string | null | undefined = liveUrls?.lastStreamUrl
   const completedStreams = Array.isArray(completedStreamsResponse?.data) 
     ? completedStreamsResponse.data 
     : []
@@ -195,13 +197,13 @@ export default function LivestreamPage() {
   }
 
   // Determine hero video: live if available, otherwise latest completed
-  const isLive = Boolean(livestreamData)
-  const heroVideo = isLive ? livestreamData : latestCompleted
-  const heroLoading = isLive ? livestreamLoading : (livestreamLoading || latestCompletedLoading)
-  const heroIframeSrc = heroVideo ? getYoutubeEmbedWithOptions(
-    heroVideo.streamUrl,
-    isLive && hasJoined, // autoplay only after joining when live
-    isLive ? !hasJoined : false // mute until join when live; unmute constraint not needed for completed
+  const isLive = !!liveStreamUrl
+  const heroUrl = liveStreamUrl || lastStreamUrl
+  const heroLoading = livestreamLoading || (isLive ? false : latestCompletedLoading)
+  const heroIframeSrc = heroUrl ? getYoutubeEmbedWithOptions(
+    heroUrl,
+    isLive && hasJoined,
+    isLive ? !hasJoined : false
   ) : null
 
   return (
@@ -219,48 +221,12 @@ export default function LivestreamPage() {
           <>
             <iframe
               src={heroIframeSrc}
-              title={heroVideo?.title || 'Live Stream'}
+              title={'Live Stream'}
               className="w-full h-full"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
-          </>
-        ) : heroVideo ? (
-          <>
-            {getEmbeddableUrl(heroVideo?.streamUrl || '') ? (
-              <iframe
-                src={getEmbeddableUrl(heroVideo?.streamUrl || '')!}
-                title="Live Stream"
-                className="w-full h-full"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            ) : (
-              <>
-                <Image
-                  src={heroVideo?.thumbnailUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
-                  alt="Live Stream"
-                  fill
-                  className="object-cover"
-                  priority
-                />
-                <div className="absolute inset-0 flex items-center justify-center z-20">
-                  <button
-                    className="group relative"
-                    onClick={() => window.open(heroVideo?.streamUrl || '#', '_blank')}
-                  >
-                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 transition-all duration-300 group-hover:scale-110 group-hover:bg-white/30">
-                      <Play className="w-8 h-8 md:w-10 md:h-10 text-white ml-1" fill="white" />
-                    </div>
-                    <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                      Watch
-                    </div>
-                  </button>
-                </div>
-              </>
-            )}
           </>
         ) : null}
 
@@ -282,82 +248,7 @@ export default function LivestreamPage() {
           </div>
         )}
 
-        {/* Live Stream Info Overlay */}
-        {isLive && livestreamData && (
-          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 z-30">
-            <div className="container mx-auto">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center gap-2 px-3 py-1 bg-red-600 rounded-full text-sm">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="animate-pulse"
-                  >
-                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                  <span>Live Stream Active</span>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-8 items-start">
-                <div className="md:col-span-2">
-                  <h1 className="text-2xl md:text-4xl font-bold mb-4 text-white leading-tight">
-                    {livestreamData.title || "Sunday Service"}
-                  </h1>
-                  <div className="flex flex-wrap gap-3 mb-4">
-                    <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm">Live Stream</span>
-                    <span className="px-3 py-1 bg-gray-700/50 text-gray-300 rounded-full text-sm">Worship</span>
-                    <span className="px-3 py-1 bg-gray-700/50 text-gray-300 rounded-full text-sm">Teaching</span>
-                  </div>
-                  <p className="text-gray-300 leading-relaxed mb-6">
-                    {livestreamData.description || "Join us for a powerful time of worship and the Word. Experience the transforming presence of God as we gather together in faith and unity."}
-                  </p>
-                  <div className="flex flex-wrap gap-4">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                      </svg>
-                      Watch Live
-                    </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm">
-                      <Share2 className="w-4 h-4" />
-                      Share
-                    </button>
-                  </div>
-                </div>
-
-                <div className="bg-black/30 rounded-lg p-4 backdrop-blur-sm">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Users className="w-5 h-5 text-primary" />
-                    <span className="text-sm text-gray-300">Current Viewers</span>
-                  </div>
-                  <p className="text-2xl font-bold text-white">
-                    {livestreamData.currentViewers || livestreamData.viewCount || "0"}
-                  </p>
-                  <p className="text-sm text-gray-400 mt-1">watching live</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          )}
+        {/* Live Stream Info Overlay removed (no metadata from URL endpoint) */}
         </div>
       </div>
 
