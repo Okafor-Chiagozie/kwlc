@@ -69,7 +69,7 @@ export const getUserById = async (
   userId: number
 ): Promise<GetUserByIdResponse> => {
   const response = await api.get<GetUserByIdResponse>(
-    `${BASE_URL}/${userId}`
+    `${BASE_URL}/GetSingleUser?id=${userId}`
   );
   return response.data;
 };
