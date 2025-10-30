@@ -208,14 +208,20 @@ export default function PaymentsPage() {
 
       const response = await initiateOnlinePayment(payload)
 
-      if (response.status && response.data?.checkoutUrl) {
-        // Redirect to Fincra checkout
+      // Handle wrapped StandardApiResponse shape
+      const checkoutUrl = response?.data?.data?.checkoutUrl
+      const ok = response?.isSuccessful && response?.data?.status && !!checkoutUrl
+      if (ok) {
         toast.success("Redirecting to payment gateway...")
         setTimeout(() => {
-        window.open(response.data.checkoutUrl, '_blank', 'noopener,noreferrer')
-        }, 1000)
+          window.open(checkoutUrl, '_blank', 'noopener,noreferrer')
+        }, 500)
+        setIsProcessing(false)
+        setIsDialogOpen(false)
+        resetForm()
       } else {
-        toast.error(response.message || "Failed to initiate payment")
+        const message = response?.data?.message || response?.responseMessage || "Failed to initiate payment"
+        toast.error(message)
         setIsProcessing(false)
       }
     } catch (error: any) {

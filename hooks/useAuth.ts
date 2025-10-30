@@ -36,20 +36,18 @@ export const useAuth = (): UseAuthReturn => {
         return
       }
 
-      setIsAuthenticated(true)
-
-      // Fetch user details
-        try {
-          const response = await getUserById(Number(userIdFromStorage))
-          if (response.isSuccessful && response.data) {
-            setUser(response.data)
+      // Validate session by fetching user details
+      try {
+        const response = await getUserById(Number(userIdFromStorage))
+        if (response.isSuccessful && response.data) {
+          setUser(response.data)
+          setIsAuthenticated(true)
         } else {
-          // Treat failure to load user as unauthenticated
           setIsAuthenticated(false)
           setUser(null)
-          }
-        } catch (error) {
-          console.error("Failed to fetch user details:", error)
+        }
+      } catch (error) {
+        console.error("Failed to fetch user details:", error)
         setIsAuthenticated(false)
         setUser(null)
       }
