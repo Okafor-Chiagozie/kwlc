@@ -42,9 +42,9 @@ export default function BranchDetailPage({ params }: { params: Promise<{ id: str
   const pastorsData = extract(pastorsResp)
   const pastors: MinisterViewModel[] = Array.isArray(pastorsData) ? pastorsData : []
 
-  const loading = branchLoading || actLoading || pastorsLoading
+  const loading = branchLoading
   const isRealError = (msg?: string | null) => !!(msg && !msg.toLowerCase().includes('no record'))
-  const hardError = isRealError(branchError) || isRealError(actError) || isRealError(pastorsError)
+  const hardError = isRealError(branchError)
 
   const formatTime = (time: any) => {
     if (!time) return ''
@@ -104,7 +104,7 @@ export default function BranchDetailPage({ params }: { params: Promise<{ id: str
         {loading ? (
           <LoadingState />
         ) : hardError ? (
-          <ErrorState error={(branchError || actError || pastorsError) as string} onRetry={() => { refetchBranch(); refetchActs(); refetchPastors(); }} />
+          <ErrorState error={(branchError as string) || 'Failed to load branch details'} onRetry={() => { refetchBranch(); refetchActs(); refetchPastors(); }} />
         ) : !branch ? (
           <EmptyState />
         ) : (
