@@ -52,18 +52,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [cartItems, isLoading])
 
-  const addToCart = (book: BookViewModel, quantity: number = 1) => {
+  const addToCart = (book: BookViewModel, _quantity: number = 1) => {
+    // Enforce single-quantity items: add once, never increment
     setCartItems(prev => {
-      const existingItem = prev.find(item => item.id === book.id)
-      if (existingItem) {
-        return prev.map(item =>
-          item.id === book.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        )
-      } else {
-        return [...prev, { ...book, quantity }]
-      }
+      const exists = prev.some(item => item.id === book.id)
+      if (exists) return prev
+      return [...prev, { ...book, quantity: 1 }]
     })
   }
 

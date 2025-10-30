@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ShoppingCart, Minus, Plus, Trash } from "lucide-react"
+import { ShoppingCart, Trash } from "lucide-react"
 import MainLayout from "@/components/main-layout"
 import { useCart } from "@/hooks/useCart"
 import { useChurchInfo } from "@/components/church-info-provider"
@@ -164,7 +164,7 @@ export default function CheckoutPage() {
               <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">First Name <span className="text-red-500">*</span></label>
                     <Input
                       value={formData.firstName}
                       onChange={(e) => handleInputChange("firstName", e.target.value)}
@@ -172,7 +172,7 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Last Name <span className="text-red-500">*</span></label>
                     <Input
                       value={formData.lastName}
                       onChange={(e) => handleInputChange("lastName", e.target.value)}
@@ -182,7 +182,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email <span className="text-red-500">*</span></label>
                   <Input
                     type="email"
                     value={formData.email}
@@ -238,21 +238,19 @@ export default function CheckoutPage() {
                             </p>
                           </div>
                           
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-col justify-between items-end text-right">
+                            <p className="font-semibold text-gray-900">
+                              {formatCurrency(item.price * item.quantity)}
+                            </p>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => removeFromCart(item.id)}
-                              className="w-8 h-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 flex items-center gap-1 p-0 h-auto"
                             >
                               <Trash className="h-4 w-4" />
+                              <span>Remove</span>
                             </Button>
-                          </div>
-                          
-                          <div className="text-right">
-                            <p className="font-semibold text-gray-900">
-                              {formatCurrency(item.price * item.quantity)}
-                            </p>
                           </div>
                     </div>
                   ))}
@@ -281,81 +279,6 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* Footer */}
-        <footer className="bg-gray-900 text-white py-12 mt-16">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="relative w-10 h-10">
-                    <Image
-                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/KWLC%20Logo%201-aSNedKIy42avfHJjhU8zekfvcwmgKh.png"
-                      alt="Kingdom Ways Living Church Logo"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-white">KINGDOM WAYS</h3>
-                    <p className="text-xs text-gray-400">LIVING CHURCH</p>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm">{details.phoneNumber || "+234 70 433 2832"}</span>
-                  </div>
-                  <div className="text-sm">
-                    {details.address || "24 Prince Ibrahim Eletu Avenue, Shoprite Circle Mall Road Jakande Bus Stop, Osapa London,Lagos"}
-                  </div>
-                  <div className="text-sm">{details.email || "info@kwlchq.org"}</div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-bold text-lg mb-6">CONTACT US</h3>
-                <div className="space-y-4">
-                  <Input placeholder="Name" className="bg-gray-800 border-gray-700 text-white" />
-                  <Input placeholder="Email" className="bg-gray-800 border-gray-700 text-white" />
-                  <textarea
-                    placeholder="Message"
-                    className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md text-white placeholder:text-gray-400 min-h-[100px]"
-                  />
-                  <Button className="w-full bg-black hover:bg-gray-800 text-white">Send</Button>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-bold text-lg mb-6">UP COMING EVENT</h3>
-                <div className="space-y-4">
-                  {[1, 2, 3].map((event) => (
-                    <div key={event}>
-                      <h4 className="font-medium">Wedding</h4>
-                      <p className="text-sm text-gray-400">July 7 @ 8:00 am - 10:30 am</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-bold text-lg mb-6">FOLLOW US</h3>
-                <div className="flex gap-3">
-                  {socials.linkedin && (
-                    <a href={socials.linkedin} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors"><span className="text-xs">L</span></a>
-                  )}
-                  {socials.twitter && (
-                    <a href={socials.twitter} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors"><span className="text-xs">T</span></a>
-                  )}
-                  {socials.facebook && (
-                    <a href={socials.facebook} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors"><span className="text-xs">F</span></a>
-                  )}
-                  {socials.instagram && (
-                    <a href={socials.instagram} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors"><span className="text-xs">I</span></a>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </footer>
       </div>
 
       {/* Modal styled like Admin Delete Branch */}

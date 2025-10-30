@@ -267,16 +267,16 @@ export default function ShopPage() {
                       
                       {/* In Cart Badge */}
                       {isInCart(book.id) && (
-                        <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-medium px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                        <div className="absolute top-2 right-2 bg-green-600 text-white text-xs font-medium px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
                           <ShoppingCart className="h-3 w-3" />
-                          <span>{getCartItem(book.id)?.quantity}</span>
+                          <span>In Cart</span>
                         </div>
                       )}
                       
                       <Button
                         onClick={(e) => {
                           e.preventDefault()
-                          handleAddToCart(book)
+                          if (!isInCart(book.id)) handleAddToCart(book)
                         }}
                         className={`absolute bottom-4 left-1/2 -translate-x-1/2 transition-all duration-300 transform bg-primary hover:bg-primary/90 text-white ${
                           isInCart(book.id) 
@@ -286,7 +286,7 @@ export default function ShopPage() {
                         size="sm"
                       >
                           <ShoppingCart className="h-4 w-4 mr-2" />
-                        {isInCart(book.id) ? "Add More" : "Add to Cart"}
+                        {isInCart(book.id) ? "In Cart" : "Add to Cart"}
                         </Button>
                     </div>
 

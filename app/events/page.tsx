@@ -434,6 +434,14 @@ export default function EventsPage() {
                       height={400}
                       className="w-full h-auto object-cover"
                     />
+                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-md">
+                      <div className="text-xs font-semibold text-gray-500">PRICE</div>
+                      <div className="text-lg font-bold text-primary">
+                        {Number((featuredEvent as any).price) > 0 || Number((featuredEvent as any).fee) > 0
+                          ? `₦${(Number((featuredEvent as any).price) || Number((featuredEvent as any).fee) || 0).toLocaleString()}`
+                          : 'Free'}
+                      </div>
+                    </div>
                   </div>
                 </div>
 

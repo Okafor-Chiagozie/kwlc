@@ -2,9 +2,8 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { Plus, Minus } from "lucide-react"
+import { } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import ShopNav from "@/components/shop-nav"
 import MainLayout from "@/components/main-layout"
 import Link from "next/link"
@@ -60,10 +59,9 @@ const relatedProducts = [
 
 export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0)
-  const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState("description")
   const { details, socials } = useChurchInfo()
-  const { addToCart } = useCart()
+  const { addToCart, isInCart } = useCart()
   const params = useParams() as { id?: string }
   const idNum = Number(params?.id || 0)
 
@@ -137,33 +135,8 @@ export default function ProductDetailPage() {
                   <span className="text-sm text-gray-600 italic">{product.stockCount} Copies Available</span>
                 </div>
 
-                {/* Quantity and Purchase */}
+                {/* Purchase */}
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <span className="text-gray-700 font-medium">Quantity</span>
-                    <div className="flex items-center border border-gray-300 rounded-lg">
-                      <button
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        className="p-2 hover:bg-gray-50 transition-colors"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </button>
-                      <Input
-                        type="number"
-                        value={quantity}
-                        onChange={(e) => setQuantity(Math.max(1, Number.parseInt(e.target.value) || 1))}
-                        className="w-16 text-center border-0 focus:ring-0"
-                        min="1"
-                      />
-                      <button
-                        onClick={() => setQuantity(quantity + 1)}
-                        className="p-2 hover:bg-gray-50 transition-colors"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-
                   {book && (book.price === 0 || (book.priceDisplay && book.priceDisplay.toLowerCase() === 'free')) ? (
                     <a href={book.bookUrl} target="_blank" rel="noopener noreferrer" className="w-full">
                       <Button className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-lg">Download</Button>
@@ -172,9 +145,10 @@ export default function ProductDetailPage() {
                     <div className="grid grid-cols-2 gap-3">
                       <Button
                         className="w-full bg-primary hover:bg-primary/90 text-white h-12 text-lg"
-                        onClick={() => book && addToCart(book, quantity)}
+                        onClick={() => { if (book && !isInCart(book.id)) addToCart(book) }}
+                        disabled={!!(book && isInCart(book.id))}
                       >
-                        Add to Cart
+                        {book && isInCart(book.id) ? 'In Cart' : 'Add to Cart'}
                       </Button>
                       <Link href="/checkout" className="w-full">
                         <Button className="w-full bg-black hover:bg-gray-800 text-white h-12 text-lg">Buy Now</Button>

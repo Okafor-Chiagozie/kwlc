@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import MainLayout from "@/components/main-layout"
 import { useApi } from "@/hooks/useApi"
-import { getBranchDetails, getWeeklyActivities } from "@/services/branch"
+import { getBranchDetails } from "@/services/branch"
 import { getBranchMinisters } from "@/services/minister"
 import type { Branch, WeeklyActivityViewModel } from "@/types/branch"
 import type { MinisterViewModel } from "@/types/minister"
@@ -18,9 +18,6 @@ export default function BranchDetailPage({ params }: { params: Promise<{ id: str
 
   const { data: branchResp, loading: branchLoading, error: branchError, refetch: refetchBranch } = useApi(
     () => getBranchDetails(branchId), [branchId]
-  )
-  const { data: activitiesResp, loading: actLoading, error: actError, refetch: refetchActs } = useApi(
-    () => getWeeklyActivities(branchId), [branchId]
   )
   const { data: pastorsResp, loading: pastorsLoading, error: pastorsError, refetch: refetchPastors } = useApi(
     () => getBranchMinisters(branchId, { pageSize: 50, pageNumber: 1, searchParams: {} }), [branchId]
@@ -36,8 +33,9 @@ export default function BranchDetailPage({ params }: { params: Promise<{ id: str
   const branchArr = extract(branchResp)
   const branch: Branch | undefined = Array.isArray(branchArr) ? branchArr[0] : (branchArr as any)
 
-  const activitiesData = extract(activitiesResp)
-  const activities: WeeklyActivityViewModel[] = Array.isArray(activitiesData) ? activitiesData : []
+  // Weekly activities now come from the GetBranchDetails payload
+  const activitiesPayload = (branch as any)?.weeklyActivities
+  const activities: WeeklyActivityViewModel[] = Array.isArray(activitiesPayload) ? activitiesPayload : []
 
   const pastorsData = extract(pastorsResp)
   const pastors: MinisterViewModel[] = Array.isArray(pastorsData) ? pastorsData : []
@@ -104,7 +102,7 @@ export default function BranchDetailPage({ params }: { params: Promise<{ id: str
         {loading ? (
           <LoadingState />
         ) : hardError ? (
-          <ErrorState error={(branchError as string) || 'Failed to load branch details'} onRetry={() => { refetchBranch(); refetchActs(); refetchPastors(); }} />
+          <ErrorState error={(branchError as string) || 'Failed to load branch details'} onRetry={() => { refetchBranch(); refetchPastors(); }} />
         ) : !branch ? (
           <EmptyState />
         ) : (
