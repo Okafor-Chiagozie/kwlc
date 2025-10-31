@@ -105,28 +105,28 @@ export default function LivestreamPage() {
     <ProtectedRoute>
     <AdminLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Livestream</h1>
             <p className="text-gray-600 mt-1">Browse previous services and watch recordings</p>
-          </div>
+            </div>
           <div className="flex items-center gap-2">
             <Badge variant={isLive ? "default" : "secondary"} className="flex items-center gap-1">
               <div className={`w-2 h-2 rounded-full ${isLive ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}`} />
               {isLive ? `LIVE` : "OFFLINE"}
-            </Badge>
+              </Badge>
           </div>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Services</CardTitle>
-              <Video className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
+                    <Video className="h-4 w-4 text-blue-600" />
+                  </CardHeader>
+                  <CardContent>
               <div className="text-2xl font-bold text-blue-600">
                 {totalsLoading ? <span className="inline-flex items-center"><Loader2 className="h-4 w-4 animate-spin" /></span> : totalServicesAll}
               </div>
@@ -143,34 +143,34 @@ export default function LivestreamPage() {
               <div className="text-2xl font-bold text-purple-600">
                 {totalsLoading ? <span className="inline-flex items-center"><Loader2 className="h-4 w-4 animate-spin" /></span> : totalUploadsAll}
               </div>
-              <p className="text-xs text-muted-foreground">All time</p>
-            </CardContent>
-          </Card>
+                    <p className="text-xs text-muted-foreground">All time</p>
+                  </CardContent>
+                </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Live Now</CardTitle>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Live Now</CardTitle>
               <div className={`w-4 h-4 rounded-full ${isLive ? 'bg-red-500 animate-pulse' : 'bg-gray-300'}`} />
-            </CardHeader>
-            <CardContent>
+                  </CardHeader>
+                  <CardContent>
               <div className={`text-2xl font-bold ${isLive ? 'text-red-600' : 'text-gray-500'}`}>{isLive ? 'ON' : 'OFF'}</div>
               <p className="text-xs text-muted-foreground">Current status</p>
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Views</CardTitle>
-              <Eye className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Views</CardTitle>
+                    <Eye className="h-4 w-4 text-green-600" />
+                  </CardHeader>
+                  <CardContent>
               <div className="text-2xl font-bold text-green-600">
                 {totalsLoading ? <span className="inline-flex items-center"><Loader2 className="h-4 w-4 animate-spin" /></span> : totalViewsAll.toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground">All time</p>
-            </CardContent>
-          </Card>
-        </div>
+                  </CardContent>
+                </Card>
+              </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -183,15 +183,15 @@ export default function LivestreamPage() {
           <TabsContent value="previous" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="h-5 w-5" />
                   Previous Services
-                </CardTitle>
+                  </CardTitle>
               </CardHeader>
-              <CardContent>
-                {loadingCompleted ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin" />
+                <CardContent>
+                  {loadingCompleted ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin" />
                     <span className="ml-2">Loading streams...</span>
                   </div>
                 ) : completedError ? (
@@ -203,7 +203,7 @@ export default function LivestreamPage() {
                   <div className="text-center py-8 text-muted-foreground">
                     <Video className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                     <p>No previous services found.</p>
-                  </div>
+                    </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {completedStreams.map((stream, index) => (
@@ -211,16 +211,16 @@ export default function LivestreamPage() {
                         <div className="relative aspect-video">
                           <img
                             src={stream.thumbnailUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
-                            alt={stream.title}
-                            className="w-full h-full object-cover"
+                                  alt={stream.title}
+                                  className="w-full h-full object-cover"
                             onError={(e) => { (e.currentTarget as HTMLImageElement).src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg" }}
                           />
                           <div className="absolute inset-0 bg-black/10" />
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="w-12 h-12 rounded-full bg-black/40 border border-white/40 flex items-center justify-center">
                               <Play className="w-5 h-5 text-white ml-0.5" />
-                            </div>
-                          </div>
+                    </div>
+                  </div>
                           <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 text-white text-xs rounded">
                             {stream.duration || 'N/A'}
                           </div>
@@ -232,10 +232,10 @@ export default function LivestreamPage() {
                             <span>{formatDate(stream.streamDate)}</span>
                             <span>{stream.viewCount || 0} views</span>
                           </div>
-                        </CardContent>
-                      </Card>
+                </CardContent>
+              </Card>
                     ))}
-                  </div>
+                    </div>
                 )}
 
                 {completedStreams.length > 0 && (
@@ -244,7 +244,7 @@ export default function LivestreamPage() {
                     <span className="text-sm text-gray-600">Page {pageNumber}</span>
                     <Button variant="outline" onClick={() => setPageNumber((p) => p + 1)} disabled={loadingCompleted}>Next</Button>
                   </div>
-                )}
+                  )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -257,10 +257,10 @@ export default function LivestreamPage() {
               </CardHeader>
               <CardContent>
                 {uploadsLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                    <span className="ml-2">Loading uploaded videos...</span>
-                  </div>
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span className="ml-2">Loading uploaded videos...</span>
+                    </div>
                 ) : uploadsError ? (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center">
                     <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
@@ -287,7 +287,7 @@ export default function LivestreamPage() {
                             <div className="w-12 h-12 rounded-full bg-black/40 border border-white/40 flex items-center justify-center">
                               <Play className="w-5 h-5 text-white ml-0.5" />
                             </div>
-                          </div>
+                        </div>
                         </div>
                         <CardContent className="p-4">
                           <h3 className="font-semibold mb-1 line-clamp-2">{stream.title || 'Untitled Stream'}</h3>
@@ -295,11 +295,11 @@ export default function LivestreamPage() {
                           <div className="flex items-center justify-between text-sm text-gray-500">
                             <span>{formatDate(stream.streamDate)}</span>
                             <span>{stream.viewCount || 0} views</span>
-                          </div>
+                      </div>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
+                  ))}
+                    </div>
                 )}
 
                 {uploads.length > 0 && (
@@ -307,8 +307,8 @@ export default function LivestreamPage() {
                     <Button variant="outline" onClick={() => setUploadsPageNumber((p) => Math.max(1, p - 1))} disabled={uploadsPageNumber === 1 || uploadsLoading}>Previous</Button>
                     <span className="text-sm text-gray-600">Page {uploadsPageNumber}</span>
                     <Button variant="outline" onClick={() => setUploadsPageNumber((p) => p + 1)} disabled={uploadsLoading}>Next</Button>
-                  </div>
-                )}
+                    </div>
+                  )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -317,7 +317,7 @@ export default function LivestreamPage() {
         {/* Video Modal */}
         {selectedVideo && (
           <div 
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] flex items-center justify-center p-4 !mt-0"
             onClick={() => setSelectedVideo(null)}
           >
             <div 
@@ -339,8 +339,8 @@ export default function LivestreamPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
-              </div>
-
+                </div>
+                
               <div className="aspect-video">
                 {getEmbeddableUrl(selectedVideo.streamUrl) ? (
                   <iframe
@@ -357,10 +357,10 @@ export default function LivestreamPage() {
                       <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                       <p className="text-gray-600">Video not available for embedding</p>
                       <Button onClick={() => window.open(selectedVideo.streamUrl, '_blank')} className="mt-2">Watch on YouTube</Button>
-                    </div>
+                  </div>
                   </div>
                 )}
-              </div>
+                </div>
 
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between text-sm text-gray-600">
@@ -371,7 +371,7 @@ export default function LivestreamPage() {
                   <div>
                     <h4 className="text-sm font-medium mb-1">Description</h4>
                     <p className="text-sm text-gray-700 leading-relaxed">{selectedVideo.description}</p>
-                  </div>
+                </div>
                 )}
               </div>
             </div>
