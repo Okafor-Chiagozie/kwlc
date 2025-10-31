@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   Video, 
   Play, 
@@ -23,12 +24,15 @@ import { useApi } from "@/hooks/useApi"
 import {
   getCompletedStreams,
   getLivestreamUrl,
+  getNormalUploads,
 } from "@/services/livestream"
 import { LivestreamViewModel } from "@/types/livestream"
 
 export default function LivestreamPage() {
   const [selectedVideo, setSelectedVideo] = useState<LivestreamViewModel | null>(null)
+  const [activeTab, setActiveTab] = useState("previous")
   const [pageNumber, setPageNumber] = useState(1)
+  const [uploadsPageNumber, setUploadsPageNumber] = useState(1)
 
   // Live stream URL (for live indicator)
   const {
@@ -50,6 +54,35 @@ export default function LivestreamPage() {
     ? completedStreamsResponse.data
     : []
   const liveStreams = (liveUrls as any)?.data?.liveStreamUrl ? 1 : 0
+
+  // Uploaded videos with pagination
+  const {
+    data: uploadsResponse,
+    loading: uploadsLoading,
+    error: uploadsError,
+    refetch: refetchUploads
+  } = useApi(() => getNormalUploads({ pageSize: 9, pageNumber: uploadsPageNumber, searchParams: {} }), [uploadsPageNumber])
+  const uploads = Array.isArray(uploadsResponse?.data) ? uploadsResponse.data : []
+
+  // All-time totals (fetch larger pages to compute counts)
+  const {
+    data: completedAllResponse,
+    loading: loadingCompletedAll,
+    error: completedAllError,
+  } = useApi(() => getCompletedStreams({ pageSize: 1000, pageNumber: 1, searchParams: {} }), [])
+
+  const {
+    data: uploadsAllResponse,
+    loading: loadingUploadsAll,
+    error: uploadsAllError,
+  } = useApi(() => getNormalUploads({ pageSize: 1000, pageNumber: 1, searchParams: {} }), [])
+
+  const completedAll = Array.isArray(completedAllResponse?.data) ? completedAllResponse.data : []
+  const uploadsAll = Array.isArray(uploadsAllResponse?.data) ? uploadsAllResponse.data : []
+  const totalsLoading = loadingCompletedAll || loadingUploadsAll
+  const totalServicesAll = completedAll.length
+  const totalUploadsAll = uploadsAll.length
+  const totalViewsAll = completedAll.concat(uploadsAll).reduce((s, v) => s + (Number(v.viewCount) || 0), 0)
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A"
@@ -86,74 +119,200 @@ export default function LivestreamPage() {
           </div>
         </div>
 
-        {/* Streams Grid */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Previous Services
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingCompleted ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
-                <span className="ml-2">Loading streams...</span>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Services</CardTitle>
+              <Video className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                {totalsLoading ? <span className="inline-flex items-center"><Loader2 className="h-4 w-4 animate-spin" /></span> : totalServicesAll}
               </div>
-            ) : completedError ? (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center">
-                <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-                <span className="text-red-700">{completedError}</span>
-              </div>
-            ) : completedStreams.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Video className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                <p>No previous services found.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {completedStreams.map((stream, index) => (
-                  <Card key={stream.streamId || index} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedVideo(stream)}>
-                    <div className="relative aspect-video">
-                      <img
-                        src={stream.thumbnailUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
-                        alt={stream.title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg" }}
-                      />
-                      <div className="absolute inset-0 bg-black/10" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-12 h-12 rounded-full bg-black/40 border border-white/40 flex items-center justify-center">
-                          <Play className="w-5 h-5 text-white ml-0.5" />
-                        </div>
-                      </div>
-                      <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 text-white text-xs rounded">
-                        {stream.duration || 'N/A'}
-                      </div>
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold mb-1 line-clamp-2">{stream.title || 'Untitled Stream'}</h3>
-                      <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{stream.description || 'No description available'}</p>
-                      <div className="flex items-center justify-between text-sm text-gray-500">
-                        <span>{formatDate(stream.streamDate)}</span>
-                        <span>{stream.viewCount || 0} views</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+              <p className="text-xs text-muted-foreground">All time</p>
+            </CardContent>
+          </Card>
 
-            {/* Pagination */}
-            {completedStreams.length > 0 && (
-              <div className="flex items-center justify-center gap-3 mt-8">
-                <Button variant="outline" onClick={() => setPageNumber((p) => Math.max(1, p - 1))} disabled={pageNumber === 1 || loadingCompleted}>Previous</Button>
-                <span className="text-sm text-gray-600">Page {pageNumber}</span>
-                <Button variant="outline" onClick={() => setPageNumber((p) => p + 1)} disabled={loadingCompleted}>Next</Button>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Uploaded Videos</CardTitle>
+              <Video className="h-4 w-4 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600">
+                {totalsLoading ? <span className="inline-flex items-center"><Loader2 className="h-4 w-4 animate-spin" /></span> : totalUploadsAll}
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <p className="text-xs text-muted-foreground">All time</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Live Now</CardTitle>
+              <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{liveStreams}</div>
+              <p className="text-xs text-muted-foreground">Active streams</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Views</CardTitle>
+              <Eye className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                {totalsLoading ? <span className="inline-flex items-center"><Loader2 className="h-4 w-4 animate-spin" /></span> : totalViewsAll.toLocaleString()}
+              </div>
+              <p className="text-xs text-muted-foreground">All time</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 h-auto">
+            <TabsTrigger value="previous" className="text-xs sm:text-sm">Previous Services</TabsTrigger>
+            <TabsTrigger value="uploads" className="text-xs sm:text-sm">Uploaded Videos</TabsTrigger>
+          </TabsList>
+
+          {/* Previous Services Tab */}
+          <TabsContent value="previous" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Previous Services
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingCompleted ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <span className="ml-2">Loading streams...</span>
+                  </div>
+                ) : completedError ? (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center">
+                    <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+                    <span className="text-red-700">{completedError}</span>
+                  </div>
+                ) : completedStreams.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Video className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p>No previous services found.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {completedStreams.map((stream, index) => (
+                      <Card key={stream.streamId || index} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedVideo(stream)}>
+                        <div className="relative aspect-video">
+                          <img
+                            src={stream.thumbnailUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
+                            alt={stream.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg" }}
+                          />
+                          <div className="absolute inset-0 bg-black/10" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-full bg-black/40 border border-white/40 flex items-center justify-center">
+                              <Play className="w-5 h-5 text-white ml-0.5" />
+                            </div>
+                          </div>
+                          <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 text-white text-xs rounded">
+                            {stream.duration || 'N/A'}
+                          </div>
+                        </div>
+                        <CardContent className="p-4">
+                          <h3 className="font-semibold mb-1 line-clamp-2">{stream.title || 'Untitled Stream'}</h3>
+                          <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{stream.description || 'No description available'}</p>
+                          <div className="flex items-center justify-between text-sm text-gray-500">
+                            <span>{formatDate(stream.streamDate)}</span>
+                            <span>{stream.viewCount || 0} views</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {completedStreams.length > 0 && (
+                  <div className="flex items-center justify-center gap-3 mt-8">
+                    <Button variant="outline" onClick={() => setPageNumber((p) => Math.max(1, p - 1))} disabled={pageNumber === 1 || loadingCompleted}>Previous</Button>
+                    <span className="text-sm text-gray-600">Page {pageNumber}</span>
+                    <Button variant="outline" onClick={() => setPageNumber((p) => p + 1)} disabled={loadingCompleted}>Next</Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Uploaded Videos Tab */}
+          <TabsContent value="uploads" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Uploaded Videos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {uploadsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <span className="ml-2">Loading uploaded videos...</span>
+                  </div>
+                ) : uploadsError ? (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center">
+                    <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+                    <span className="text-red-700">{uploadsError}</span>
+                  </div>
+                ) : uploads.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Clock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p>No uploaded videos found.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {uploads.map((stream, index) => (
+                      <Card key={stream.streamId || index} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedVideo(stream)}>
+                        <div className="relative aspect-video">
+                          <img
+                            src={stream.thumbnailUrl || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"}
+                            alt={stream.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg" }}
+                          />
+                          <div className="absolute inset-0 bg-black/10" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-full bg-black/40 border border-white/40 flex items-center justify-center">
+                              <Play className="w-5 h-5 text-white ml-0.5" />
+                            </div>
+                          </div>
+                        </div>
+                        <CardContent className="p-4">
+                          <h3 className="font-semibold mb-1 line-clamp-2">{stream.title || 'Untitled Stream'}</h3>
+                          <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{stream.description || 'No description available'}</p>
+                          <div className="flex items-center justify-between text-sm text-gray-500">
+                            <span>{formatDate(stream.streamDate)}</span>
+                            <span>{stream.viewCount || 0} views</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {uploads.length > 0 && (
+                  <div className="flex items-center justify-center gap-3 mt-8">
+                    <Button variant="outline" onClick={() => setUploadsPageNumber((p) => Math.max(1, p - 1))} disabled={uploadsPageNumber === 1 || uploadsLoading}>Previous</Button>
+                    <span className="text-sm text-gray-600">Page {uploadsPageNumber}</span>
+                    <Button variant="outline" onClick={() => setUploadsPageNumber((p) => p + 1)} disabled={uploadsLoading}>Next</Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Video Modal */}
         {selectedVideo && (
