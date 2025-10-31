@@ -4,11 +4,13 @@ import Navbar from "@/components/navbar"
 import Link from "next/link"
 import { useChurchInfo } from "@/components/church-info-provider"
 import { Facebook, Instagram, Twitter, Youtube, Phone, Mail, MapPin } from "lucide-react"
+import { Toaster } from "sonner"
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { details, socials } = useChurchInfo()
   return (
     <div className="flex flex-col min-h-screen">
+      <Toaster richColors position="top-center" />
       <Navbar />
       {children}
       <footer className="bg-gray-900 text-white py-12">

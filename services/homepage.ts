@@ -1,4 +1,29 @@
-import api from '@/lib/axios';
+import api from '@/lib/axios'
+
+export interface ContactUsRequest {
+  name: string
+  email: string
+  message: string
+}
+
+export interface BooleanResult {
+  data?: boolean | any
+  isSuccessful?: boolean
+  responseMessage?: string
+  responseCode?: string
+}
+
+// Use absolute URL as provided by the API spec
+const CONTACT_US_URL = 'http://musharealestate-001-site4.jtempurl.com/api/v1/HomePage/ContactUs'
+
+export const contactUs = async (payload: ContactUsRequest): Promise<BooleanResult> => {
+  const response = await api.post<BooleanResult>(CONTACT_US_URL, payload, {
+    headers: { 'Content-Type': 'application/json', accept: 'text/plain' }
+  })
+  return response.data
+}
+
+ 
 import {
   GetHomePageResponse,
   CreateOrUpdateChurchDetailsRequest,

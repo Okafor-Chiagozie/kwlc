@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { useState } from "react"
 import { MapPin, Phone, Mail, Heart, Loader2, AlertCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -13,6 +14,8 @@ import LocationsSection from "@/components/locations-section"
 import LocationPin from "@/components/location-pin"
 import MainLayout from "@/components/main-layout"
 import Link from "next/link"
+import { toast } from "sonner"
+import { contactUs } from "@/services/homepage"
 import { useApi } from "@/hooks/useApi"
 import { getUpcomingEvents } from "@/services/event"
 import { useChurchInfo } from "@/components/church-info-provider"
@@ -34,6 +37,40 @@ export default function Home() {
   }
 
   // Format time for display (supports "9:00 AM" or "HH:mm[:ss]")
+  // Contact form state
+  const [contactLoading, setContactLoading] = useState(false)
+
+  const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (contactLoading) return
+    const form = e.currentTarget
+    const formData = new FormData(form)
+    const name = String(formData.get('name') || '').trim()
+    const email = String(formData.get('email') || '').trim()
+    const message = String(formData.get('message') || '').trim()
+
+    if (!name || !email || !message) {
+      toast.error('Please fill in all fields')
+      return
+    }
+
+    setContactLoading(true)
+    try {
+      const resp = await contactUs({ name, email, message })
+      const ok = (resp as any)?.isSuccessful ?? (resp as any)?.data === true
+      if (ok) {
+        toast.success('Message sent successfully!')
+        form.reset()
+      } else {
+        const msg = (resp as any)?.responseMessage || 'Failed to send message'
+        toast.error(msg)
+      }
+    } catch (err) {
+      toast.error('Unable to send message. Please try again later.')
+    } finally {
+      setContactLoading(false)
+    }
+  }
   const formatEventTime = (startTime: string, closeTime: string) => {
     const toHuman = (timeStr: string) => {
       const raw = String(timeStr || '').trim()
@@ -571,12 +608,16 @@ export default function Home() {
 
               <div>
                 <h3 className="text-xl font-bold mb-6">CONTACT US</h3>
-                <form className="space-y-4">
-                  <Input placeholder="Name" />
-                  <Input placeholder="Email" type="email" />
-                  <Textarea placeholder="Message" className="min-h-[120px]" />
-                  <Button type="submit" className="w-full">
-                    Send
+                <form className="space-y-4" onSubmit={handleContactSubmit}>
+                  <Input placeholder="Name" name="name" />
+                  <Input placeholder="Email" type="email" name="email" />
+                  <Textarea placeholder="Message" className="min-h-[120px]" name="message" />
+                  <Button type="submit" className="w-full" disabled={contactLoading}>
+                    {contactLoading ? (
+                      <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Sending...</span>
+                    ) : (
+                      'Send'
+                    )}
                   </Button>
                 </form>
               </div>
