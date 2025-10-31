@@ -53,7 +53,7 @@ export default function LivestreamPage() {
   const completedStreams = Array.isArray(completedStreamsResponse?.data)
     ? completedStreamsResponse.data
     : []
-  const liveStreams = (liveUrls as any)?.data?.liveStreamUrl ? 1 : 0
+  const isLive = Boolean((liveUrls as any)?.data?.liveStreamUrl)
 
   // Uploaded videos with pagination
   const {
@@ -112,9 +112,9 @@ export default function LivestreamPage() {
             <p className="text-gray-600 mt-1">Browse previous services and watch recordings</p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant={liveStreams > 0 ? "default" : "secondary"} className="flex items-center gap-1">
-              <div className={`w-2 h-2 rounded-full ${liveStreams > 0 ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}`} />
-              {liveStreams > 0 ? `LIVE` : "OFFLINE"}
+            <Badge variant={isLive ? "default" : "secondary"} className="flex items-center gap-1">
+              <div className={`w-2 h-2 rounded-full ${isLive ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}`} />
+              {isLive ? `LIVE` : "OFFLINE"}
             </Badge>
           </div>
         </div>
@@ -150,11 +150,11 @@ export default function LivestreamPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Live Now</CardTitle>
-              <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse" />
+              <div className={`w-4 h-4 rounded-full ${isLive ? 'bg-red-500 animate-pulse' : 'bg-gray-300'}`} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{liveStreams}</div>
-              <p className="text-xs text-muted-foreground">Active streams</p>
+              <div className={`text-2xl font-bold ${isLive ? 'text-red-600' : 'text-gray-500'}`}>{isLive ? 'ON' : 'OFF'}</div>
+              <p className="text-xs text-muted-foreground">Current status</p>
             </CardContent>
           </Card>
 

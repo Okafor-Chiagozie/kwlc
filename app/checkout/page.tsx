@@ -12,9 +12,12 @@ import { useCart } from "@/hooks/useCart"
 import { useChurchInfo } from "@/components/church-info-provider"
 import { initiateOrder } from "@/services/bookPurchase"
 import type { AddBookOrderRequest } from "@/types/book"
+import { usePaymentsToggle } from "@/components/payments-toggle-provider"
+import { toast } from "sonner"
 
 export default function CheckoutPage() {
   const { details, socials } = useChurchInfo()
+  const { paymentsEnabled } = usePaymentsToggle()
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -51,6 +54,12 @@ export default function CheckoutPage() {
   }
 
   const handlePlaceOrder = async () => {
+    if (!paymentsEnabled) {
+      setDialogTitle("Payments are currently disabled")
+      setDialogMessage("Please try again later or contact support.")
+      setDialogOpen(true)
+      return
+    }
     if (cartItems.length === 0) {
       setDialogTitle("Cart is empty")
       setDialogMessage("Please add at least one item to your cart to proceed.")
@@ -268,10 +277,10 @@ export default function CheckoutPage() {
 
                   <Button 
                     onClick={handlePlaceOrder} 
-                    disabled={cartItems.length === 0 || isPlacingOrder}
+                    disabled={!paymentsEnabled || cartItems.length === 0 || isPlacingOrder}
                     className="w-full bg-black hover:bg-gray-800 text-white h-12 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isPlacingOrder ? "Processing..." : `Place Order (${getItemCount()} ${getItemCount() === 1 ? 'item' : 'items'})`}
+                    {isPlacingOrder ? "Processing..." : !paymentsEnabled ? "Payments Disabled" : `Place Order (${getItemCount()} ${getItemCount() === 1 ? 'item' : 'items'})`}
                   </Button>
                 </div>
               </div>

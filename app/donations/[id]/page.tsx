@@ -15,8 +15,10 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
 import { AlertCircle, Loader2, Heart, ArrowLeft, Share2, Target, TrendingUp, MapPin, ChevronLeft, ChevronRight } from "lucide-react"
+import { usePaymentsToggle } from "@/components/payments-toggle-provider"
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { paymentsEnabled } = usePaymentsToggle()
   const { id } = use(params)
   const projectId = Number(id)
 
@@ -90,6 +92,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const heroImage = images[activeIndex] || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-kwlc-X45sTS2cVZ0mNgtttsneuf0aeXrYtI.jpeg"
 
   const handleDonate = async () => {
+    if (!paymentsEnabled) {
+      setDialogTitle("Donations are currently disabled")
+      setDialogMessage("Please try again later or use bank transfer details on the Payments page.")
+      setDialogIsDestructive(false)
+      setDialogOpen(true)
+      return
+    }
     if (isSubmitting || !project) return
     const amount = parseFloat(formData.amount)
     if (!formData.email.trim() || isNaN(amount) || amount <= 0) {
@@ -290,9 +299,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                           <label htmlFor="anonymous" className="text-sm text-gray-600">Make this donation anonymous</label>
                         </div>
                       </div>
-                      <Button className="w-full mt-6 bg-primary hover:bg-primary/90 text-white py-3" onClick={handleDonate} disabled={isSubmitting}>
+                      <Button className="w-full mt-6 bg-primary hover:bg-primary/90 text-white py-3 disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleDonate} disabled={isSubmitting || !paymentsEnabled}>
                         <Heart className="h-4 w-4 mr-2" />
-                        {isSubmitting ? "Processing..." : "Donate Now"}
+                        {isSubmitting ? "Processing..." : paymentsEnabled ? "Donate Now" : "Donations Disabled"}
                       </Button>
                       <p className="text-xs text-gray-500 text-center mt-4">Your donation is secure and tax-deductible. You will receive a receipt via email.</p>
                     </div>

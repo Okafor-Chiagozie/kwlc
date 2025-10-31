@@ -36,6 +36,7 @@ import Image from "next/image"
 import { initiateOnlinePayment } from "@/services/payment"
 import { getCurrencies, getPaymentTypes, type SelectOption } from "@/services/select"
 import { Currency, PaymentMethod, PaymentType } from "@/types/payment"
+import { usePaymentsToggle } from "@/components/payments-toggle-provider"
 
 interface BankAccount {
   id: string
@@ -51,6 +52,7 @@ interface BankAccount {
 }
 
 export default function PaymentsPage() {
+  const { paymentsEnabled } = usePaymentsToggle()
   const [copiedField, setCopiedField] = useState<string | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -191,6 +193,10 @@ export default function PaymentsPage() {
   }
 
   const handlePaymentSubmit = async () => {
+    if (!paymentsEnabled) {
+      toast.error("Online payments are currently disabled. Please try bank transfer.")
+      return
+    }
     if (!validateForm()) return
 
     setIsProcessing(true)
@@ -333,8 +339,15 @@ export default function PaymentsPage() {
                   <div className="flex justify-center pt-2">
                     <Button 
                       size="lg" 
-                      className="gap-2 text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all"
-                      onClick={() => setIsDialogOpen(true)}
+                      className="gap-2 text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                      onClick={() => {
+                        if (!paymentsEnabled) {
+                          toast.error("Online payments are currently disabled. Please try bank transfer.")
+                        } else {
+                          setIsDialogOpen(true)
+                        }
+                      }}
+                      disabled={!paymentsEnabled}
                     >
                       <Wallet className="h-5 w-5" />
                       Make Payment
@@ -800,8 +813,8 @@ export default function PaymentsPage() {
               </Button>
               <Button
                 onClick={handlePaymentSubmit}
-                disabled={isProcessing}
-                className="w-full sm:w-auto gap-2"
+                disabled={isProcessing || !paymentsEnabled}
+                className="w-full sm:w-auto gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isProcessing ? (
                   <>
@@ -811,7 +824,7 @@ export default function PaymentsPage() {
                 ) : (
                   <>
                     <ShieldCheck className="h-4 w-4" />
-                    Proceed to Payment
+                    {paymentsEnabled ? 'Proceed to Payment' : 'Payments Disabled'}
                   </>
                 )}
               </Button>
