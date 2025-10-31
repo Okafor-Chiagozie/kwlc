@@ -45,7 +45,8 @@ export interface RegistrationRequestViewModel {
   email: string;
   password: string;
   phoneNumber: string;
-  userTypeId: UserType;
+  roleId: number;
+  branchId: number;
 }
 
 // UpdateUserRequestViewModel from API
@@ -130,3 +131,11 @@ export interface UnblockUserResponse extends UserViewModelResult {}
 export interface ForgotPasswordResponse extends StringResult {}
 export interface ResetPasswordResponse extends StringResult {}
 export interface ChangePasswordResponse extends StringResult {}
+
+// Roles
+export interface RoleViewModel {
+  role: string;
+  roleId: number;
+  isDeleted: boolean;
+}
+export interface GetRolesResponse extends StandardApiResponse<RoleViewModel[]> {}

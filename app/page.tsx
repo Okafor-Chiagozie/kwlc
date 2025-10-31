@@ -100,7 +100,7 @@ export default function Home() {
                 <div className="relative h-[500px] rounded-2xl overflow-hidden shadow-xl transform transition-all duration-500 group-hover:scale-[1.02]">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent z-10"></div>
                   <Image
-                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/jointhefamily1-pRIZsRznCch0qMViqggja9a1QCm5hG.png"
+                    src={details.fellowshipImage || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/jointhefamily1-pRIZsRznCch0qMViqggja9a1QCm5hG.png"}
                     alt="Fellowship"
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
@@ -176,7 +176,7 @@ export default function Home() {
                 <div className="relative h-[500px] rounded-2xl overflow-hidden shadow-xl transform transition-all duration-500 group-hover:scale-[1.02]">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent z-10"></div>
                   <Image
-                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/jointhefamily2-HdjteQq2HsXowGZL3DweqcAVHAHdX2.png"
+                    src={details.bibleStudyImage || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/jointhefamily2-HdjteQq2HsXowGZL3DweqcAVHAHdX2.png"}
                     alt="Bible Classes"
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
@@ -217,7 +217,7 @@ export default function Home() {
                 <div className="relative h-[600px] rounded-2xl overflow-hidden shadow-2xl transform-gpu transition-transform hover:scale-[1.02] duration-500">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-10"></div>
                   <Image
-                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/donation.png-9JtcRLA0zWlxl6ac4XovOm11jhfnK9.jpeg"
+                    src={details.communityImage || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/donation.png-9JtcRLA0zWlxl6ac4XovOm11jhfnK9.jpeg"}
                     alt="Happy children supported by donations"
                     fill
                     className="object-cover"

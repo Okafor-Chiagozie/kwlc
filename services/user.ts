@@ -18,7 +18,8 @@ import {
   ResetPasswordRequest,
   ResetPasswordResponse,
   ChangePasswordRequest,
-  ChangePasswordResponse
+  ChangePasswordResponse,
+  GetRolesResponse
 } from '@/types/user';
 
 const BASE_URL = '/api/v1/User';
@@ -70,6 +71,14 @@ export const getUserById = async (
 ): Promise<GetUserByIdResponse> => {
   const response = await api.get<GetUserByIdResponse>(
     `${BASE_URL}/GetSingleUser?id=${userId}`
+  );
+  return response.data;
+};
+
+// Roles
+export const getRoles = async (): Promise<GetRolesResponse> => {
+  const response = await api.get<GetRolesResponse>(
+    `${BASE_URL}/Roles`
   );
   return response.data;
 };

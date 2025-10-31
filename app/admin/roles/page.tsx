@@ -13,8 +13,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import AdminLayout from "@/components/admin/admin-layout"
 import { toast } from "sonner"
-import { getAllUsers, blockUser, unblockUser, updateUser } from "@/services/user"
-import { GetAllUsersRequest, UserViewModel, UpdateUserRequest } from "@/types/user"
+import { getAllUsers, blockUser, unblockUser, updateUser, registration, getRoles } from "@/services/user"
+import { getAllBranches } from "@/services/branch"
+import { GetAllUsersRequest, UserViewModel, UpdateUserRequest, RegistrationRequest, RoleViewModel } from "@/types/user"
+import type { Branch } from "@/types/branch"
 
 export default function RolesPage() {
   // Users state (API-backed)
@@ -26,6 +28,22 @@ export default function RolesPage() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmUserId, setConfirmUserId] = useState<number | null>(null)
   const [confirmAction, setConfirmAction] = useState<"block" | "unblock">("block")
+
+  // Add User (Registration) dialog state
+  const [addOpen, setAddOpen] = useState(false)
+  const [isRegistering, setIsRegistering] = useState(false)
+  const [regForm, setRegForm] = useState<RegistrationRequest>({
+    firstName: "",
+    lastName: "",
+    middleName: "",
+    email: "",
+    password: "",
+    phoneNumber: "",
+    roleId: 0,
+    branchId: 0,
+  })
+  const [rolesApi, setRolesApi] = useState<RoleViewModel[]>([])
+  const [branchesApi, setBranchesApi] = useState<Branch[]>([])
 
   // Mock roles (kept as-is)
   const [roles] = useState([
@@ -91,8 +109,33 @@ export default function RolesPage() {
     },
   ])
 
-  const handleCreateUser = () => {
-    toast.success("User created successfully!")
+  const handleCreateUser = async () => {
+    // Minimal validation
+    if (!regForm.firstName || !regForm.lastName || !regForm.email || !regForm.password) {
+      toast.error("Please fill in first name, last name, email and password")
+      return
+    }
+    if (!regForm.roleId || !regForm.branchId) {
+      toast.error("Please select role and branch")
+      return
+    }
+    try {
+      setIsRegistering(true)
+      const resp = await registration(regForm)
+      if (resp.isSuccessful) {
+        toast.success("User registered successfully")
+        setAddOpen(false)
+        // reset form
+        setRegForm({ firstName: "", lastName: "", middleName: "", email: "", password: "", phoneNumber: "", roleId: 0, branchId: 0 })
+        await loadUsers()
+      } else {
+        toast.error(resp.responseMessage || "Registration failed")
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Registration error")
+    } finally {
+      setIsRegistering(false)
+    }
   }
 
   const handleCreateRole = () => {
@@ -119,6 +162,20 @@ export default function RolesPage() {
 
   useEffect(() => {
     loadUsers()
+    ;(async () => {
+      try {
+        const resp = await getRoles()
+        if (resp?.isSuccessful && Array.isArray(resp.data)) {
+          setRolesApi(resp.data.filter(r => !r.isDeleted))
+        }
+      } catch {}
+      try {
+        const branches = await getAllBranches({ pageSize: 100, pageNumber: 1, searchParams: {} })
+        if (branches?.isSuccessful && Array.isArray(branches.data)) {
+          setBranchesApi(branches.data)
+        }
+      } catch {}
+    })()
   }, [])
 
   const openConfirm = (userId: number, action: "block" | "unblock") => {
@@ -162,57 +219,72 @@ export default function RolesPage() {
         <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <h1 className="text-xl sm:text-2xl font-bold">Roles & Access Management</h1>
           <div className="flex gap-2 w-full sm:w-auto">
-            <Dialog>
+            <Dialog open={addOpen} onOpenChange={setAddOpen}>
               <DialogTrigger asChild>
                 <Button className="w-full sm:w-auto">
                   <UserPlus className="h-4 w-4 mr-2" />
                   Add User
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-lg sm:max-w-xl lg:max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Create New User</DialogTitle>
+                  <DialogTitle>Register New User</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="userName">Full Name</Label>
-                    <Input id="userName" placeholder="Enter full name" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input id="firstName" value={regForm.firstName} onChange={(e) => setRegForm({ ...regForm, firstName: e.target.value })} placeholder="First name" />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input id="lastName" value={regForm.lastName} onChange={(e) => setRegForm({ ...regForm, lastName: e.target.value })} placeholder="Last name" />
+                    </div>
+                    <div>
+                      <Label htmlFor="middleName">Middle Name</Label>
+                      <Input id="middleName" value={regForm.middleName} onChange={(e) => setRegForm({ ...regForm, middleName: e.target.value })} placeholder="Middle name (optional)" />
+                    </div>
+                    <div>
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input id="phone" value={regForm.phoneNumber} onChange={(e) => setRegForm({ ...regForm, phoneNumber: e.target.value })} placeholder="Phone number" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" type="email" value={regForm.email} onChange={(e) => setRegForm({ ...regForm, email: e.target.value })} placeholder="Email address" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input id="password" type="password" value={regForm.password} onChange={(e) => setRegForm({ ...regForm, password: e.target.value })} placeholder="Set a password" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label>Role</Label>
+                      <Select value={regForm.roleId ? String(regForm.roleId) : undefined} onValueChange={(v) => setRegForm({ ...regForm, roleId: Number(v) })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {rolesApi.map((r) => (
+                            <SelectItem key={r.roleId} value={String(r.roleId)}>{r.role}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label>Branch</Label>
+                      <Select value={regForm.branchId ? String(regForm.branchId) : undefined} onValueChange={(v) => setRegForm({ ...regForm, branchId: Number(v) })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select branch" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {branchesApi.map((b) => (
+                            <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="userEmail">Email</Label>
-                    <Input id="userEmail" type="email" placeholder="Enter email address" />
-                  </div>
-                  <div>
-                    <Label htmlFor="userRole">Role</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="super_admin">Super Admin</SelectItem>
-                        <SelectItem value="branch_admin">Branch Admin</SelectItem>
-                        <SelectItem value="finance_manager">Finance Manager</SelectItem>
-                        <SelectItem value="pastor">Pastor</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="userBranch">Branch</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select branch" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Branches</SelectItem>
-                        <SelectItem value="lagos">Lagos (Main)</SelectItem>
-                        <SelectItem value="abuja">Abuja Branch</SelectItem>
-                        <SelectItem value="portharcourt">Port Harcourt</SelectItem>
-                        <SelectItem value="kano">Kano Branch</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button onClick={handleCreateUser} className="w-full">
-                    Create User
+                  <Button onClick={handleCreateUser} className="w-full" disabled={isRegistering}>
+                    {isRegistering ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Registering...</span> : "Register User"}
                   </Button>
                 </div>
               </DialogContent>

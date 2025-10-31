@@ -4,30 +4,33 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { useChurchInfo } from "@/components/church-info-provider"
 
-const services = [
-  {
-    title: "Live service",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/live-service-5faFVpfIByX7WiFuRlhAfkv8BbmtjY.png",
-    href: "/livestream",
-    description: "Experience powerful moments of worship and prayer in our live services",
-  },
-  {
-    title: "Church weddings",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/church-weddings-DmQ5gtkndaCkxGoNJw8nAlnk0Jjwvh.png",
-    href: "/events",
-    description: "Begin your journey together with a beautiful, sacred ceremony",
-  },
-  {
-    title: "Special Event",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/special-event-qzExNLmmxo7PJwS7A1c1MAXrZMdft9.png",
-    href: "/events",
-    description: "Join us for transformative events and conferences",
-  },
-]
 
 export default function ServicesGrid() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const { details } = useChurchInfo()
+
+  const services = [
+    {
+      title: "Live service",
+      image: details.churchLivestreamImage || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/live-service-5faFVpfIByX7WiFuRlhAfkv8BbmtjY.png",
+      href: "/livestream",
+      description: "Experience powerful moments of worship and prayer in our live services",
+    },
+    {
+      title: "Church weddings",
+      image: details.weddingImage || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/church-weddings-DmQ5gtkndaCkxGoNJw8nAlnk0Jjwvh.png",
+      href: "/events",
+      description: "Begin your journey together with a beautiful, sacred ceremony",
+    },
+    {
+      title: "Special Event",
+      image: details.churchEventImage || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/special-event-qzExNLmmxo7PJwS7A1c1MAXrZMdft9.png",
+      href: "/events",
+      description: "Join us for transformative events and conferences",
+    },
+  ]
 
   return (
     <section id="experience" className="py-24 bg-gradient-to-b from-black to-gray-900">

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react"
-import { getHomePage, getAllServiceSchedules, getChurchImages } from "@/services/homepage"
+import { getHomePage, getAllServiceSchedules } from "@/services/homepage"
 
 export type SocialLinks = {
   facebook?: string
@@ -21,6 +21,12 @@ export type ChurchDetails = {
   location?: string
   phoneNumber?: string
   welcomeAddress?: string
+  communityImage?: string
+  fellowshipImage?: string
+  bibleStudyImage?: string
+  churchEventImage?: string
+  churchLivestreamImage?: string
+  weddingImage?: string
 }
 
 export type ChurchInfoContextValue = {
@@ -59,6 +65,12 @@ export function ChurchInfoProvider({ children }: { children: React.ReactNode }) 
               location: obj.location ?? "",
               phoneNumber: obj.phoneNumber ?? "",
               welcomeAddress: obj.welcomeAddress ?? "",
+              communityImage: obj.communityImage ?? "",
+              fellowshipImage: obj.fellowshipImage ?? "",
+              bibleStudyImage: obj.bibleStudyImage ?? "",
+              churchEventImage: obj.churchEventImage ?? "",
+              churchLivestreamImage: obj.churchLivestreamImage ?? "",
+              weddingImage: obj.weddingImage ?? "",
             })
           }
         }
@@ -70,11 +82,7 @@ export function ChurchInfoProvider({ children }: { children: React.ReactNode }) 
         if (ss?.isSuccessful && Array.isArray(ss.data)) setSchedules(ss.data)
       } catch {}
 
-      // Images
-      try {
-        const imgs = await getChurchImages()
-        if (imgs?.isSuccessful) setImages(imgs.data)
-      } catch {}
+      // Images intentionally not auto-fetched to avoid unnecessary homepage calls
 
       // Social links from localStorage (saved from admin church-info)
       try {

@@ -801,10 +801,10 @@ export default function BranchesPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="branch-location">Location</Label>
+                      <Label htmlFor="branch-location">Google Location</Label>
                       <Input 
                         id="branch-location" 
-                        placeholder="e.g., Osapa London"
+                        placeholder="Paste Google Maps link"
                         value={newBranch.location}
                         onChange={(e) => setNewBranch({ ...newBranch, location: e.target.value })}
                       />
@@ -1110,8 +1110,9 @@ export default function BranchesPage() {
                     />
                   </div>
                   <div>
-                    <Label>Location</Label>
+                    <Label>Google Location</Label>
                     <Input
+                      placeholder="Paste Google Maps link"
                       value={editingBranch.location}
                       onChange={(e) => setEditingBranch({ ...editingBranch, location: e.target.value })}
                     />
