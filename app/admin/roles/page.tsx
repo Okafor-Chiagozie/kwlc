@@ -319,9 +319,11 @@ export default function RolesPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right">
-                        <Badge>{getRoleLabel(user.userTypeId)}</Badge>
+                        {user.role && user.role.trim() !== "" && (
+                          <Badge variant="outline" className="text-gray-700">{getRoleLabel(user.role)}</Badge>
+                        )}
                         <div className="mt-1">
-                          <Badge variant="outline" className={user.isBanned ? "text-red-600" : "text-green-600"}>
+                          <Badge className={user.isBanned ? "bg-red-600 text-white hover:bg-red-600" : "bg-blue-600 text-white hover:bg-blue-600"}>
                             {user.isBanned ? "inactive" : "active"}
                           </Badge>
                         </div>

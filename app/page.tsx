@@ -16,11 +16,15 @@ import MainLayout from "@/components/main-layout"
 import Link from "next/link"
 import { toast } from "sonner"
 import { contactUs } from "@/services/homepage"
+import { usePaymentsToggle } from "@/components/payments-toggle-provider"
+import { initiateDonation } from "@/services/donation"
+import { Currency, DonationType, PaymentMethod, PurposeCode } from "@/types/donation"
 import { useApi } from "@/hooks/useApi"
 import { getUpcomingEvents } from "@/services/event"
 import { useChurchInfo } from "@/components/church-info-provider"
 
 export default function Home() {
+  const { paymentsEnabled } = usePaymentsToggle()
   // Fetch upcoming events
   const { data: upcomingEvents, loading: eventsLoading, error: eventsError } = useApi(
     () => getUpcomingEvents(),
@@ -39,6 +43,16 @@ export default function Home() {
   // Format time for display (supports "9:00 AM" or "HH:mm[:ss]")
   // Contact form state
   const [contactLoading, setContactLoading] = useState(false)
+  const [donateOpen, setDonateOpen] = useState(false)
+  const [donateLoading, setDonateLoading] = useState(false)
+  const [donateForm, setDonateForm] = useState({
+    fullName: "",
+    email: "",
+    phoneNumber: "",
+    amount: "",
+    message: "",
+    isAnonymous: false
+  })
 
   const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -313,7 +327,13 @@ export default function Home() {
                 </div>
                 <Button className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all group text-lg h-12">
                   <Heart className="h-5 w-5 mr-2" />
-                  <Link href={'/donations'}>Make a Donation</Link>
+                  <span onClick={() => {
+                    if (!paymentsEnabled) {
+                      toast.error('Online donations are currently disabled.')
+                      return
+                    }
+                    setDonateOpen(true)
+                  }}>Make a Donation</span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
@@ -691,6 +711,131 @@ export default function Home() {
           </div>
         </section>
       </main>
+      {/* Donate Modal (Community) */}
+      {donateOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4 !mt-0"
+          onClick={() => setDonateOpen(false)}
+        >
+          <div className="w-full max-w-2xl bg-white rounded-xl shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="p-5 border-b">
+              <h3 className="text-lg font-semibold">Make a Community Donation</h3>
+              <p className="text-sm text-gray-500 mt-1">Your gift supports our outreach and community programs.</p>
+            </div>
+            <div className="p-5">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Amount (NGN)</label>
+                  <Input
+                    type="number"
+                    min="100"
+                    step="100"
+                    value={donateForm.amount}
+                    onChange={(e) => setDonateForm({ ...donateForm, amount: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                  <Input
+                    value={donateForm.fullName}
+                    onChange={(e) => setDonateForm({ ...donateForm, fullName: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                  <Input
+                    type="email"
+                    value={donateForm.email}
+                    onChange={(e) => setDonateForm({ ...donateForm, email: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                  <Input
+                    type="tel"
+                    value={donateForm.phoneNumber}
+                    onChange={(e) => setDonateForm({ ...donateForm, phoneNumber: e.target.value })}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Message (Optional)</label>
+                  <Textarea
+                    value={donateForm.message}
+                    onChange={(e) => setDonateForm({ ...donateForm, message: e.target.value })}
+                    className="min-h-[100px]"
+                  />
+                </div>
+                <div className="flex items-center gap-2 md:col-span-2">
+                  <input
+                    type="checkbox"
+                    id="homepage-anonymous"
+                    className="rounded"
+                    checked={donateForm.isAnonymous}
+                    onChange={(e) => setDonateForm({ ...donateForm, isAnonymous: e.target.checked })}
+                  />
+                  <label htmlFor="homepage-anonymous" className="text-sm text-gray-600">Make this donation anonymous</label>
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end pt-4">
+                <Button variant="outline" onClick={() => setDonateOpen(false)} disabled={donateLoading}>Cancel</Button>
+                <Button
+                  onClick={async () => {
+                    if (!paymentsEnabled) {
+                      toast.error('Online donations are currently disabled.')
+                      return
+                    }
+                    const amount = parseFloat(donateForm.amount)
+                    if (!donateForm.email.trim() || isNaN(amount) || amount <= 0) {
+                      toast.error('Please enter a valid amount and email')
+                      return
+                    }
+                    try {
+                      setDonateLoading(true)
+                      const donorNameValue = donateForm.isAnonymous ? undefined : (donateForm.fullName.trim() || undefined)
+                      const payload = {
+                        email: donateForm.email.trim(),
+                        amount,
+                        message: donateForm.message.trim() || undefined,
+                        currencyId: Currency.NGN,
+                        donorName: donorNameValue,
+                        isAnnonymous: donateForm.isAnonymous,
+                        phoneNumber: donateForm.phoneNumber.trim() || undefined,
+                        churchProjectId: undefined,
+                        purposeCode: PurposeCode.CDON,
+                        donationTypeId: DonationType.Community,
+                        paymenMethodId: PaymentMethod.Card
+                      }
+                      const response = await initiateDonation(payload)
+                      const checkoutUrl = (response as any)?.data?.data?.checkoutUrl
+                      const ok = (response as any)?.isSuccessful && (response as any)?.data?.status && !!checkoutUrl
+                      if (ok) {
+                        toast.success('Redirecting to payment gateway...')
+                        setTimeout(() => {
+                          window.open(checkoutUrl, '_blank', 'noopener,noreferrer')
+                        }, 400)
+                        setDonateOpen(false)
+                      } else {
+                        const message = (response as any)?.data?.message || (response as any)?.responseMessage || 'Failed to initiate donation'
+                        toast.error(message)
+                      }
+                    } catch (error) {
+                      toast.error('An error occurred. Please try again.')
+                    } finally {
+                      setDonateLoading(false)
+                    }
+                  }}
+                  disabled={donateLoading}
+                  className="gap-2"
+                >
+                  {donateLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className="h-4 w-4" />}
+                  {donateLoading ? 'Processing...' : 'Donate Now'}
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 text-center mt-3">Your donation is secure and tax-deductible. You will receive a receipt via email.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   )
 }

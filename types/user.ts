@@ -57,7 +57,10 @@ export interface UpdateUserRequestViewModel {
   middleName: string;
   email: string;
   phoneNumber: string;
-  userTypeId: UserType;
+  // According to docs, updates are driven by roleId
+  roleId: number;
+  // Backward compatibility: some legacy code may still send userTypeId
+  userTypeId?: UserType;
 }
 
 // UserViewModel from API
@@ -70,7 +73,11 @@ export interface UserViewModel {
   middleName: string;
   isBanned: boolean;
   phoneNumber: string;
-  userTypeId: UserType;
+  // Docs provide role metadata
+  role: string;
+  roleId: number;
+  // Backward compatibility while migrating UI
+  userTypeId?: UserType;
   loginFailedCount: number;
 }
 
