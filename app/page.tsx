@@ -325,15 +325,13 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                <Button className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all group text-lg h-12">
+                <Button
+                  className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all group text-lg h-12 disabled:opacity-60 disabled:cursor-not-allowed"
+                  onClick={() => setDonateOpen(true)}
+                  disabled={!paymentsEnabled}
+                >
                   <Heart className="h-5 w-5 mr-2" />
-                  <span onClick={() => {
-                    if (!paymentsEnabled) {
-                      toast.error('Online donations are currently disabled.')
-                      return
-                    }
-                    setDonateOpen(true)
-                  }}>Make a Donation</span>
+                  <span>Make a Donation</span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
